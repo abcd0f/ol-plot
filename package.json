@@ -1,0 +1,41 @@
+{
+  "name": "@seedlib/ol-plot",
+  "version": "1.0.0",
+  "description": "OpenLayers plotting library",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev:docs": "pnpm build && pnpm -F @ol-plot/docs run dev",
+    "build": "tsdown",
+    "lint": "pnpm run lint",
+    "format": "pnpm run format",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "format:write": "prettier --write \"src/**/*.{ts,js}\"",
+    "clean": "node ./scripts/clean.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.28.2",
+  "peerDependencies": {
+    "ol": ">=10.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}

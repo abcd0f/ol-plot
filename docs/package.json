@@ -1,0 +1,27 @@
+{
+  "name": "@ol-plot/docs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.28.2",
+  "dependencies": {
+    "vitepress": "^1.6.4"
+  },
+  "devDependencies": {
+    "@nolebase/vitepress-plugin-enhanced-readabilities": "^2.18.2",
+    "@types/markdown-it-container": "^2.0.10",
+    "@types/node": "^24.5.2",
+    "markdown-it-container": "^4.0.0",
+    "ol": "catalog:",
+    "vitepress-demo-plugin": "^1.5.0",
+    "vue": "^3.5.21"
+  }
+}

@@ -1,0 +1,247 @@
+html {
+  font-family: Arial, Helvetica;
+}
+
+:root {
+  --vp-code-copy-copied-text-content: '已复制';
+}
+
+/**
+ * Colors: Solid
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-c-white: #ffffff;
+  --vp-c-black: #000000;
+
+  --vp-c-neutral: var(--vp-c-black);
+  --vp-c-neutral-inverse: var(--vp-c-white);
+}
+
+.dark {
+  --vp-c-neutral: var(--vp-c-white);
+  --vp-c-neutral-inverse: var(--vp-c-black);
+}
+
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #bd34fe 30%, #41d1ff);
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #bd34fe 50%, #47caff 50%);
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+/**
+* 颜色：调色板（Palette）
+* 用于强调色的原始颜色。这些颜色会被功能性色彩如“文字（Text）”、“背景（Background）”或“品牌色（Brand）”引用。
+* 每种颜色都遵循完全相同的颜色等级体系：包括3个不同亮度的纯色等级，以及1个柔和色。
+* - XXX-1：最纯的颜色，主要用于彩色文本。它必须在使用于 XXX-soft 背景之上时，满足对比度要求。
+* - XXX-2：主要用于按钮的悬停状态（hover state）时的颜色。
+* - XXX-3：用于纯色背景，例如按钮的背景色。它必须在白色纯文字（#ffffff）叠加其上时满足对比度要求。
+* - XXX-soft：用于较弱的背景，例如自定义容器或徽章（badge）。在其上叠加 XXX-1 的文字时，必须满足对比度要求。
+* - 柔和色必须使用半透明的 Alpha 通道。这一点非常关键，因为它允许多个“soft”颜色相叠加，从而营造出强调效果，例如在自定义容器中放置内联代码块时。
+* -------------------------------------------------------------------------- */
+
+:root {
+  --vp-c-gray-1: #dddde3;
+  --vp-c-gray-2: #e4e4e9;
+  --vp-c-gray-3: #ebebef;
+  --vp-c-gray-soft: rgba(142, 150, 170, 0.14);
+
+  --vp-c-indigo-1: #3451b2;
+  --vp-c-indigo-2: #3a5ccc;
+  --vp-c-indigo-3: #5672cd;
+  --vp-c-indigo-soft: rgba(100, 108, 255, 0.14);
+
+  --vp-c-purple-1: #6f42c1;
+  --vp-c-purple-2: #7e4cc9;
+  --vp-c-purple-3: #8e5cd9;
+  --vp-c-purple-soft: rgba(159, 122, 234, 0.14);
+
+  --vp-c-green-1: #18794e;
+  --vp-c-green-2: #299764;
+  --vp-c-green-3: #30a46c;
+  --vp-c-green-soft: rgba(16, 185, 129, 0.14);
+
+  --vp-c-yellow-1: #915930;
+  --vp-c-yellow-2: #946300;
+  --vp-c-yellow-3: #9f6a00;
+  --vp-c-yellow-soft: rgba(234, 179, 8, 0.14);
+
+  --vp-c-red-1: #b8272c;
+  --vp-c-red-2: #d5393e;
+  --vp-c-red-3: #e0575b;
+  --vp-c-red-soft: rgba(244, 63, 94, 0.14);
+
+  --vp-c-sponsor: #db2777;
+}
+
+.dark {
+  --vp-c-gray-1: #515c67;
+  --vp-c-gray-2: #414853;
+  --vp-c-gray-3: #32363f;
+  --vp-c-gray-soft: rgba(101, 117, 133, 0.16);
+
+  --vp-c-indigo-1: #a8b1ff;
+  --vp-c-indigo-2: #5c73e7;
+  --vp-c-indigo-3: #3e63dd;
+  --vp-c-indigo-soft: rgba(100, 108, 255, 0.16);
+
+  --vp-c-purple-1: #c8abfa;
+  --vp-c-purple-2: #a879e6;
+  --vp-c-purple-3: #8e5cd9;
+  --vp-c-purple-soft: rgba(159, 122, 234, 0.16);
+
+  --vp-c-green-1: #3dd68c;
+  --vp-c-green-2: #30a46c;
+  --vp-c-green-3: #298459;
+  --vp-c-green-soft: rgba(16, 185, 129, 0.16);
+
+  --vp-c-yellow-1: #f9b44e;
+  --vp-c-yellow-2: #da8b17;
+  --vp-c-yellow-3: #a46a0a;
+  --vp-c-yellow-soft: rgba(234, 179, 8, 0.16);
+
+  --vp-c-red-1: #f66f81;
+  --vp-c-red-2: #f14158;
+  --vp-c-red-3: #b62a3c;
+  --vp-c-red-soft: rgba(244, 63, 94, 0.16);
+}
+
+/**
+  * 颜色：背景（Background）
+  * bg：主屏幕使用的背景色。
+  * bg-alt：备用背景色，使用于诸如“侧边栏”或“代码块”等位置。
+  * bg-elv：悬浮背景色。用于一些“浮动”的部分，例如“对话框”。
+  * bg-soft：用于轻微区分某些组件与页面的背景色。用于诸如“Carbon 广告”或“表格”等场景。
+  *------------------------------------------------------------------------- */
+
+:root {
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #f6f6f7;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f6f6f7;
+}
+
+.dark {
+  --vp-c-bg: #1b1b1f;
+  --vp-c-bg-alt: #161618;
+  --vp-c-bg-elv: #202127;
+  --vp-c-bg-soft: #202127;
+}
+
+/**
+ * Colors: Borders
+ *
+ * - divider：用于分隔线。
+ *   用于在同一组件内划分不同区域，例如在 “h2” 标题上添加分隔线。
+ *
+ * - border：用于交互式组件的边框设计。
+ *   例如，它应该用于按钮的描边（outline）。
+ *
+ * - gutter：用于在页面中分隔组件。
+ *   例如，用于分隔页眉和页面的其余部分。
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-c-border: #c2c2c4;
+  --vp-c-divider: #e2e2e3;
+  --vp-c-gutter: #e2e2e3;
+}
+
+.dark {
+  --vp-c-border: #3c3f44;
+  --vp-c-divider: #2e2e32;
+  --vp-c-gutter: #000000;
+}
+
+/**
+ * Colors: Text
+ *
+ * - `text-1`: Used for primary text.
+ *
+ * - `text-2`: Used for muted texts, such as "inactive menu" or "info texts".
+ *
+ * - `text-3`: Used for subtle texts, such as "placeholders" or "caret icon".
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-c-text-1: #3c3c43;
+  --vp-c-text-2: #67676c;
+  --vp-c-text-3: #929295;
+}
+
+.dark {
+  --vp-c-text-1: #dfdfd6;
+  --vp-c-text-2: #98989f;
+  --vp-c-text-3: #6a6a71;
+}
+
+/**
+ * Colors: Function
+ *
+ * - `default`: The color used purely for subtle indication without any
+ *   special meanings attached to it such as bg color for menu hover state.
+ *
+ * - `brand`: Used for primary brand colors, such as link text, button with
+ *   brand theme, etc.
+ *
+ * - `tip`: Used to indicate useful information. The default theme uses the
+ *   brand color for this by default.
+ *
+ * - `warning`: Used to indicate warning to the users. Used in custom
+ *   container, badges, etc.
+ *
+ * - `danger`: Used to show error, or dangerous message to the users. Used
+ *   in custom container, badges, etc.
+ *
+ * To understand the scaling system, refer to "Colors: Palette" section.
+ * -------------------------------------------------------------------------- */
+
+/**
+ * Typography
+ * -------------------------------------------------------------------------- */
+:root {
+  --vp-font-family-base: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --vp-font-family-mono: ui-monospace, 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  font-optical-sizing: auto;
+}
+
+/**
+ * Shadows
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --vp-shadow-2: 0 3px 12px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.07);
+  --vp-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+  --vp-shadow-4: 0 14px 44px rgba(0, 0, 0, 0.12), 0 3px 9px rgba(0, 0, 0, 0.12);
+  --vp-shadow-5: 0 18px 56px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.16);
+}
+
+/**
+ * Z-indexes
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-z-index-footer: 10;
+  --vp-z-index-local-nav: 20;
+  --vp-z-index-nav: 30;
+  --vp-z-index-layout-top: 40;
+  --vp-z-index-backdrop: 50;
+  --vp-z-index-sidebar: 60;
+}
+
+@media (min-width: 960px) {
+  :root {
+    --vp-z-index-sidebar: 25;
+  }
+}
+
+/**
+ * Layouts
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-layout-max-width: 1440px;
+}
