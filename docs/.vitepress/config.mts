@@ -91,16 +91,6 @@ export default defineConfig({
     },
     server: {
       host: '0.0.0.0',
-      proxy: {
-        '/seamap': {
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/seamap/, ''),
-          // mock代理目标地址
-          target: 'https://192.168.13.220',
-          ws: true,
-          secure: false,
-        },
-      },
     },
   },
 });
