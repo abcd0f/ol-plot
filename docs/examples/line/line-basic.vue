@@ -1,5 +1,5 @@
 <template>
-  <div ref="el" class="map-wrapper"></div>
+  <div class="map-wrapper" ref="el" />
 </template>
 
 <script setup lang="ts">
@@ -11,8 +11,12 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
+import { LineTool, DrawEvent } from '../../../src';
+
 const el = ref<HTMLDivElement>();
-let map: Map | null = null;
+
+let map: Map;
+let lineTool: LineTool;
 
 onMounted(() => {
   map = new Map({
@@ -25,20 +29,33 @@ onMounted(() => {
       }),
     ],
     view: new View({
-      center: fromLonLat([116.3974, 39.9093]), // 北京
+      center: fromLonLat([116.3974, 39.9093]),
       zoom: 10,
     }),
   });
+
+  lineTool = new LineTool(map);
+
+  lineTool
+    .on(DrawEvent.DRAW_START, () => {
+      console.log('开始绘制');
+    })
+    .on(DrawEvent.DRAW_END, () => {
+      console.log('绘制完成');
+    });
+
+  lineTool.activate();
 });
 
 onUnmounted(() => {
-  map?.setTarget(undefined);
+  lineTool.destroy();
+  map.setTarget(undefined);
 });
 </script>
 
 <style scoped>
 .map-wrapper {
   width: 100%;
-  height: 300px;
+  height: 500px;
 }
 </style>

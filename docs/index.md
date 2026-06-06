@@ -3,9 +3,9 @@
 layout: home
 
 hero:
-  name: '文档模板'
-  text: '一个简单的文档模板'
-  tagline: 用来记录组件或者函数的文档
+  name: 'OL-Plot'
+  text: '好用的 ol 封装库'
+  tagline: 简单使用的工具库
   actions:
     - theme: brand
       text: 开始

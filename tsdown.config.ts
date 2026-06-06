@@ -22,42 +22,14 @@
 
 import { defineConfig } from 'tsdown';
 
-const shared = {
-  format: ['esm', 'cjs'],
-  dts: true,
-  external: ['ol'],
-  clean: true,
-} as any;
-
 export default defineConfig([
   {
-    ...shared,
+    format: ['esm', 'cjs'],
+    dts: true,
+    external: ['ol'],
+    clean: true,
     entry: ['src/index.ts'],
     outDir: 'dist',
     exports: true,
-  },
-
-  {
-    ...shared,
-    entry: ['packages/core/index.ts'],
-    outDir: 'dist/core',
-  },
-
-  {
-    ...shared,
-    entry: ['packages/interact/index.ts'],
-    outDir: 'dist/interact',
-  },
-
-  {
-    ...shared,
-    entry: ['packages/constants/index.ts'],
-    outDir: 'dist/constants',
-  },
-
-  {
-    ...shared,
-    entry: ['packages/types/index.ts'],
-    outDir: 'dist/types',
   },
 ]);

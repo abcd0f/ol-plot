@@ -4,9 +4,9 @@ import { getSearchOptions } from './script/search.ts';
 import { vitepressDemoPlugin } from 'vitepress-demo-plugin';
 
 export default defineConfig({
-  title: 'DOCS模板',
-  titleTemplate: '自定义后缀',
-  description: '一个文档模板',
+  title: 'OL-Plot',
+  titleTemplate: '好用的 ol 封装库',
+  description: '简单使用的工具库',
   // base: './',
   lang: 'zh-CN',
   outDir: '../dist',
@@ -41,7 +41,7 @@ export default defineConfig({
         items: [
           { text: 'Markdown Examples', link: '/markdown-examples' },
           { text: 'Runtime API Examples', link: '/api-examples' },
-          { text: '测试', link: '/content/aaa' },
+          { text: '绘制线', link: '/content/line' },
         ],
       },
     ],

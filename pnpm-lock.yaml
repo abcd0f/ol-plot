@@ -77,12 +77,6 @@ importers:
         specifier: ^3.5.21
         version: 3.5.35(typescript@6.0.3)
 
-  packages/ol-plot:
-    dependencies:
-      ol:
-        specifier: '>=10.8.0'
-        version: 10.9.0
-
 packages:
 
   '@algolia/abtesting@1.19.0':
