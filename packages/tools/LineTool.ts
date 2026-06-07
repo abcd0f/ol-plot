@@ -31,12 +31,12 @@
 
 import type { StyleLike } from 'ol/style/Style';
 
-import { BaseDrawTool } from '../core/BaseDrawTool';
+import { LineBaseTool } from '../core/LineBaseTool';
 import { DrawType } from '../constants/index';
 import { LINE_TOOL_CONFIG } from '../config/toolConfigs';
 import type { DrawToolUserConfig } from '../types/index';
 
-export class LineTool extends BaseDrawTool {
+export class LineTool extends LineBaseTool {
   constructor(map: import('ol/Map').default, userConfig: DrawToolUserConfig = {}) {
     super(map, userConfig);
   }

@@ -12,7 +12,7 @@ export { LineTool } from '../packages/tools/LineTool';
 // export { ArrowTool }      from '../packages/tools/ArrowTool';       // 待扩展
 
 // ─── 基类（供高级用户自定义扩展工具）────────────────────────────────────────────
-export { BaseDrawTool } from '../packages/core/BaseDrawTool';
+export { LineBaseTool } from '../packages/core/LineBaseTool';
 
 // ─── 常量 & 枚举 ──────────────────────────────────────────────────────────────
 export { DrawType, LINE_DASH, LineCap, LineJoin, DrawEvent, ToolStatus, ZIndex } from '../packages/constants/index';

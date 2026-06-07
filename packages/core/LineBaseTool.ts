@@ -50,7 +50,7 @@ type ListenerMap = {
 
 // ─── 抽象基类 ─────────────────────────────────────────────────────────────────
 
-export abstract class BaseDrawTool<C extends DrawToolConfig = DrawToolConfig> implements IDrawTool {
+export abstract class LineBaseTool<C extends DrawToolConfig = DrawToolConfig> implements IDrawTool {
   protected readonly _map: OlMap;
   protected _config: C;
   protected _status: ToolStatus = ToolStatus.IDLE;
