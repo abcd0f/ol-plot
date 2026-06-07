@@ -28,7 +28,7 @@ export default defineConfig([
     dts: true,
     external: ['ol'],
     clean: true,
-    entry: ['src/index.ts'],
+    entry: ['packages/index.ts'],
     outDir: 'dist',
     exports: true,
   },

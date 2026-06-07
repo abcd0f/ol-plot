@@ -11,7 +11,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { LineTool, DrawEvent } from '../../../src';
+import { LineTool, DrawEvent } from '../../../packages';
 
 const el = ref<HTMLDivElement>();
 

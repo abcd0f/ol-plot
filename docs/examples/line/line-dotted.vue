@@ -7,7 +7,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { LineTool, LINE_DASH, LineCap } from '../../../src';
+import { LineTool, LINE_DASH, LineCap } from '../../../packages';
 
 const el = ref<HTMLDivElement>();
 
