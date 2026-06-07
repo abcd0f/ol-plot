@@ -1,5 +1,5 @@
 /**
- * @file core/BaseDrawTool.ts
+ * @file core/LineBaseTool.ts
  * @description 所有标绘工具的抽象基类（TypeScript 完整实现）
  *
  * 泛型参数 C extends DrawToolConfig：
@@ -14,7 +14,6 @@ import Draw, { type Options as DrawOptions } from 'ol/interaction/Draw';
 import OlStyle from 'ol/style/Style';
 import OlStroke from 'ol/style/Stroke';
 import OlFill from 'ol/style/Fill';
-import OlCircleStyle from 'ol/style/Circle';
 import type { Feature } from 'ol';
 import type { Geometry } from 'ol/geom';
 import type { StyleLike } from 'ol/style/Style';
