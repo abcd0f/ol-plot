@@ -11,7 +11,12 @@ import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
 import { mergeConfig, buildFeatureStyle } from '../utils';
 
+/**
+ * BaseTool 是一个抽象基类，用于创建地图绘制工具
+ * 提供了绘制、选择、修改等功能的基础实现
+ */
 export abstract class BaseTool {
+  /**  */
   protected map: Map;
   protected config: Required<PlotConfig>;
   protected drawType!: DrawType;
@@ -24,6 +29,12 @@ export abstract class BaseTool {
 
   protected activeFeature: Feature | null = null;
 
+  /**
+   * 初始化地图工具的基本组件和配置
+   *
+   * @param map - 地图实例
+   * @param config - 绘制配置项（可选）
+   */
   constructor(map: Map, config?: PlotConfig) {
     this.map = map;
     this.config = mergeConfig(config);
@@ -32,16 +43,15 @@ export abstract class BaseTool {
     this.layerManager = new LayerManager(map, buildFeatureStyle(this.config));
     this.drawManager = new DrawManager(map, this.layerManager.getSource(), this.eventBus);
     this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
-    this.modifyManager = new ModifyManager(
-      map,
-      this.selectManager.getSelectedFeatures(),
-      this.config,
-      this.eventBus,
-    );
+    this.modifyManager = new ModifyManager(map, this.selectManager.getSelectedFeatures(), this.config, this.eventBus);
 
     this.bindEvents();
   }
 
+  /**
+   * 绑定事件监听器
+   * 处理绘制结束、选择和取消选择等事件
+   */
   private bindEvents(): void {
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
       this.activeFeature = feature;
@@ -62,6 +72,12 @@ export abstract class BaseTool {
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
+  /**
+   * 激活工具
+   * 开始绘制模式，禁用选择和修改功能
+   *
+   * @returns 返回当前实例以支持链式调用
+   */
   activate(): this {
     this.selectManager.setActive(false);
     this.modifyManager.setActive(false);
@@ -71,6 +87,12 @@ export abstract class BaseTool {
     return this;
   }
 
+  /**
+   * 停用工具
+   * 结束绘制模式，启用选择和修改功能
+   *
+   * @returns 返回当前实例以支持链式调用
+   */
   deactivate(): this {
     this.drawManager.deactivate();
     this.selectManager.setActive(true);
@@ -78,6 +100,10 @@ export abstract class BaseTool {
     return this;
   }
 
+  /**
+   * 销毁工具实例
+   * 清理所有管理器和事件监听器
+   */
   destroy(): void {
     this.drawManager.destroy();
     this.selectManager.destroy();
@@ -89,11 +115,9 @@ export abstract class BaseTool {
   // ─── Load from data ───────────────────────────────────────────────────────
 
   /**
-   * Create a feature from coordinates and add it to the layer.
-   * Coordinates must be in the map projection (e.g. EPSG:3857).
-   * Use `ol/proj.fromLonLat` to convert from WGS84 lon/lat first.
-   *
-   * @returns the created Feature so you can pass it to selectFeature() if needed
+   * 添加一个要素到图层中
+   * @param coordinates - 坐标数组，用于创建几何对象
+   * @returns 返回创建的要素对象
    */
   addFeature(coordinates: number[][]): Feature {
     const feature = new Feature({ geometry: this.createGeometry(coordinates) });
@@ -102,8 +126,10 @@ export abstract class BaseTool {
   }
 
   /**
-   * Programmatically select a feature: sets it as the active feature and
-   * shows its vertex handles so it can be edited immediately.
+   * 选择指定的要素并激活相应的管理器
+   *
+   * @param feature - 要选择的要素对象
+   * @returns 返回当前实例，支持链式调用
    */
   selectFeature(feature: Feature): this {
     this.drawManager.deactivate();
@@ -116,10 +142,20 @@ export abstract class BaseTool {
 
   // ─── Features ─────────────────────────────────────────────────────────────
 
+  /**
+   * 获取所有要素
+   *
+   * @returns 返回要素数组
+   */
   getFeatures(): Feature[] {
     return this.layerManager.getFeatures();
   }
 
+  /**
+   * 清空所有要素
+   *
+   * @returns 返回当前实例以支持链式调用
+   */
   clearFeatures(): this {
     this.selectManager.clearSelection();
     this.activeFeature = null;
@@ -129,6 +165,12 @@ export abstract class BaseTool {
 
   // ─── Draw type ────────────────────────────────────────────────────────────
 
+  /**
+   * 设置绘制类型
+   *
+   * @param type - 绘制类型
+   * @returns 返回当前实例以支持链式调用
+   */
   setDrawType(type: DrawType): this {
     this.drawType = type;
     return this;
@@ -136,11 +178,25 @@ export abstract class BaseTool {
 
   // ─── Events ───────────────────────────────────────────────────────────────
 
+  /**
+   * 添加事件监听器
+   *
+   * @param event - 事件名称
+   * @param handler - 事件处理函数
+   * @returns 返回当前实例以支持链式调用
+   */
   on(event: string, handler: (...args: any[]) => void): this {
     this.eventBus.on(event, handler);
     return this;
   }
 
+  /**
+   * 移除事件监听器
+   *
+   * @param event - 事件名称
+   * @param handler - 事件处理函数
+   * @returns 返回当前实例以支持链式调用
+   */
   off(event: string, handler: (...args: any[]) => void): this {
     this.eventBus.off(event, handler);
     return this;
@@ -148,11 +204,37 @@ export abstract class BaseTool {
 
   // ─── Abstract API ─────────────────────────────────────────────────────────
 
-  /** Build the geometry for this tool type from a flat coordinate array. */
+  /**
+   * 从平面坐标数组构建此工具类型的几何图形
+   */
   protected abstract createGeometry(coordinates: number[][]): Geometry;
 
+  /**
+   * 设置坐标
+   *
+   * @param coordinates - 坐标数组
+   */
   abstract setCoordinates(coordinates: number[][]): void;
+
+  /**
+   * 获取坐标
+   *
+   * @returns 返回坐标数组
+   */
   abstract getCoordinates(): number[][];
+
+  /**
+   * 获取点的数量
+   *
+   * @returns 返回点的数量
+   */
   abstract getPointCount(): number;
+
+  /**
+   * 更新指定索引的点坐标
+   *
+   * @param index - 点的索引
+   * @param coordinate - 新的坐标
+   */
   abstract updatePoint(index: number, coordinate: number[]): void;
 }
