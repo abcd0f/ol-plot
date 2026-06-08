@@ -5,10 +5,10 @@ import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { BaseTool } from '../core/BaseTool';
 
-export class LineTool extends BaseTool {
+export class FreehandLineTool extends BaseTool {
   constructor(map: Map, config?: PlotConfig) {
     super(map, config);
-    this.drawType = DrawType.Line;
+    this.drawType = DrawType.FreehandLine;
   }
 
   protected createGeometry(coordinates: number[][]): Geometry {

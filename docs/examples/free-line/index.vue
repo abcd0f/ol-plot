@@ -12,7 +12,7 @@
     </div>
 
     <!-- 操作提示 -->
-    <div v-if="isDrawing" class="status-tip">单击添加节点，双击完成绘制</div>
+    <div v-if="isDrawing" class="status-tip">按住鼠标拖动绘制，松开完成</div>
 
     <!-- 信息面板 -->
     <div class="info-panel">
@@ -45,7 +45,7 @@ import XYZ from 'ol/source/XYZ';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import type LineString from 'ol/geom/LineString';
 
-import { LineTool, DrawEvent } from '../../../packages';
+import { FreehandLineTool, DrawEvent } from '../../../packages';
 
 // ─── 状态 ────────────────────────────────────────────────────────────────────
 
@@ -69,7 +69,7 @@ function addLog(item: LogItem) {
 // ─── OL + 工具实例 ────────────────────────────────────────────────────────────
 
 let map: OlMap;
-let tool: LineTool;
+let tool: FreehandLineTool;
 
 onMounted(() => {
   map = new OlMap({
@@ -87,26 +87,16 @@ onMounted(() => {
     }),
   });
 
-  tool = new LineTool(map, {
+  tool = new FreehandLineTool(map, {
     strokeColor: '#1890ff',
     strokeWidth: 2,
     fillColor: 'rgba(24,144,255,0.1)',
     nodeStyle: { radius: 5, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
   });
 
-  const apiLine = [
-    [116.38, 39.9],
-    [116.42, 39.91],
-    [116.45, 39.88],
-  ];
-  const mapCoords = apiLine.map((c) => fromLonLat(c));
-
-  const feature = tool.addFeature(mapCoords);
-  tool.selectFeature(feature);
-
   tool
     .on(DrawEvent.DRAW_START, () => {
-      addLog({ type: 'start', label: '开始', msg: '开始绘制折线' });
+      addLog({ type: 'start', label: '开始', msg: '开始绘制自由线' });
     })
     .on(DrawEvent.DRAW_END, ({ feature }) => {
       isDrawing.value = false;

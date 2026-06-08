@@ -37,4 +37,4 @@ lineTool.activate();
 
 用于展示默认配置下的 LineTool。
 
-<demo vue="../examples/line/line-basic.vue" />
+<demo vue="../examples/free-line/index.vue" />

@@ -1,41 +1,16 @@
-/**
- * @file index.ts
- * @description ol-draw-tools 标绘工具库统一入口
- */
+export { BaseTool } from './core/BaseTool';
+export { EventBus } from './core/EventBus';
+export { LayerManager } from './core/LayerManager';
+export { DrawManager } from './core/DrawManager';
+export { SelectManager } from './core/SelectManager';
+export { ModifyManager } from './core/ModifyManager';
 
-// ─── 工具类 ───────────────────────────────────────────────────────────────────
-export { LineTool } from '../packages/tools/LineTool';
-// export { CurveTool }      from '../packages/tools/CurveTool';       // 待扩展
-// export { PolygonTool }    from '../packages/tools/PolygonTool';     // 待扩展
-// export { CircleTool }     from '../packages/tools/CircleTool';      // 待扩展
-// export { RectangleTool }  from '../packages/tools/RectangleTool';   // 待扩展
-// export { ArrowTool }      from '../packages/tools/ArrowTool';       // 待扩展
+export { LineTool } from './tools/LineTool';
+export { FreehandLineTool } from './tools/FreehandLineTool';
+export { PolygonTool } from './tools/PolygonTool';
+export { RectangleTool } from './tools/RectangleTool';
+export { CircleTool } from './tools/CircleTool';
 
-// ─── 基类（供高级用户自定义扩展工具）────────────────────────────────────────────
-export { LineBaseTool } from '../packages/core/LineBaseTool';
-
-// ─── 常量 & 枚举 ──────────────────────────────────────────────────────────────
-export { DrawType, LINE_DASH, LineCap, LineJoin, DrawEvent, ToolStatus, ZIndex } from '../packages/constants/index';
-
-// ─── 默认配置 ─────────────────────────────────────────────────────────────────
-export { DEFAULT_CONFIG } from '../packages/config/defaultConfig';
-export { TOOL_CONFIG_MAP } from '../packages/config/toolConfigs';
-
-// ─── 类型导出（纯类型，不产生运行时代码）────────────────────────────────────────
-export type {
-  DrawToolConfig,
-  DrawToolUserConfig,
-  DeepPartial,
-  StrokeConfig,
-  FillConfig,
-  VertexConfig,
-  LayerConfig,
-  InteractionConfig,
-  TooltipConfig,
-  IDrawTool,
-  DrawToolEventMap,
-  DrawToolEventHandler,
-  DrawStartPayload,
-  DrawEndPayload,
-  DrawAbortPayload,
-} from '../packages/types/index';
+export { DrawType, DEFAULT_CONFIG, DrawEvent } from './constants';
+export type { DrawEventType } from './constants';
+export type { PlotConfig, NodeStyle } from './types';
