@@ -2,6 +2,12 @@
  * @file tools/LineTool.ts
  * @description 直线 / 折线 标绘工具
  *
+ * 交互行为：
+ *  - 绘制中：仅显示线预览，无顶点节点
+ *  - drawend 后：自动渲染所有顶点节点，进入编辑状态
+ *  - 点击已有线：选中该线，显示顶点节点，进入编辑状态，不触发新绘制
+ *  - 点击空白区域：开始新绘制
+ *
  * @example
  * // 最简用法
  * const tool = new LineTool(map);
@@ -19,7 +25,7 @@
  * });
  *
  * @example
- * // 事件监听（类型推断 payload 类型）
+ * // 事件监听
  * tool.on(DrawEvent.DRAW_END, ({ feature }) => {
  *   const coords = (feature.getGeometry() as LineString).getCoordinates();
  * });
@@ -50,15 +56,17 @@ export class LineTool extends LineBaseTool {
   }
 
   /**
-   * 绘制中预览样式：草稿线 + 顶点控制点
+   * 绘制中预览样式：仅线条，无顶点节点
+   * 顶点节点由 LineBaseTool 的 vertex layer 在 drawend 后统一渲染
    */
   protected _buildDrawStyle(): StyleLike {
-    const { sketchStroke, vertex } = this._config;
-    return [this._createStyle({ stroke: this._createStroke(sketchStroke) }), this._createVertexStyle(vertex)];
+    const { sketchStroke } = this._config;
+    // 注意：此处故意不包含顶点样式，消除绘制中跟随鼠标的编辑节点
+    return this._createStyle({ stroke: this._createStroke(sketchStroke) });
   }
 
   /**
-   * 绘制完成后最终样式
+   * 绘制完成后最终样式（线要素本身，顶点节点由独立 layer 管理）
    */
   protected _buildFinishStyle(): StyleLike {
     const { stroke } = this._config;

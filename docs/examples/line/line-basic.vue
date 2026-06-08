@@ -40,11 +40,15 @@ onMounted(() => {
     .on(DrawEvent.DRAW_START, () => {
       console.log('开始绘制');
     })
-    .on(DrawEvent.DRAW_END, () => {
-      console.log('绘制完成');
+    .on(DrawEvent.DRAW_END, ({ feature }) => {
+      console.log('绘制完成', feature);
+    })
+    .on(DrawEvent.MODIFY_START, () => {
+      console.log('开始编辑节点');
+    })
+    .on(DrawEvent.MODIFY_END, ({ features }) => {
+      console.log('编辑完成', features);
     });
-
-  lineTool.activate();
 });
 
 onUnmounted(() => {

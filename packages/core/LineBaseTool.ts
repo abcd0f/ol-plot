@@ -1,22 +1,51 @@
 /**
  * @file core/LineBaseTool.ts
- * @description 所有标绘工具的抽象基类（TypeScript 完整实现）
+ * @description 所有标绘工具的抽象基类
  *
- * 泛型参数 C extends DrawToolConfig：
- *   允许子类扩展配置类型（如 ArrowTool 可添加 arrowHead 配置）
- *   默认为标准 DrawToolConfig
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │                     有限状态机                               │
+ * │                                                             │
+ * │   构造完成                                                   │
+ * │      │                                                      │
+ * │      ▼                                                      │
+ * │  [DRAWING_IDLE] ◄──────────────────────────────────┐       │
+ * │   Draw 挂载                                         │       │
+ * │   Modify 未挂载                                     │       │
+ * │      │ 点击空白区域（Draw 响应）                     │       │
+ * │      ▼                                             │       │
+ * │  [DRAWING_ACTIVE]                                  │       │
+ * │   Draw 挂载 + 正在绘制中                            │       │
+ * │      │ 双击完成 / drawend                          │       │
+ * │      ▼                                             │       │
+ * │  [EDITING] ────────── 点击空白区域 ────────────────┘       │
+ * │   Draw 卸载                                                 │
+ * │   Modify 挂载                                               │
+ * │   顶点节点显示                                               │
+ * │      │ 点击其他线                                           │
+ * │      └──────► 清理旧 Modify + 顶点 → 建立新 Modify + 顶点  │
+ * │                                                             │
+ * └─────────────────────────────────────────────────────────────┘
+ *
+ * 状态转换规则：
+ *  DRAWING_IDLE  → DRAWING_ACTIVE : Draw interaction 触发 drawstart
+ *  DRAWING_ACTIVE → EDITING       : drawend，卸载 Draw，挂载 Modify + 顶点
+ *  EDITING       → DRAWING_IDLE   : 点击地图空白区域，卸载 Modify，挂载 Draw
+ *  EDITING       → EDITING        : 点击另一条线，切换选中要素
  */
 
 import OlMap from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import Draw, { type Options as DrawOptions } from 'ol/interaction/Draw';
-import OlStyle from 'ol/style/Style';
 import OlStroke from 'ol/style/Stroke';
 import OlFill from 'ol/style/Fill';
-import type { Feature } from 'ol';
-import type { Geometry } from 'ol/geom';
+import OlCircle from 'ol/style/Circle';
+import OlStyle from 'ol/style/Style';
+import OlFeature from 'ol/Feature';
+import { Point } from 'ol/geom';
+import type { Geometry, LineString } from 'ol/geom';
 import type { StyleLike } from 'ol/style/Style';
+import type { Options as DrawOptions } from 'ol/interaction/Draw';
+import type { MapBrowserEvent } from 'ol';
 
 import { DEFAULT_CONFIG } from '../config/defaultConfig';
 import { DrawEvent, DrawType, ToolStatus } from '../constants/index';
@@ -27,13 +56,13 @@ import {
   buildFill,
   buildVertexStyle,
   assertMap,
-  safeRemoveInteraction,
 } from '../utils/index';
+
+import { EventDispatcher, DrawingSystem, EditingSystem, StateManager, ToolState } from './systems/index';
 
 import type {
   DrawToolConfig,
   DrawToolUserConfig,
-  DrawToolEventMap,
   DrawToolEventHandler,
   IDrawTool,
   StrokeConfig,
@@ -41,150 +70,164 @@ import type {
   VertexConfig,
 } from '../types/index';
 
-// ─── 内部事件监听器存储类型 ───────────────────────────────────────────────────
-
-type ListenerMap = {
-  [E in DrawEvent]?: Array<DrawToolEventHandler<E>>;
-};
 
 // ─── 抽象基类 ─────────────────────────────────────────────────────────────────
 
 export abstract class LineBaseTool<C extends DrawToolConfig = DrawToolConfig> implements IDrawTool {
   protected readonly _map: OlMap;
   protected _config: C;
-  protected _status: ToolStatus = ToolStatus.IDLE;
-  protected _source!: VectorSource<Feature<Geometry>>;
-  protected _layer!: VectorLayer<VectorSource<Feature<Geometry>>>;
-  protected _drawInteraction: Draw | null = null;
 
-  // 类型安全的事件监听器存储
-  private readonly _listeners: ListenerMap = {};
+  protected _source!: VectorSource<OlFeature<Geometry>>;
+  protected _layer!: VectorLayer<VectorSource<OlFeature<Geometry>>>;
+
+  private _eventDispatcher: EventDispatcher;
+  private _drawingSystem: DrawingSystem;
+  private _editingSystem: EditingSystem;
+  private _stateManager: StateManager;
+
+  // ═══════════════════════════════════════════════════════════════
+  // 构造
+  // ═══════════════════════════════════════════════════════════════
 
   constructor(map: OlMap, userConfig: DrawToolUserConfig = {}) {
     assertMap(map);
     this._map = map;
-
-    // 三层配置合并：全局默认 → 工具专属默认 → 用户传入
     this._config = deepMerge<any>(DEFAULT_CONFIG as C, this._getToolConfig() as Partial<C>, userConfig as Partial<C>);
 
     this._initLayer();
+
+    this._eventDispatcher = new EventDispatcher();
+    this._drawingSystem = new DrawingSystem(
+      this._map,
+      this._source,
+      this._eventDispatcher,
+      () => this._buildDrawStyle(),
+      () => this._buildInteractionOptions(),
+      (feature) => this._stateManager.enterEditing(feature),
+    );
+    this._editingSystem = new EditingSystem(
+      this._map,
+      this._layer,
+      this._eventDispatcher,
+      () => this._buildVertexHandleStyle(),
+    );
+    this._stateManager = new StateManager(
+      this._map,
+      this._layer,
+      this._source,
+      this._eventDispatcher,
+      this._drawingSystem,
+      this._editingSystem,
+      (e) => this._hitTestLineFeature(e),
+    );
+
+    this._stateManager.enterDrawingIdle();
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 子类必须实现的抽象方法
+  // 子类抽象方法
   // ═══════════════════════════════════════════════════════════════
 
-  /** 返回该工具对应的 DrawType 枚举值 */
   protected abstract _getDrawType(): DrawType;
-
-  /** 返回工具专属默认配置（来自 toolConfigs.ts），不需要时返回 {} */
   protected abstract _getToolConfig(): DrawToolUserConfig;
 
-  /** 构建绘制中的草稿样式（支持 StyleLike：Style / Style[] / StyleFunction） */
+  /**
+   * 绘制中草稿样式
+   * ⚠️  不要在此包含顶点样式，顶点由 vertex layer 独立渲染
+   */
   protected abstract _buildDrawStyle(): StyleLike;
 
-  /** 构建绘制完成后要素的最终样式 */
+  /** 绘制完成后线要素的固定样式 */
   protected abstract _buildFinishStyle(): StyleLike;
 
   // ═══════════════════════════════════════════════════════════════
   // 公共 API
   // ═══════════════════════════════════════════════════════════════
 
-  /** 激活绘制工具 */
   activate(): this {
-    if (this._status === ToolStatus.DRAWING) return this;
-    this._createInteraction();
-    this._map.addInteraction(this._drawInteraction!);
-    this._status = ToolStatus.DRAWING;
+    if (this._stateManager.getState() === ToolState.DRAWING_IDLE ||
+        this._stateManager.getState() === ToolState.DRAWING_ACTIVE) {
+      return this;
+    }
+    this._stateManager.enterDrawingIdle();
     return this;
   }
 
-  /** 停用绘制工具（保留已绘要素） */
   deactivate(): this {
-    safeRemoveInteraction(this._map, this._drawInteraction);
-    this._drawInteraction = null;
-    this._status = ToolStatus.IDLE;
+    this._stateManager.enterDisabled();
     return this;
   }
 
-  /** 清空图层所有要素 */
   clear(): this {
+    this._stateManager.enterDisabled();
     this._source?.clear();
+    this._stateManager.enterDrawingIdle();
     return this;
   }
 
-  /** 销毁工具，释放所有资源 */
+  /** 销毁工具，释放全部资源 */
   destroy(): void {
-    this.deactivate();
+    this._stateManager.enterDisabled();
+    this._editingSystem.destroy();
+    this._eventDispatcher.clear();
     this._map.removeLayer(this._layer);
-    // 清理引用，防止内存泄漏
     (this._source as unknown) = null;
     (this._layer as unknown) = null;
-    // 清空所有事件监听
-    (this._listeners as unknown as Record<string, unknown[]>) &&
-      Object.keys(this._listeners).forEach((k) => delete (this._listeners as Record<string, unknown>)[k]);
   }
 
-  /**
-   * 动态更新配置（热更新，自动重建样式）
-   * @param partialConfig 只需传入需要修改的部分
-   */
   updateConfig(partialConfig: DrawToolUserConfig): this {
     this._config = deepMerge<any>(this._config, partialConfig as Partial<C>);
-    if (this._layer) {
-      this._layer.setStyle(this._buildFinishStyle());
-    }
+    this._layer?.setStyle(this._buildFinishStyle());
     return this;
   }
 
-  /** 获取当前完整配置的只读副本 */
   getConfig(): C {
     return deepMerge<any>(this._config);
   }
 
-  /** 获取图层上所有已绘要素 */
-  getFeatures(): Feature<Geometry>[] {
+  getFeatures(): OlFeature<Geometry>[] {
     return this._source?.getFeatures() ?? [];
   }
 
-  /** 获取当前工具状态 */
   getStatus(): ToolStatus {
-    return this._status;
+    const state = this._stateManager.getState();
+    switch (state) {
+      case ToolState.DRAWING_IDLE:
+      case ToolState.DRAWING_ACTIVE:
+        return ToolStatus.DRAWING;
+      case ToolState.EDITING:
+        return ToolStatus.EDITING;
+      case ToolState.DISABLED:
+      default:
+        return ToolStatus.DISABLED;
+    }
   }
 
-  /** 获取 VectorLayer 实例（供外部直接操作图层） */
-  getLayer(): VectorLayer<VectorSource<Feature<Geometry>>> {
+  getLayer(): VectorLayer<VectorSource<OlFeature<Geometry>>> {
     return this._layer;
   }
 
-  // ─── 类型安全的事件系统 ───────────────────────────────────────────────────
+  // ─── 事件系统 ────────────────────────────────────────────────────────────
 
   on<E extends DrawEvent>(event: E, handler: DrawToolEventHandler<E>): this {
-    if (!this._listeners[event]) {
-      (this._listeners as Record<DrawEvent, unknown[]>)[event] = [];
-    }
-    (this._listeners[event] as Array<DrawToolEventHandler<E>>).push(handler);
+    this._eventDispatcher.on(event, handler);
     return this;
   }
 
   off<E extends DrawEvent>(event: E, handler?: DrawToolEventHandler<E>): this {
-    if (!handler) {
-      delete this._listeners[event];
-    } else {
-      const handlers = this._listeners[event] as Array<DrawToolEventHandler<E>> | undefined;
-      if (handlers) {
-        (this._listeners as Record<DrawEvent, unknown[]>)[event] = handlers.filter((fn) => fn !== handler);
-      }
-    }
+    this._eventDispatcher.off(event, handler);
     return this;
   }
 
+
+
+
   // ═══════════════════════════════════════════════════════════════
-  // 内部方法
+  // 图层初始化
   // ═══════════════════════════════════════════════════════════════
 
   private _initLayer(): void {
-    this._source = new VectorSource<Feature<Geometry>>({ wrapX: false });
+    this._source = new VectorSource<OlFeature<Geometry>>({ wrapX: false });
     this._layer = new VectorLayer({
       source: this._source,
       style: this._buildFinishStyle(),
@@ -199,36 +242,48 @@ export abstract class LineBaseTool<C extends DrawToolConfig = DrawToolConfig> im
     this._map.addLayer(this._layer);
   }
 
-  private _createInteraction(): void {
-    const options = this._buildInteractionOptions();
-    this._drawInteraction = new Draw(options);
 
-    this._drawInteraction.on('drawstart', (e) => {
-      this._status = ToolStatus.DRAWING;
-      this._emit(DrawEvent.DRAW_START, {
-        feature: e.feature as Feature<Geometry>,
-        tool: this,
-      });
-    });
 
-    this._drawInteraction.on('drawend', (e) => {
-      this._status = ToolStatus.IDLE;
-      this._emit(DrawEvent.DRAW_END, {
-        feature: e.feature as Feature<Geometry>,
-        tool: this,
-      });
-    });
-
-    this._drawInteraction.on('drawabort', () => {
-      this._status = ToolStatus.IDLE;
-      this._emit(DrawEvent.DRAW_ABORT, { tool: this });
+  private _buildVertexHandleStyle(): OlStyle {
+    const { vertex } = this._config;
+    return new OlStyle({
+      image: new OlCircle({
+        radius: vertex.radius,
+        fill: new OlFill({ color: vertex.fillColor }),
+        stroke: new OlStroke({
+          color: vertex.strokeColor,
+          width: vertex.strokeWidth,
+        }),
+      }),
     });
   }
 
-  /**
-   * 构建 Draw Interaction 选项，子类可 override 扩展
-   * 例如 RectangleTool 可以 override 此方法添加 geometryFunction
-   */
+  // ═══════════════════════════════════════════════════════════════
+  // 命中检测
+  // ═══════════════════════════════════════════════════════════════
+
+
+  private _hitTestLineFeature(e: MapBrowserEvent<any>): OlFeature<LineString> | null {
+    let found: OlFeature<LineString> | null = null;
+    this._map.forEachFeatureAtPixel(
+      e.pixel,
+      (feature) => {
+        const f = feature as OlFeature<Geometry>;
+        if (this._source.hasFeature(f)) {
+          found = f as unknown as OlFeature<LineString>;
+          return true;
+        }
+        return false;
+      },
+      { hitTolerance: 6 },
+    );
+    return found;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 构建 Draw Interaction 选项（子类可 override 扩展）
+  // ═══════════════════════════════════════════════════════════════
+
   protected _buildInteractionOptions(): DrawOptions {
     const { interaction } = this._config;
     return {
@@ -242,12 +297,10 @@ export abstract class LineBaseTool<C extends DrawToolConfig = DrawToolConfig> im
     };
   }
 
-  private _emit<E extends DrawEvent>(event: E, payload: DrawToolEventMap[E]): void {
-    const handlers = this._listeners[event] as Array<DrawToolEventHandler<E>> | undefined;
-    handlers?.forEach((fn) => fn(payload));
-  }
 
-  // ─── 样式构建辅助方法（供子类直接调用）──────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════
+  // 样式构建辅助（供子类使用）
+  // ═══════════════════════════════════════════════════════════════
 
   protected _createStroke(config: StrokeConfig): OlStroke {
     return buildStroke(config);
