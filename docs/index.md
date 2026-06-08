@@ -13,9 +13,6 @@ hero:
     - theme: alt
       text: API
       link: /api
-  image:
-    src: /vitepress-logo-large.svg
-    alt: VitePress
 
 features:
   - title: 多种绘图工具
