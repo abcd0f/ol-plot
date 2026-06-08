@@ -91,7 +91,17 @@ export class RectangleTool extends BaseTool {
   private attachConstraint(feature: Feature): void {
     this.detachConstraint();
     const geom = feature.getGeometry() as Polygon;
-    this.prevCorners = (geom.getCoordinates()[0] ?? []).slice(0, 4);
+
+    // createBox() produces [BL, BR, TR, TL] but SHARE tables expect bboxRect order [BL, TL, TR, BR].
+    // Normalize to canonical order before attaching the listener so the first edit applies correct neighbors.
+    const rawRing = geom.getCoordinates()[0] ?? [];
+    const normalized = bboxRect(rawRing.slice(0, rawRing.length - 1));
+    this.constraining = true;
+    geom.setCoordinates([[...normalized, normalized[0]]]);
+    this.constraining = false;
+    this.prevCorners = normalized;
+
+    feature.set('_rectEditIndices', [1, 3]);
 
     this.geomChangeKey = geom.on('change', () => {
       if (this.constraining || !this.prevCorners) return;

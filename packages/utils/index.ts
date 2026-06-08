@@ -45,8 +45,10 @@ function extractVertices(feature: Feature): number[][] {
       return (geom as LineString).getCoordinates();
     case 'Polygon': {
       const ring = (geom as Polygon).getCoordinates()[0] ?? [];
-      // Ring is closed (first === last), drop the duplicate last point
-      return ring.length > 1 ? ring.slice(0, -1) : ring;
+      const verts = ring.length > 1 ? ring.slice(0, -1) : ring;
+      const editIndices: number[] | undefined = (feature as Feature).get('_rectEditIndices');
+      if (editIndices) return editIndices.map((i) => verts[i]).filter(Boolean);
+      return verts;
     }
     case 'Point':
       return [(geom as Point).getCoordinates()];
