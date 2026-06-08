@@ -39,6 +39,7 @@ export default defineConfig({
       {
         text: '绘制工具',
         items: [
+          { text: '点', link: '/content/point' },
           { text: '折线', link: '/content/line' },
           { text: '自由线', link: '/content/freehand-line' },
           { text: '多边形', link: '/content/polygon' },

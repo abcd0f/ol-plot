@@ -5,6 +5,7 @@ export { DrawManager } from './core/DrawManager';
 export { SelectManager } from './core/SelectManager';
 export { ModifyManager } from './core/ModifyManager';
 
+export { PointTool } from './tools/PointTool';
 export { LineTool } from './tools/LineTool';
 export { FreehandLineTool } from './tools/FreehandLineTool';
 export { PolygonTool } from './tools/PolygonTool';
