@@ -84,7 +84,12 @@ onMounted(() => {
     view: new View({ center: fromLonLat([116.3974, 39.9093]), zoom: 10 }),
   });
 
-  tool = new CircleTool(map);
+  tool = new CircleTool(map, {
+    strokeColor: '#722ed1',
+    strokeWidth: 2,
+    fillColor: 'rgba(114,46,209,0.1)',
+    nodeStyle: { radius: 5, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
+  });
 
   tool
     .on(DrawEvent.DRAW_START, () => {
@@ -92,10 +97,27 @@ onMounted(() => {
     })
     .on(DrawEvent.DRAW_END, ({ feature }) => {
       isDrawing.value = false;
+      featureCount.value = tool.getFeatures().length;
+      const geom = feature.getGeometry() as OlCircle;
+      updateRadius(geom);
+      const center = toLonLat(geom.getCenter()).map((v) => v.toFixed(4));
+      addLog({ type: 'end', label: '完成', msg: `圆心 [${center}]，半径 ${formatRadius(geom.getRadius())}` });
     })
-    .on(DrawEvent.SELECT, ({ feature }) => {})
-    .on(DrawEvent.DESELECT, () => {})
-    .on(DrawEvent.MODIFY_END, ({ features }) => {});
+    .on(DrawEvent.SELECT, ({ feature }) => {
+      const geom = feature.getGeometry() as OlCircle;
+      updateRadius(geom);
+      const center = toLonLat(geom.getCenter()).map((v) => v.toFixed(4));
+      addLog({ type: 'select', label: '选中', msg: `圆心 [${center}]` });
+    })
+    .on(DrawEvent.DESELECT, () => {
+      radiusText.value = '—';
+      addLog({ type: 'select', label: '取消', msg: '取消选中' });
+    })
+    .on(DrawEvent.MODIFY_END, ({ features }) => {
+      const geom = features[0].getGeometry() as OlCircle;
+      updateRadius(geom);
+      addLog({ type: 'modify', label: '编辑', msg: `半径更新：${formatRadius(geom.getRadius())}` });
+    });
 });
 
 onUnmounted(() => {
@@ -123,144 +145,48 @@ function handleClear() {
 </script>
 
 <style scoped>
-.map-container {
-  position: relative;
-  width: 100%;
-  font-size: 13px;
-}
-.map-wrapper {
-  width: 100%;
-  height: 500px;
-}
+.map-container { position: relative; width: 100%; font-size: 13px; }
+.map-wrapper { width: 100%; height: 500px; }
 
 .toolbar {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  z-index: 10;
+  position: absolute; top: 12px; left: 12px;
+  display: flex; align-items: center; gap: 6px; padding: 6px 8px;
+  background: rgba(255,255,255,0.95); border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12); z-index: 10;
 }
 .toolbar-btn {
-  padding: 4px 12px;
-  color: #333;
-  background: transparent;
-  border: 1px solid #d9d9d9;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  user-select: none;
+  padding: 4px 12px; color: #333; background: transparent;
+  border: 1px solid #d9d9d9; border-radius: 5px;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; user-select: none;
 }
-.toolbar-btn:hover {
-  color: #722ed1;
-  border-color: #722ed1;
-  background: #f9f0ff;
-}
-.toolbar-btn.active {
-  color: #fff;
-  background: #722ed1;
-  border-color: #722ed1;
-}
-.toolbar-btn.danger {
-  color: #ff4d4f;
-  border-color: #ffccc7;
-}
-.toolbar-btn.danger:hover {
-  color: #fff;
-  background: #ff4d4f;
-  border-color: #ff4d4f;
-}
-.toolbar-divider {
-  width: 1px;
-  height: 18px;
-  background: #e8e8e8;
-  margin: 0 2px;
-}
+.toolbar-btn:hover  { color: #722ed1; border-color: #722ed1; background: #f9f0ff; }
+.toolbar-btn.active { color: #fff; background: #722ed1; border-color: #722ed1; }
+.toolbar-btn.danger { color: #ff4d4f; border-color: #ffccc7; }
+.toolbar-btn.danger:hover { color: #fff; background: #ff4d4f; border-color: #ff4d4f; }
+.toolbar-divider { width: 1px; height: 18px; background: #e8e8e8; margin: 0 2px; }
 
 .status-tip {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 14px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: 10;
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  padding: 5px 14px; color: #fff; background: rgba(0,0,0,0.55);
+  border-radius: 20px; pointer-events: none; z-index: 10;
 }
 
 .info-panel {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 200px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  z-index: 10;
+  position: absolute; top: 12px; right: 12px; width: 200px;
+  padding: 10px 12px; background: rgba(255,255,255,0.95);
+  border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); z-index: 10;
 }
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-.info-label {
-  color: #999;
-}
-.info-value {
-  font-weight: 600;
-  color: #333;
-}
-.log-title {
-  margin: 8px 0 4px;
-  color: #999;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 8px;
-}
-.log-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.log-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 1.4;
-}
-.log-tag {
-  flex-shrink: 0;
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-size: 11px;
-  color: #fff;
-}
-.log-tag--start {
-  background: #722ed1;
-}
-.log-tag--end {
-  background: #531dab;
-}
-.log-tag--select {
-  background: #faad14;
-}
-.log-tag--modify {
-  background: #1890ff;
-}
-.log-msg {
-  color: #555;
-  font-size: 12px;
-}
-.log-empty {
-  color: #bbb;
-  font-size: 12px;
-}
+.info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.info-label { color: #999; }
+.info-value { font-weight: 600; color: #333; }
+.log-title { margin: 8px 0 4px; color: #999; border-top: 1px solid #f0f0f0; padding-top: 8px; }
+.log-list { display: flex; flex-direction: column; gap: 4px; }
+.log-item { display: flex; align-items: center; gap: 6px; line-height: 1.4; }
+.log-tag { flex-shrink: 0; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #fff; }
+.log-tag--start  { background: #722ed1; }
+.log-tag--end    { background: #531dab; }
+.log-tag--select { background: #faad14; }
+.log-tag--modify { background: #1890ff; }
+.log-msg   { color: #555; font-size: 12px; }
+.log-empty { color: #bbb; font-size: 12px; }
 </style>
