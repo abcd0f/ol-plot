@@ -15,8 +15,7 @@ export class PolygonTool extends BaseTool {
    * @param config 绘制配置项
    */
   constructor(map: Map, config?: PlotConfig) {
-    super(map, config);
-    this.drawType = DrawType.Polygon;
+    super(map, DrawType.Polygon, config);
   }
 
   /**

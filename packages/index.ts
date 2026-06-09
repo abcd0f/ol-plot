@@ -12,6 +12,6 @@ export { PolygonTool } from './tools/PolygonTool';
 export { RectangleTool } from './tools/RectangleTool';
 export { CircleTool } from './tools/CircleTool';
 
-export { DrawType, DEFAULT_CONFIG, DrawEvent } from './constants';
+export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
 export type { DrawEventType } from './constants';
 export type { PlotConfig, NodeStyle } from './types';

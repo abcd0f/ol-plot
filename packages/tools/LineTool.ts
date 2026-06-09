@@ -16,8 +16,7 @@ export class LineTool extends BaseTool {
    * @param config 绘制配置选项（可选）
    */
   constructor(map: Map, config?: PlotConfig) {
-    super(map, config);
-    this.drawType = DrawType.Line;
+    super(map, DrawType.Line, config);
   }
 
   /**

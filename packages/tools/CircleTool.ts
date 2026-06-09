@@ -26,8 +26,7 @@ export class CircleTool extends BaseTool {
    * @param config 绘制配置参数
    */
   constructor(map: Map, config?: PlotConfig) {
-    super(map, config);
-    this.drawType = DrawType.Circle;
+    super(map, DrawType.Circle, config);
   }
 
   /**

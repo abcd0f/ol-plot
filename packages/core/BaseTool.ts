@@ -3,23 +3,37 @@ import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
+import { ToolState } from '../constants/toolState';
 import { DrawEvent } from '../constants/events';
 import { EventBus } from './EventBus';
 import { LayerManager } from './LayerManager';
 import { DrawManager } from './DrawManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
-import { mergeConfig, buildFeatureStyle } from '../utils';
+import { mergeConfig, buildFeatureStyle, buildDrawStyle } from '../utils';
 
 /**
- * BaseTool 是一个抽象基类，用于创建地图绘制工具
- * 提供了绘制、选择、修改等功能的基础实现
+ * BaseTool 是一个抽象基类，用于创建地图绘制工具。
+ *
+ * 它内部以「协调式交互」的方式统一管理 Draw / Select / Modify 三个 interaction，
+ * 并自动维护完整生命周期（Idle → Drawing → Editing → Drawing），业务层只需：
+ *
+ * ```ts
+ * const tool = new LineTool(map);
+ * ```
+ *
+ * 无需任何按钮或 start/stop 接口即可获得：绘制（无跟随鼠标的节点）→ 绘制完成自动
+ * 选中并进入编辑 → 点击其它要素切换选中 → 点空白取消选中并保留内容 → 无选中时点
+ * 空白直接重新绘制。
+ *
+ * 三个 interaction 始终处于激活状态，通过 Draw 的 `condition` 与添加顺序（Draw 最后
+ * 添加 → 优先级最高）保证同一次点击只被一个 interaction 真正处理，避免相互冲突。
  */
 export abstract class BaseTool {
   /**  */
   protected map: Map;
   protected config: Required<PlotConfig>;
-  protected drawType!: DrawType;
+  protected drawType: DrawType;
 
   protected eventBus: EventBus;
   protected layerManager: LayerManager;
@@ -28,82 +42,80 @@ export abstract class BaseTool {
   protected modifyManager: ModifyManager;
 
   protected activeFeature: Feature | null = null;
-  private isDrawing: boolean = false;
+  /** 当前内部状态，由生命周期自动维护 */
+  protected state: ToolState = ToolState.Idle;
 
   /**
-   * 初始化地图工具的基本组件和配置
+   * 初始化地图工具的基本组件和配置，并自动进入绘制态。
    *
    * @param map - 地图实例
+   * @param drawType - 绘制类型（由具体子类传入）
    * @param config - 绘制配置项（可选）
    */
-  constructor(map: Map, config?: PlotConfig) {
+  constructor(map: Map, drawType: DrawType, config?: PlotConfig) {
     this.map = map;
+    this.drawType = drawType;
     this.config = mergeConfig(config);
 
     this.eventBus = new EventBus();
     this.layerManager = new LayerManager(map, buildFeatureStyle(this.config));
-    this.drawManager = new DrawManager(map, this.layerManager.getSource(), this.eventBus);
+
+    // 创建顺序即添加顺序：Select → Modify → Draw。
+    // Draw 最后添加，因此事件处理优先级最高，能在 Select 之前评估 condition，
+    // 读取到本次点击「尚未被清空」的选中状态，从而正确协调起笔与取消选中。
     this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
     this.modifyManager = new ModifyManager(map, this.selectManager.getSelectedFeatures(), this.config, this.eventBus);
+    this.drawManager = new DrawManager(
+      map,
+      this.layerManager.getLayer(),
+      this.eventBus,
+      drawType,
+      buildDrawStyle(this.config),
+      () => this.selectManager.isEmpty(),
+    );
 
     this.bindEvents();
+
+    // 自动激活：进入绘制态，业务层无需调用任何方法
+    this.state = ToolState.Drawing;
   }
 
   /**
-   * 绑定事件监听器
-   * 处理绘制结束、选择和取消选择等事件
+   * 绑定生命周期事件，驱动状态机自动流转。
+   *
+   * - 绘制完成（DRAW_END）：自动选中刚创建的要素并进入编辑态。
+   * - 选中要素（SELECT）：进入编辑态（Select 已保证单选，自动取消旧选中）。
+   * - 取消选中（DESELECT）：回到绘制态，保留已绘制内容。
    */
   private bindEvents(): void {
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      this.activeFeature = feature;
-      if (this.isDrawing) {
-        // 连续绘制模式：保持 Draw 交互激活，不切换到选择/修改模式
-        return;
-      }
-      this.selectManager.setActive(true);
-      this.modifyManager.setActive(true);
-      this.selectManager.selectFeature(feature);
+      setTimeout(() => {
+        this.activeFeature = feature;
+        // 绘制完成后自动选中刚画的要素：显示其顶点节点、Modify 跟随、进入编辑态
+        this.selectManager.selectFeature(feature);
+      }, 0);
     });
 
     this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
       this.activeFeature = feature;
+      this.state = ToolState.Editing;
     });
 
     this.eventBus.on(DrawEvent.DESELECT, () => {
       this.activeFeature = null;
+      this.state = ToolState.Drawing;
     });
   }
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   /**
-   * 激活工具
-   * 开始绘制模式，禁用选择和修改功能
+   * 获取当前内部状态（只读）。生命周期由工具自动维护，业务层一般无需关心。
    *
-   * @returns 返回当前实例以支持链式调用
+   * @returns 当前状态：Idle / Drawing / Editing
    */
-  activate(): this {
-    this.isDrawing = true;
-    this.selectManager.setActive(false);
-    this.modifyManager.setActive(false);
-    this.selectManager.clearSelection();
-    this.activeFeature = null;
-    this.drawManager.activate(this.drawType);
-    return this;
-  }
-
-  /**
-   * 停用工具
-   * 结束绘制模式，启用选择和修改功能
-   *
-   * @returns 返回当前实例以支持链式调用
-   */
-  deactivate(): this {
-    this.isDrawing = false;
-    this.drawManager.deactivate();
-    this.selectManager.setActive(true);
-    this.modifyManager.setActive(true);
-    return this;
+  getState(): ToolState {
+    return this.state;
   }
 
   /**
@@ -116,6 +128,8 @@ export abstract class BaseTool {
     this.modifyManager.destroy();
     this.layerManager.destroy();
     this.eventBus.clear();
+    this.activeFeature = null;
+    this.state = ToolState.Idle;
   }
 
   // ─── Load from data ───────────────────────────────────────────────────────
@@ -131,21 +145,6 @@ export abstract class BaseTool {
     return feature;
   }
 
-  /**
-   * 选择指定的要素并激活相应的管理器
-   *
-   * @param feature - 要选择的要素对象
-   * @returns 返回当前实例，支持链式调用
-   */
-  selectFeature(feature: Feature): this {
-    this.drawManager.deactivate();
-    this.selectManager.setActive(true);
-    this.modifyManager.setActive(true);
-    this.activeFeature = feature;
-    this.selectManager.selectFeature(feature);
-    return this;
-  }
-
   // ─── Features ─────────────────────────────────────────────────────────────
 
   /**
@@ -158,7 +157,7 @@ export abstract class BaseTool {
   }
 
   /**
-   * 清空所有要素
+   * 清空所有要素，并回到绘制态
    *
    * @returns 返回当前实例以支持链式调用
    */
@@ -166,19 +165,7 @@ export abstract class BaseTool {
     this.selectManager.clearSelection();
     this.activeFeature = null;
     this.layerManager.clear();
-    return this;
-  }
-
-  // ─── Draw type ────────────────────────────────────────────────────────────
-
-  /**
-   * 设置绘制类型
-   *
-   * @param type - 绘制类型
-   * @returns 返回当前实例以支持链式调用
-   */
-  setDrawType(type: DrawType): this {
-    this.drawType = type;
+    this.state = ToolState.Drawing;
     return this;
   }
 

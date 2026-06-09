@@ -1,12 +1,6 @@
 <template>
   <div class="map-toolbar" :style="cssVars">
-    <button :class="['map-toolbar-btn', { active: mode === 'draw' }]" @click="$emit('draw')">
-      绘制模式
-    </button>
-    <div class="map-toolbar-divider" />
-    <button :class="['map-toolbar-btn', { active: mode === 'edit' }]" @click="$emit('edit')">
-      编辑模式
-    </button>
+    <span class="map-toolbar-hint">{{ hint }}</span>
     <div class="map-toolbar-divider" />
     <button class="map-toolbar-btn danger" @click="$emit('clear')">清除</button>
   </div>
@@ -17,15 +11,16 @@ import { computed } from 'vue';
 
 const props = withDefaults(
   defineProps<{
-    mode: 'draw' | 'edit' | 'idle';
     color?: string;
+    hint?: string;
   }>(),
-  { color: '#1890ff' },
+  {
+    color: '#1890ff',
+    hint: '点击空白处绘制 · 双击完成后自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中',
+  },
 );
 
 defineEmits<{
-  draw: [];
-  edit: [];
   clear: [];
 }>();
 
@@ -39,12 +34,18 @@ const cssVars = computed(() => ({ '--accent': props.color }));
   left: 12px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 8px;
+  padding: 6px 10px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   z-index: 10;
+}
+
+.map-toolbar-hint {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
 }
 
 .map-toolbar-btn {
@@ -63,12 +64,6 @@ const cssVars = computed(() => ({ '--accent': props.color }));
   color: var(--accent);
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 10%, white);
-}
-
-.map-toolbar-btn.active {
-  color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
 }
 
 .map-toolbar-btn.danger {

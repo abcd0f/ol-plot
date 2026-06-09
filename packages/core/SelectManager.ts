@@ -56,6 +56,14 @@ export class SelectManager {
     return this.select.getFeatures() as Collection<Feature>;
   }
 
+  /**
+   * 当前是否没有任何选中要素
+   * @returns 无选中时返回 true
+   */
+  isEmpty(): boolean {
+    return this.select.getFeatures().getLength() === 0;
+  }
+
   /** Programmatically select a feature (e.g. after drawing completes) */
   /**
    * 程序化选择指定要素（例如绘制完成后）

@@ -16,8 +16,7 @@ export class FreehandLineTool extends BaseTool {
    * @param config 绘制配置选项（可选）
    */
   constructor(map: Map, config?: PlotConfig) {
-    super(map, config);
-    this.drawType = DrawType.FreehandLine;
+    super(map, DrawType.FreehandLine, config);
   }
 
   /**

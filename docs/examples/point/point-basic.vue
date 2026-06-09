@@ -2,9 +2,7 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar :mode="mode" color="#52c41a" @draw="toggleDraw" @edit="toggleEdit" @clear="handleClear" />
-
-    <div v-if="mode === 'draw'" class="status-tip">单击地图放置点</div>
+    <MapToolbar color="#52c41a" @clear="handleClear" />
   </div>
 </template>
 
@@ -20,7 +18,6 @@ import { PointTool } from '../../../packages';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
-const mode = ref<'draw' | 'edit' | 'idle'>('idle');
 
 let map: OlMap;
 let tool: PointTool;
@@ -51,29 +48,8 @@ onUnmounted(() => {
   map.setTarget(undefined);
 });
 
-function toggleDraw() {
-  if (mode.value === 'draw') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.activate();
-    mode.value = 'draw';
-  }
-}
-
-function toggleEdit() {
-  if (mode.value === 'edit') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.deactivate();
-    mode.value = 'edit';
-  }
-}
-
 function handleClear() {
   tool.clearFeatures();
-  mode.value = 'idle';
 }
 </script>
 

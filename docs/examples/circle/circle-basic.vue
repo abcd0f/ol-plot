@@ -2,8 +2,7 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar :mode="mode" color="#722ed1" @draw="toggleDraw" @edit="toggleEdit" @clear="handleClear" />
-
+    <MapToolbar color="#fa8c16" @clear="handleClear" />
     <div v-if="mode === 'draw'" class="status-tip">单击确定圆心，再次单击确定半径</div>
   </div>
 </template>
@@ -51,29 +50,8 @@ onUnmounted(() => {
   map.setTarget(undefined);
 });
 
-function toggleDraw() {
-  if (mode.value === 'draw') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.activate();
-    mode.value = 'draw';
-  }
-}
-
-function toggleEdit() {
-  if (mode.value === 'edit') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.deactivate();
-    mode.value = 'edit';
-  }
-}
-
 function handleClear() {
   tool.clearFeatures();
-  mode.value = 'idle';
 }
 </script>
 

@@ -2,7 +2,10 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar :mode="mode" color="#52c41a" @draw="toggleDraw" @edit="toggleEdit" @clear="handleClear" />
+    <MapToolbar
+      color="#fa8c16"
+     @clear="handleClear"
+    />
 
     <div v-if="mode === 'draw'" class="status-tip">单击添加节点，双击完成绘制</div>
   </div>
@@ -52,29 +55,8 @@ onUnmounted(() => {
   map.setTarget(undefined);
 });
 
-function toggleDraw() {
-  if (mode.value === 'draw') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.activate();
-    mode.value = 'draw';
-  }
-}
-
-function toggleEdit() {
-  if (mode.value === 'edit') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.deactivate();
-    mode.value = 'edit';
-  }
-}
-
 function handleClear() {
   tool.clearFeatures();
-  mode.value = 'idle';
 }
 </script>
 

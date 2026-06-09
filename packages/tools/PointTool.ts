@@ -11,8 +11,7 @@ import { BaseTool } from '../core/BaseTool';
 
 export class PointTool extends BaseTool {
   constructor(map: Map, config?: PlotConfig) {
-    super(map, config);
-    this.drawType = DrawType.Point;
+    super(map, DrawType.Point, config);
     // Point 几何需要 image 样式才能渲染，覆盖仅有 stroke/fill 的默认样式
     const ns = this.config.nodeStyle;
     this.layerManager.getLayer().setStyle(

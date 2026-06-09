@@ -2,9 +2,7 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar :mode="mode" color="#fa8c16" @draw="toggleDraw" @edit="toggleEdit" @clear="handleClear" />
-
-    <div v-if="mode === 'draw'" class="status-tip">单击确定起点，再次单击确定对角点</div>
+    <MapToolbar color="#fa8c16" hint="单击起点再单击对角点完成 · 完成后自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中" @clear="handleClear" />
   </div>
 </template>
 
@@ -20,7 +18,6 @@ import { RectangleTool } from '../../../packages';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
-const mode = ref<'draw' | 'edit' | 'idle'>('idle');
 
 let map: OlMap;
 let tool: RectangleTool;
@@ -51,29 +48,8 @@ onUnmounted(() => {
   map.setTarget(undefined);
 });
 
-function toggleDraw() {
-  if (mode.value === 'draw') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.activate();
-    mode.value = 'draw';
-  }
-}
-
-function toggleEdit() {
-  if (mode.value === 'edit') {
-    tool.deactivate();
-    mode.value = 'idle';
-  } else {
-    tool.deactivate();
-    mode.value = 'edit';
-  }
-}
-
 function handleClear() {
   tool.clearFeatures();
-  mode.value = 'idle';
 }
 </script>
 
