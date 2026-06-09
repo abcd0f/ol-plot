@@ -72,6 +72,9 @@ function extractVertices(feature: Feature): number[][] {
     case 'LineString':
       return (geom as LineString).getCoordinates();
     case 'Polygon': {
+      if ((feature as Feature).get('plotType') === 'ellipse') {
+        return (feature as Feature).get('controlPoints') || [];
+      }
       const ring = (geom as Polygon).getCoordinates()[0] ?? [];
       const verts = ring.length > 1 ? ring.slice(0, -1) : ring;
       const editIndices: number[] | undefined = (feature as Feature).get('_rectEditIndices');

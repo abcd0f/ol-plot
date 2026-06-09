@@ -6,6 +6,7 @@ import type { StyleFunction } from 'ol/style/Style';
 import type { EventBus } from './EventBus';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
+import { createEllipseGeometryFunction } from '../utils/ellipse';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -60,6 +61,9 @@ export class DrawManager {
     if (drawType === DrawType.Rectangle) {
       type = 'Circle';
       geometryFunction = createBox();
+    } else if (drawType === DrawType.Ellipse) {
+      type = 'Circle';
+      geometryFunction = createEllipseGeometryFunction() as unknown as GeometryFunction;
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';
       freehand = true;
