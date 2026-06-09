@@ -38,6 +38,7 @@ export default defineConfig({
     sidebar: [
       {
         text: '绘制工具',
+        collapsed: true,
         items: [
           { text: '点', link: '/content/point' },
           { text: '折线', link: '/content/line' },

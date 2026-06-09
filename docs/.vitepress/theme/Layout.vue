@@ -3,7 +3,7 @@ import theme from 'vitepress/theme';
 
 import {
   NolebaseEnhancedReadabilitiesMenu,
-  NolebaseEnhancedReadabilitiesScreenMenu
+  NolebaseEnhancedReadabilitiesScreenMenu,
 } from '@nolebase/vitepress-plugin-enhanced-readabilities/client';
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css';
