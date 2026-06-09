@@ -46,6 +46,7 @@ export default defineConfig({
           { text: '多边形', link: '/content/polygon' },
           { text: '矩形', link: '/content/rectangle' },
           { text: '圆', link: '/content/circle' },
+          { text: '椭圆', link: '/content/ellipse' },
         ],
       },
     ],
