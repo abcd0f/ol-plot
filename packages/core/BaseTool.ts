@@ -28,6 +28,7 @@ export abstract class BaseTool {
   protected modifyManager: ModifyManager;
 
   protected activeFeature: Feature | null = null;
+  private isDrawing: boolean = false;
 
   /**
    * 初始化地图工具的基本组件和配置
@@ -55,7 +56,10 @@ export abstract class BaseTool {
   private bindEvents(): void {
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
       this.activeFeature = feature;
-      this.drawManager.deactivate();
+      if (this.isDrawing) {
+        // 连续绘制模式：保持 Draw 交互激活，不切换到选择/修改模式
+        return;
+      }
       this.selectManager.setActive(true);
       this.modifyManager.setActive(true);
       this.selectManager.selectFeature(feature);
@@ -79,6 +83,7 @@ export abstract class BaseTool {
    * @returns 返回当前实例以支持链式调用
    */
   activate(): this {
+    this.isDrawing = true;
     this.selectManager.setActive(false);
     this.modifyManager.setActive(false);
     this.selectManager.clearSelection();
@@ -94,6 +99,7 @@ export abstract class BaseTool {
    * @returns 返回当前实例以支持链式调用
    */
   deactivate(): this {
+    this.isDrawing = false;
     this.drawManager.deactivate();
     this.selectManager.setActive(true);
     this.modifyManager.setActive(true);
