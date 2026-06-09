@@ -1,25 +1,3 @@
-// import { defineConfig } from 'tsdown';
-
-// export default defineConfig([
-//   {
-//     entry: {
-//       index: 'src/index.ts',
-
-//       core: 'packages/core/index.ts',
-//       interact: 'packages/interact/index.ts',
-//       constants: 'packages/constants/index.ts',
-//       types: 'packages/types/index.ts',
-//     },
-//     outDir: 'dist',
-//     format: ['esm', 'cjs'],
-//     dts: true,
-//     clean: true,
-//     sourcemap: false,
-//     treeshake: true,
-//     external: ['ol'],
-//   },
-// ]);
-
 import { defineConfig } from 'tsdown';
 
 export default defineConfig([
@@ -31,5 +9,15 @@ export default defineConfig([
     entry: ['packages/index.ts'],
     outDir: 'dist',
     exports: true,
+    treeshake: true,
+    unbundle: true,
+    minify: true,
+  },
+  {
+    format: ['iife'],
+    entry: ['packages/index.ts'],
+    outDir: 'dist/browser',
+    globalName: 'OlPlot',
+    minify: true,
   },
 ]);

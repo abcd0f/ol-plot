@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "dev:docs": "pnpm build && pnpm -F @ol-plot/docs run dev",
+    "dev:docs": "pnpm -F @ol-plot/docs run dev",
     "build": "tsdown",
     "lint": "pnpm run lint",
     "format": "pnpm run format",
