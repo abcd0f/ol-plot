@@ -2,38 +2,9 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <div class="toolbar">
-      <button :class="['toolbar-btn', { active: isDrawing }]" @click="toggleDraw">
-        {{ isDrawing ? '停止绘制' : '开始绘制' }}
-      </button>
-      <div class="toolbar-divider" />
-      <button class="toolbar-btn danger" @click="handleClear">清空</button>
-    </div>
+    <MapToolbar :mode="mode" color="#52c41a" @draw="toggleDraw" @edit="toggleEdit" @clear="handleClear" />
 
-    <div v-if="isDrawing" class="status-tip">单击地图放置点</div>
-
-    <div class="info-panel">
-      <div class="info-row">
-        <span class="info-label">要素数</span>
-        <span class="info-value">{{ featureCount }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">经度</span>
-        <span class="info-value">{{ lonText }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">纬度</span>
-        <span class="info-value">{{ latText }}</span>
-      </div>
-      <div class="log-title">事件日志</div>
-      <div class="log-list">
-        <div v-for="(log, i) in logs" :key="i" class="log-item">
-          <span :class="['log-tag', `log-tag--${log.type}`]">{{ log.label }}</span>
-          <span class="log-msg">{{ log.msg }}</span>
-        </div>
-        <div v-if="!logs.length" class="log-empty">暂无事件</div>
-      </div>
-    </div>
+    <div v-if="mode === 'draw'" class="status-tip">单击地图放置点</div>
   </div>
 </template>
 
@@ -43,33 +14,13 @@ import OlMap from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import type OlPoint from 'ol/geom/Point';
+import { fromLonLat } from 'ol/proj';
 
-import { PointTool, DrawEvent } from '../../../packages';
+import { PointTool } from '../../../packages';
+import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
-const isDrawing = ref(false);
-const featureCount = ref(0);
-const lonText = ref('—');
-const latText = ref('—');
-
-interface LogItem {
-  type: 'start' | 'end' | 'select' | 'modify';
-  label: string;
-  msg: string;
-}
-const logs = ref<LogItem[]>([]);
-function addLog(item: LogItem) {
-  logs.value.unshift(item);
-  if (logs.value.length > 8) logs.value.pop();
-}
-
-function updateCoord(geom: OlPoint) {
-  const [lon, lat] = toLonLat(geom.getCoordinates());
-  lonText.value = lon.toFixed(4);
-  latText.value = lat.toFixed(4);
-}
+const mode = ref<'draw' | 'edit' | 'idle'>('idle');
 
 let map: OlMap;
 let tool: PointTool;
@@ -93,36 +44,6 @@ onMounted(() => {
     fillColor: 'rgba(82,196,26,0.2)',
     nodeStyle: { radius: 6, fill: '#fff', stroke: '#52c41a', strokeWidth: 2 },
   });
-
-  tool
-    .on(DrawEvent.DRAW_START, () => {
-      addLog({ type: 'start', label: '开始', msg: '开始绘制点' });
-    })
-    .on(DrawEvent.DRAW_END, ({ feature }) => {
-      isDrawing.value = false;
-      featureCount.value = tool.getFeatures().length;
-      const geom = feature.getGeometry() as OlPoint;
-      updateCoord(geom);
-      const [lon, lat] = toLonLat(geom.getCoordinates()).map((v) => v.toFixed(4));
-      addLog({ type: 'end', label: '完成', msg: `[${lon}, ${lat}]` });
-    })
-    .on(DrawEvent.SELECT, ({ feature }) => {
-      const geom = feature.getGeometry() as OlPoint;
-      updateCoord(geom);
-      const [lon, lat] = toLonLat(geom.getCoordinates()).map((v) => v.toFixed(4));
-      addLog({ type: 'select', label: '选中', msg: `[${lon}, ${lat}]` });
-    })
-    .on(DrawEvent.DESELECT, () => {
-      lonText.value = '—';
-      latText.value = '—';
-      addLog({ type: 'select', label: '取消', msg: '取消选中' });
-    })
-    .on(DrawEvent.MODIFY_END, ({ features }) => {
-      const geom = features[0].getGeometry() as OlPoint;
-      updateCoord(geom);
-      const [lon, lat] = toLonLat(geom.getCoordinates()).map((v) => v.toFixed(4));
-      addLog({ type: 'modify', label: '编辑', msg: `[${lon}, ${lat}]` });
-    });
 });
 
 onUnmounted(() => {
@@ -131,22 +52,28 @@ onUnmounted(() => {
 });
 
 function toggleDraw() {
-  if (isDrawing.value) {
+  if (mode.value === 'draw') {
     tool.deactivate();
-    isDrawing.value = false;
+    mode.value = 'idle';
   } else {
     tool.activate();
-    isDrawing.value = true;
+    mode.value = 'draw';
+  }
+}
+
+function toggleEdit() {
+  if (mode.value === 'edit') {
+    tool.deactivate();
+    mode.value = 'idle';
+  } else {
+    tool.deactivate();
+    mode.value = 'edit';
   }
 }
 
 function handleClear() {
   tool.clearFeatures();
-  isDrawing.value = false;
-  featureCount.value = 0;
-  lonText.value = '—';
-  latText.value = '—';
-  logs.value = [];
+  mode.value = 'idle';
 }
 </script>
 
@@ -156,59 +83,10 @@ function handleClear() {
   width: 100%;
   font-size: 13px;
 }
+
 .map-wrapper {
   width: 100%;
   height: 500px;
-}
-
-.toolbar {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  z-index: 10;
-}
-.toolbar-btn {
-  padding: 4px 12px;
-  color: #333;
-  background: transparent;
-  border: 1px solid #d9d9d9;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  user-select: none;
-}
-.toolbar-btn:hover {
-  color: #52c41a;
-  border-color: #52c41a;
-  background: #f6ffed;
-}
-.toolbar-btn.active {
-  color: #fff;
-  background: #52c41a;
-  border-color: #52c41a;
-}
-.toolbar-btn.danger {
-  color: #ff4d4f;
-  border-color: #ffccc7;
-}
-.toolbar-btn.danger:hover {
-  color: #fff;
-  background: #ff4d4f;
-  border-color: #ff4d4f;
-}
-.toolbar-divider {
-  width: 1px;
-  height: 18px;
-  background: #e8e8e8;
-  margin: 0 2px;
 }
 
 .status-tip {
@@ -222,73 +100,5 @@ function handleClear() {
   border-radius: 20px;
   pointer-events: none;
   z-index: 10;
-}
-
-.info-panel {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 200px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  z-index: 10;
-}
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-.info-label {
-  color: #999;
-}
-.info-value {
-  font-weight: 600;
-  color: #333;
-}
-.log-title {
-  margin: 8px 0 4px;
-  color: #999;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 8px;
-}
-.log-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.log-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 1.4;
-}
-.log-tag {
-  flex-shrink: 0;
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-size: 11px;
-  color: #fff;
-}
-.log-tag--start {
-  background: #52c41a;
-}
-.log-tag--end {
-  background: #389e0d;
-}
-.log-tag--select {
-  background: #faad14;
-}
-.log-tag--modify {
-  background: #1890ff;
-}
-.log-msg {
-  color: #555;
-  font-size: 12px;
-}
-.log-empty {
-  color: #bbb;
-  font-size: 12px;
 }
 </style>
