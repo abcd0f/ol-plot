@@ -3,7 +3,6 @@
     <div ref="el" class="map-wrapper" />
 
     <MapToolbar color="#fa8c16" @clear="handleClear" />
-    <div v-if="mode === 'draw'" class="status-tip">单击确定圆心，再次单击确定半径</div>
   </div>
 </template>
 
@@ -19,7 +18,6 @@ import { CircleTool } from '../../../packages';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
-const mode = ref<'draw' | 'edit' | 'idle'>('idle');
 
 let map: OlMap;
 let tool: CircleTool;
@@ -65,18 +63,5 @@ function handleClear() {
 .map-wrapper {
   width: 100%;
   height: 500px;
-}
-
-.status-tip {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 14px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: 10;
 }
 </style>

@@ -2,7 +2,11 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar color="#fa8c16" hint="单击起点再单击对角点完成 · 完成后自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中" @clear="handleClear" />
+    <MapToolbar
+      color="#fa8c16"
+      hint="单击起点再单击对角点完成 · 完成后自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中"
+      @clear="handleClear"
+    />
   </div>
 </template>
 
@@ -63,18 +67,5 @@ function handleClear() {
 .map-wrapper {
   width: 100%;
   height: 500px;
-}
-
-.status-tip {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 14px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: 10;
 }
 </style>

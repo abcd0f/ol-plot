@@ -67,17 +67,4 @@ function handleClear() {
   width: 100%;
   height: 500px;
 }
-
-.status-tip {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 14px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: 10;
-}
 </style>

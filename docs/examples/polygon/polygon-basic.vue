@@ -6,8 +6,6 @@
       color="#fa8c16"
      @clear="handleClear"
     />
-
-    <div v-if="mode === 'draw'" class="status-tip">单击添加节点，双击完成绘制</div>
   </div>
 </template>
 
@@ -23,7 +21,7 @@ import { PolygonTool } from '../../../packages';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
-const mode = ref<'draw' | 'edit' | 'idle'>('idle');
+
 
 let map: OlMap;
 let tool: PolygonTool;
@@ -70,18 +68,5 @@ function handleClear() {
 .map-wrapper {
   width: 100%;
   height: 500px;
-}
-
-.status-tip {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 14px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: 10;
 }
 </style>
