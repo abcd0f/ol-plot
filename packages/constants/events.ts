@@ -13,6 +13,8 @@ export const DrawEvent = {
   SELECT: 'select',
   /** 取消选中 */
   DESELECT: 'deselect',
+  /** 删除选中要素 */
+  DELETE: 'delete',
 } as const;
 
 export type DrawEventType = (typeof DrawEvent)[keyof typeof DrawEvent];

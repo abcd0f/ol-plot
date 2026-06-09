@@ -45,6 +45,8 @@ export abstract class BaseTool {
   /** 当前内部状态，由生命周期自动维护 */
   protected state: ToolState = ToolState.Idle;
 
+  private handleKeyDown: (e: KeyboardEvent) => void;
+
   /**
    * 初始化地图工具的基本组件和配置，并自动进入绘制态。
    *
@@ -75,6 +77,13 @@ export abstract class BaseTool {
     );
 
     this.bindEvents();
+
+    this.handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && this.activeFeature) {
+        this.deleteActiveFeature();
+      }
+    };
+    document.addEventListener('keydown', this.handleKeyDown);
 
     // 自动激活：进入绘制态，业务层无需调用任何方法
     this.state = ToolState.Drawing;
@@ -110,6 +119,16 @@ export abstract class BaseTool {
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   /**
+   * 删除当前选中的要素
+   */
+  private deleteActiveFeature(): void {
+    const feature = this.activeFeature!;
+    this.selectManager.clearSelection();
+    this.layerManager.removeFeature(feature);
+    this.eventBus.emit(DrawEvent.DELETE, { feature });
+  }
+
+  /**
    * 获取当前内部状态（只读）。生命周期由工具自动维护，业务层一般无需关心。
    *
    * @returns 当前状态：Idle / Drawing / Editing
@@ -123,6 +142,7 @@ export abstract class BaseTool {
    * 清理所有管理器和事件监听器
    */
   destroy(): void {
+    document.removeEventListener('keydown', this.handleKeyDown);
     this.drawManager.destroy();
     this.selectManager.destroy();
     this.modifyManager.destroy();

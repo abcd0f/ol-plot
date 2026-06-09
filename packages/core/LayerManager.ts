@@ -57,6 +57,14 @@ export class LayerManager {
   }
 
   /**
+   * 从数据源中移除指定要素
+   * @param feature 要移除的要素
+   */
+  removeFeature(feature: Feature): void {
+    this.source.removeFeature(feature as any);
+  }
+
+  /**
    * 清空数据源中的所有要素
    */
   clear(): void {
