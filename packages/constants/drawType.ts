@@ -13,4 +13,6 @@ export enum DrawType {
   Circle = 'Circle',
   /** 椭圆 */
   Ellipse = 'Ellipse',
+  /** 扇形 */
+  Sector = 'Sector',
 }

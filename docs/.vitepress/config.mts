@@ -47,6 +47,7 @@ export default defineConfig({
           { text: '矩形', link: '/content/rectangle' },
           { text: '圆', link: '/content/circle' },
           { text: '椭圆', link: '/content/ellipse' },
+          { text: '扇形', link: '/content/sector' },
         ],
       },
     ],
