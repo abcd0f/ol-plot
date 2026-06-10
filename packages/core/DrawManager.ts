@@ -8,6 +8,7 @@ import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { createEllipseGeometryFunction } from '../utils/ellipse';
 import { createSectorGeometryFunction } from '../utils/sector';
+import { createTriangleArrowGeometryFunction } from '../utils/triangleArrow';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -69,6 +70,10 @@ export class DrawManager {
     } else if (drawType === DrawType.Sector) {
       type = 'LineString';
       geometryFunction = createSectorGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 3;
+    } else if (drawType === DrawType.TriangleArrow) {
+      type = 'LineString';
+      geometryFunction = createTriangleArrowGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 3;
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';

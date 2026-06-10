@@ -73,7 +73,7 @@ function extractVertices(feature: Feature): number[][] {
       return (geom as LineString).getCoordinates();
     case 'Polygon': {
       const plotType = (feature as Feature).get('plotType');
-      if (plotType === 'ellipse' || plotType === 'sector') {
+      if (plotType === 'ellipse' || plotType === 'sector' || plotType === 'triangleArrow') {
         return (feature as Feature).get('controlPoints') || [];
       }
       const ring = (geom as Polygon).getCoordinates()[0] ?? [];
