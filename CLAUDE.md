@@ -11,35 +11,61 @@
 ## 二、目录结构总览
 
 ```
-packages/
-├── index.ts                 # 统一导出入口
-├── types/
-│   ├── index.ts             # 类型导出桥接
-│   └── config.ts            # PlotConfig / NodeStyle 接口定义
-├── constants/
-│   ├── index.ts             # 常量导出桥接
-│   ├── drawType.ts          # DrawType 枚举（Point/Line/Polygon/...）
-│   ├── toolState.ts         # ToolState 枚举（Idle/Drawing/Editing）
-│   ├── defaultConfig.ts     # 默认绘图样式配置
-│   └── events.ts            # DrawEvent 事件名常量
-├── core/
-│   ├── EventBus.ts          # 内部事件总线（基于 OL Target）
-│   ├── BaseTool.ts          # 抽象基类：整合 Layer/Draw/Select/Modify
-│   ├── LayerManager.ts      # 矢量图层 & 数据源管理
-│   ├── DrawManager.ts       # 绘制交互管理（含起笔条件协调）
-│   ├── SelectManager.ts     # 选择交互管理
-│   └── ModifyManager.ts     # 编辑/修改交互管理
-├── tools/
-│   ├── PointTool.ts         # 点绘制工具
-│   ├── LineTool.ts          # 线段绘制工具
-│   ├── FreehandLineTool.ts  # 自由手绘线工具
-│   ├── PolygonTool.ts       # 多边形绘制工具
-│   ├── RectangleTool.ts     # 矩形绘制工具（含约束保持矩形形状）
-│   ├── CircleTool.ts        # 圆形绘制工具
-│   └── EllipseTool.ts       # 椭圆绘制工具（自定义控制点 handle）
-└── utils/
-    ├── index.ts             # 样式工厂函数集合
-    └── ellipse.ts           # 椭圆几何计算辅助函数
+ol-plot/
+├── packages/
+│   ├── index.ts                 # 统一导出入口
+│   ├── types/
+│   │   ├── index.ts             # 类型导出桥接
+│   │   └── config.ts            # PlotConfig / NodeStyle 接口定义
+│   ├── utils/                   # 纯通用工具（零 OL 依赖）
+│   │   ├── index.ts             # Barrel 导出
+│   │   └── math.ts              # dist / computeDirectionAndNormal / createDegeneratePolygon
+│   ├── constants/
+│   │   ├── index.ts             # 常量导出桥接
+│   │   ├── drawType.ts          # DrawType 枚举（Point/Line/Polygon/...）
+│   │   ├── toolState.ts         # ToolState 枚举（Idle/Drawing/Editing）
+│   │   ├── defaultConfig.ts     # 默认绘图样式配置
+│   │   ├── events.ts            # DrawEvent 事件名常量
+│   │   └── mergeConfig.ts       # 🆕 用户配置与默认配置合并
+│   ├── core/
+│   │   ├── EventBus.ts          # 内部事件总线（基于 OL Target）
+│   │   ├── BaseTool.ts          # 抽象基类：整合 Layer/Draw/Select/Modify
+│   │   ├── LayerManager.ts      # 矢量图层 & 数据源管理
+│   │   ├── DrawManager.ts       # 绘制交互管理（含起笔条件协调）
+│   │   ├── SelectManager.ts     # 选择交互管理
+│   │   └── ModifyManager.ts     # 编辑/修改交互管理
+│   ├── geometry/                # 📐 形状几何计算（从 packages/utils/ 迁入）
+│   │   ├── index.ts             # Barrel 导出
+│   │   ├── rectangle.ts         # buildRectangle / getRectControlPoints / createRectGeometryFunction
+│   │   ├── ellipse.ts           # buildEllipse / getEllipseControlPoints / createEllipseGeometryFunction
+│   │   ├── sector.ts            # buildSector / getSectorControlPoints / createSectorGeometryFunction
+│   │   ├── arc.ts               # buildArc / getArcControlPoints / createArcGeometryFunction
+│   │   └── arrow/               # 箭头族
+│   │       ├── index.ts         # Barrel 导出
+│   │       ├── straight.ts      # buildStraightArrow / createStraightArrowGeometryFunction
+│   │       ├── tapered.ts       # buildTaperedArrow / createTaperedArrowGeometryFunction
+│   │       └── line.ts          # buildLineArrowGeometries / createLineArrowGeometryFunction
+│   ├── style/                   # 🎨 OL Style 工厂（从 utils/index.ts 拆出）
+│   │   ├── index.ts             # Barrel 导出
+│   │   ├── feature.ts           # buildFeatureStyle（要素默认样式）
+│   │   ├── draw.ts              # buildDrawStyle（草图样式，隐藏 Point 顶点）
+│   │   ├── select.ts            # buildSelectStyle（选中样式 + 顶点标记）
+│   │   └── modify.ts            # buildModifyStyle（拖拽手柄样式）
+│   ├── tools/
+│   │   ├── PointTool.ts         # 点绘制工具
+│   │   ├── LineTool.ts          # 线段绘制工具
+│   │   ├── FreehandLineTool.ts  # 自由手绘线工具
+│   │   ├── PolygonTool.ts       # 多边形绘制工具
+│   │   ├── RectangleTool.ts     # 矩形绘制工具（自定义 handle 编辑）
+│   │   ├── CircleTool.ts        # 圆形绘制工具
+│   │   ├── EllipseTool.ts       # 椭圆绘制工具（自定义 handle 编辑）
+│   │   ├── SectorTool.ts        # 扇形绘制工具（自定义 handle 编辑）
+│   │   ├── StraightArrowTool.ts # 直箭头绘制工具
+│   │   ├── TaperedArrowTool.ts  # 斜箭头绘制工具
+│   │   ├── LineArrowTool.ts     # 线箭头绘制工具
+│   │   └── ArcTool.ts           # 弓形绘制工具
+│   └── helper/                  # 🆕 内部共享工具（不对外暴露）
+│       └── handle.ts            # HandleManager：自定义 handle 图层/Modify 管理
 ```
 
 ---
@@ -263,26 +289,55 @@ tool.destroy();
 
 ---
 
-## 六、工具函数（utils）
+## 六、模块详解
 
-### 6.1 `utils/index.ts`
+### 6.1 `utils/` — 纯通用工具（零 OL 依赖）
 
-| 函数 | 说明 |
-|------|------|
-| `mergeConfig(config?)` | 合并用户配置与默认配置 |
-| `buildFeatureStyle(config)` | 构建要素渲染样式（stroke + fill） |
-| `buildDrawStyle(config)` | 构建绘制草图样式（隐藏跟随鼠标的 Point） |
-| `buildSelectStyle(config)` | 构建选中样式（几何 + 顶点圆点叠加） |
-| `buildModifyStyle(config)` | 构建编辑拖拽手柄样式 |
+| 文件 | 导出 | 说明 |
+|------|------|------|
+| `utils/math.ts` | `dist(a, b)` | 两点间欧几里得距离 |
+| | `computeDirectionAndNormal(p0, p1, length)` | 方向向量 + 法向量（逆时针 90°） |
+| | `createDegeneratePolygon(point)` | 零长度兜底退化 Polygon |
 
-### 6.2 `utils/ellipse.ts`
+### 6.2 `packages/geometry/` — 形状几何计算
 
-| 函数 | 说明 |
-|------|------|
-| `buildEllipse(controlPoints)` | 根据两个对角控制点生成 64 段椭圆 Polygon 坐标 |
-| `getEllipseControlPoints(polygon)` | 从椭圆 Polygon 的 extent 反推控制点 |
-| `getEllipseCenter(controlPoints)` | 计算椭圆中心点 |
-| `createEllipseGeometryFunction()` | OL Draw 交互的 geometryFunction（实时预览椭圆） |
+每个形状模块提供三组函数：
+1. **纯坐标构建**（`buildXxx`）— 从控制点坐标计算形状坐标
+2. **控制点反推**（`getXxxControlPoints`）— 从 OL Geometry 反推控制点
+3. **OL 绘图适配**（`createXxxGeometryFunction`）— OL Draw 交互的 geometryFunction
+
+| 模块 | 主要函数 |
+|------|---------|
+| `geometry/rectangle.ts` | `buildRectangle`, `getRectangleControlPoints`, `getRectangleCenter`, `getRectangleWidth`, `getRectangleHeight`, `createRectangleGeometryFunction` |
+| `geometry/ellipse.ts` | `buildEllipse`, `getEllipseControlPoints`, `getEllipseCenter`, `createEllipseGeometryFunction` |
+| `geometry/sector.ts` | `buildSector`, `getSectorControlPoints`, `createSectorGeometryFunction` |
+| `geometry/arc.ts` | `buildArc`, `getArcControlPoints`, `createArcGeometryFunction` |
+| `geometry/arrow/straight.ts` | `buildStraightArrow`, `getStraightArrowCenter`, `createStraightArrowGeometryFunction` |
+| `geometry/arrow/tapered.ts` | `buildTaperedArrow`, `createTaperedArrowGeometryFunction` |
+| `geometry/arrow/line.ts` | `buildLineArrowGeometries`, `createLineArrowGeometryFunction` |
+
+### 6.3 `packages/style/` — OL Style 工厂
+
+从原来的 `utils/index.ts` 拆出，职责单一：构建各类 OL Style 对象。
+
+| 文件 | 函数 | 说明 |
+|------|------|------|
+| `style/feature.ts` | `buildFeatureStyle(config)` | 要素渲染样式（stroke + fill） |
+| `style/draw.ts` | `buildDrawStyle(config)` | 绘制草图样式（隐藏跟随鼠标的 Point） |
+| `style/select.ts` | `buildSelectStyle(config)` | 选中样式（几何 + 顶点圆点叠加） |
+| `style/modify.ts` | `buildModifyStyle(config)` | 编辑拖拽手柄样式 |
+
+### 6.4 `packages/helper/` — 内部共享工具（不对外暴露）
+
+| 文件 | 类 | 说明 |
+|------|-----|------|
+| `helper/handle.ts` | `HandleManager` | 自定义 handle 图层管理，消除 7 个 Tool 中的重复样板代码 |
+
+### 6.5 `packages/constants/` — 常量和配置
+
+| 文件 | 导出 | 说明 |
+|------|------|------|
+| `constants/mergeConfig.ts` | `mergeConfig(config?)` | 合并用户配置与默认配置（从原 `utils/index.ts` 迁入） |
 
 ---
 
@@ -410,21 +465,35 @@ tool.clearFeatures();
 ## 十、依赖关系图
 
 ```
-BaseTool (abstract)
-  ├── LayerManager      → VectorLayer + VectorSource
-  ├── DrawManager       → Draw interaction
-  ├── SelectManager     → Select interaction
-  ├── ModifyManager     → Modify interaction
-  └── EventBus          → 内部事件通信
-
-具体工具 (extends BaseTool)
-  ├── PointTool
-  ├── LineTool
-  ├── FreehandLineTool
-  ├── PolygonTool
-  ├── RectangleTool     (+矩形约束)
-  ├── CircleTool
-  └── EllipseTool       (+自定义 handle 图层)
+packages/
+  ├── utils/               ← 零 OL 依赖
+  │   └── math.ts (dist / computeDirectionAndNormal / createDegeneratePolygon)
+  │        ↑ 仅被 geometry/ 引用
+  ├── geometry/            ← 依赖 utils/math + ol/geom/*
+  │   ├── rectangle.ts, ellipse.ts, sector.ts, arc.ts
+  │   └── arrow/straight.ts, tapered.ts, line.ts
+  │
+  ├── style/               ← 依赖 ol/style/* + ol/geom/*（无项目内部依赖）
+  │   └── feature.ts, draw.ts, select.ts, modify.ts
+  │
+  ├── constants/           ← 依赖 types/
+  │   └── mergeConfig.ts (依赖于 defaultConfig)
+  │
+  ├── core/                ← 依赖 constants/ + style/ + geometry/
+  │   ├── EventBus (extends ol/events/Target)
+  │   ├── LayerManager (VectorLayer + VectorSource)
+  │   ├── DrawManager (Draw interaction + geometryFunction 路由)
+  │   ├── SelectManager (Select interaction)
+  │   ├── ModifyManager (Modify interaction)
+  │   └── BaseTool (abstract) ──→ 整合以上 5 个 Manager
+  │
+  ├── helper/              ← 依赖 core/ + style/ + ol/*
+  │   └── HandleManager (自定义 handle 图层管理)
+  │
+  └── tools/               ← 依赖 core/ + geometry/ + style/ + helper/
+      ├── PointTool, LineTool, FreehandLineTool, PolygonTool, CircleTool  (简单工具)
+      └── RectangleTool, EllipseTool, SectorTool, ArcTool,                (自定义 handle 工具)
+           StraightArrowTool, TaperedArrowTool, LineArrowTool
 ```
 
 ---
@@ -434,10 +503,14 @@ BaseTool (abstract)
 要添加一个新的绘制工具类型：
 
 1. 在 `constants/drawType.ts` 中添加新的枚举值
-2. 创建 `tools/XxxTool.ts`，继承 `BaseTool`
-3. 实现 4 个抽象方法：`createGeometry`, `setCoordinates`, `getCoordinates`, `getPointCount`, `updatePoint`
-4. 如果需要特殊的 OL 绘制行为，在 `DrawManager` 中添加对应的条件分支
-5. 在 `packages/index.ts` 中导出新工具
+2. 在 `geometry/` 中创建对应的几何文件（`buildXxx` + `getXxxControlPoints` + `createXxxGeometryFunction`）
+   - 纯坐标构建函数可选引用 `utils/math` 中的通用数学函数
+3. 在 `geometry/index.ts` 中导出新几何模块
+4. 创建 `tools/XxxTool.ts`，继承 `BaseTool`
+5. 实现 5 个抽象方法：`createGeometry`, `setCoordinates`, `getCoordinates`, `getPointCount`, `updatePoint`
+6. 如果需要自定义 handle 编辑（非标准 OL 几何），使用 `HandleManager` 并在构造中 `modifyManager.setActive(false)`
+7. 如果需要特殊的 OL 绘制行为，在 `DrawManager` 中添加对应的条件分支
+8. 在 `packages/index.ts` 中导出新工具
 
 ```ts
 // 示例：添加一个星形工具

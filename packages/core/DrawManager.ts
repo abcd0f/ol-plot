@@ -6,13 +6,13 @@ import type { StyleFunction } from 'ol/style/Style';
 import type { EventBus } from './EventBus';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
-import { createEllipseGeometryFunction } from '../utils/ellipse';
-import { createSectorGeometryFunction } from '../utils/sector';
-import { createStraightArrowGeometryFunction } from '../utils/straightArrow';
-import { createTaperedArrowGeometryFunction } from '../utils/taperedArrow';
-import { createLineArrowGeometryFunction } from '../utils/lineArrow';
-import { createArcGeometryFunction } from '../utils/arc';
-import { createRectangleGeometryFunction } from '../utils/rectangle';
+import { createEllipseGeometryFunction } from '../geometry/ellipse';
+import { createSectorGeometryFunction } from '../geometry/sector';
+import { createStraightArrowGeometryFunction } from '../geometry/arrow/straight';
+import { createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
+import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
+import { createArcGeometryFunction } from '../geometry/arc';
+import { createRectangleGeometryFunction } from '../geometry/rectangle';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 

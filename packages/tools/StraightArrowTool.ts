@@ -14,8 +14,8 @@ import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle } from '../utils';
-import { buildStraightArrow } from '../utils/straightArrow';
+import { buildModifyStyle } from '../style/modify';
+import { buildStraightArrow } from '../geometry/arrow/straight';
 
 /**
  * 直箭头绘制工具类，继承自 BaseTool。

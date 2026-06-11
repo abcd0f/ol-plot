@@ -7,7 +7,7 @@ import type VectorLayer from 'ol/layer/Vector';
 import type { EventBus } from './EventBus';
 import type { PlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
-import { buildSelectStyle } from '../utils';
+import { buildSelectStyle } from '../style/select';
 
 /**
  * 选择管理器类，用于处理地图要素的选择交互

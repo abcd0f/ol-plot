@@ -14,8 +14,8 @@ import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle } from '../utils';
-import { buildRectangle, getRectangleControlPoints } from '../utils/rectangle';
+import { buildModifyStyle } from '../style/modify';
+import { buildRectangle, getRectangleControlPoints } from '../geometry/rectangle';
 
 /**
  * 矩形绘制工具类，继承自BaseTool

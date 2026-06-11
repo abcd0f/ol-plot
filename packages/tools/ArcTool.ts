@@ -14,7 +14,8 @@ import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle, buildArc, getArcControlPoints } from '../utils';
+import { buildModifyStyle } from '../style/modify';
+import { buildArc, getArcControlPoints } from '../geometry/arc';
 
 export class ArcTool extends BaseTool {
   private handleSource: VectorSource;

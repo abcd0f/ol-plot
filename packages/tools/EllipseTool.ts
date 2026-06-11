@@ -14,8 +14,8 @@ import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle } from '../utils';
-import { buildEllipse, getEllipseControlPoints } from '../utils/ellipse';
+import { buildModifyStyle } from '../style/modify';
+import { buildEllipse, getEllipseControlPoints } from '../geometry/ellipse';
 
 export class EllipseTool extends BaseTool {
   private handleSource: VectorSource;

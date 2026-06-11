@@ -14,8 +14,8 @@ import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle } from '../utils';
-import { buildSector, getSectorControlPoints } from '../utils/sector';
+import { buildModifyStyle } from '../style/modify';
+import { buildSector, getSectorControlPoints } from '../geometry/sector';
 
 export class SectorTool extends BaseTool {
   private handleSource: VectorSource;

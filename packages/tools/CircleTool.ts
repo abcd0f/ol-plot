@@ -5,16 +5,7 @@ import type Feature from 'ol/Feature';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { BaseTool } from '../core/BaseTool';
-
-/**
- * 计算两个二维点之间的欧几里得距离
- * @param a - 第一个点的坐标数组 [x, y]
- * @param b - 第二个点的坐标数组 [x, y]
- * @returns 两点之间的直线距离
- */
-function dist(a: number[], b: number[]): number {
-  return Math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
-}
+import { dist } from '../utils';
 
 /**
  * 圆形绘制工具类，继承自BaseTool

@@ -1,13 +1,7 @@
 import LineString from 'ol/geom/LineString';
+import { dist } from '../utils';
 
 const DEFAULT_SEGMENTS = 64;
-
-/**
- * 计算两点之间的欧几里得距离
- */
-function dist(a: number[], b: number[]): number {
-  return Math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
-}
 
 /**
  * 计算三个不共线点确定的外接圆圆心和半径。
@@ -37,16 +31,10 @@ function getCircleFromThreePoints(
   const D = 2 * (x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1));
 
   const centerX =
-    ((x0 * x0 + y0 * y0) * (y1 - y2) +
-      (x1 * x1 + y1 * y1) * (y2 - y0) +
-      (x2 * x2 + y2 * y2) * (y0 - y1)) /
-    D;
+    ((x0 * x0 + y0 * y0) * (y1 - y2) + (x1 * x1 + y1 * y1) * (y2 - y0) + (x2 * x2 + y2 * y2) * (y0 - y1)) / D;
 
   const centerY =
-    ((x0 * x0 + y0 * y0) * (x2 - x1) +
-      (x1 * x1 + y1 * y1) * (x0 - x2) +
-      (x2 * x2 + y2 * y2) * (x1 - x0)) /
-    D;
+    ((x0 * x0 + y0 * y0) * (x2 - x1) + (x1 * x1 + y1 * y1) * (x0 - x2) + (x2 * x2 + y2 * y2) * (x1 - x0)) / D;
 
   const center: number[] = [centerX, centerY];
   const radius = dist(center, p0);

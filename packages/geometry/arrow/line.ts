@@ -1,7 +1,7 @@
 import LineString from 'ol/geom/LineString';
 import Polygon from 'ol/geom/Polygon';
 import GeometryCollection from 'ol/geom/GeometryCollection';
-import { dist, computeDirectionAndNormal, createDegeneratePolygon } from './arrow';
+import { dist, computeDirectionAndNormal, createDegeneratePolygon } from '../../utils';
 
 /** 箭头头部长度占箭头总长度的比例 */
 const HEAD_LENGTH_FACTOR = 0.12;

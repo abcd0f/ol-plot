@@ -10,7 +10,9 @@ import { LayerManager } from './LayerManager';
 import { DrawManager } from './DrawManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
-import { mergeConfig, buildFeatureStyle, buildDrawStyle } from '../utils';
+import { mergeConfig } from '../constants';
+import { buildFeatureStyle } from '../style/feature';
+import { buildDrawStyle } from '../style/draw';
 
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。

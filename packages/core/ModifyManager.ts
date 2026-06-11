@@ -5,7 +5,7 @@ import type Feature from 'ol/Feature';
 import type { EventBus } from './EventBus';
 import type { PlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
-import { buildModifyStyle } from '../utils';
+import { buildModifyStyle } from '../style/modify';
 
 /**
  * 修改管理器类，用于处理地图要素的修改操作

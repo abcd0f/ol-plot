@@ -1,7 +1,8 @@
 /**
- * 箭头几何计算公共工具函数
+ * 纯数学 / 坐标计算工具函数
  *
- * 提供直箭头和斜箭头共享的基础计算方法
+ * 零 OpenLayers 依赖，仅使用 `Math.*` 和基本类型。
+ * 可用于任意需要二维坐标运算的场景。
  */
 
 /**
@@ -15,7 +16,11 @@ export function dist(a: number[], b: number[]): number {
 }
 
 /**
- * 计算从 p0 到 p1 的方向向量和法向量
+ * 计算从 p0 到 p1 的方向向量和法向量。
+ *
+ * 方向向量 = (p1 - p0) / length（单位向量）
+ * 法向量 = 方向向量逆时针旋转 90°
+ *
  * @param p0 - 起点坐标
  * @param p1 - 终点坐标
  * @param length - 两点间距离（可预先计算以避免重复）
@@ -35,9 +40,13 @@ export function computeDirectionAndNormal(
 }
 
 /**
- * 创建退化 Polygon（两点重合时的兜底）
+ * 创建退化 Polygon（两点重合时的兜底）。
+ *
+ * 当箭头尾部和尖端重合（零长度）时，返回一个最小三角形，
+ * 防止 OpenLayers 渲染空几何报错。
+ *
  * @param point - 退化点坐标
- * @returns 退化的 Polygon 坐标
+ * @returns 退化的 Polygon 坐标 `number[][][]`
  */
 export function createDegeneratePolygon(point: number[]): number[][][] {
   return [[[...point], [...point], [...point]]];

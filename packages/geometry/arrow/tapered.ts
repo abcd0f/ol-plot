@@ -1,5 +1,5 @@
 import Polygon from 'ol/geom/Polygon';
-import { dist, computeDirectionAndNormal, createDegeneratePolygon } from './arrow';
+import { dist, computeDirectionAndNormal, createDegeneratePolygon } from '../../utils';
 
 /** 箭尾宽度占箭头总长度的比例 */
 const TAIL_WIDTH_FACTOR = 0.2;

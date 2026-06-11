@@ -14,8 +14,8 @@ import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle } from '../utils';
-import { buildTaperedArrow } from '../utils/taperedArrow';
+import { buildModifyStyle } from '../style/modify';
+import { buildTaperedArrow } from '../geometry/arrow/tapered';
 
 /**
  * 斜箭头（TaperedArrow）绘制工具类，继承自 BaseTool。
