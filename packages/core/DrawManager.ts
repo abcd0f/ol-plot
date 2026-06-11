@@ -1,5 +1,5 @@
 import Map from 'ol/Map';
-import Draw, { createBox, type GeometryFunction } from 'ol/interaction/Draw';
+import Draw, { type GeometryFunction } from 'ol/interaction/Draw';
 import type VectorLayer from 'ol/layer/Vector';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import type { StyleFunction } from 'ol/style/Style';
@@ -12,6 +12,7 @@ import { createStraightArrowGeometryFunction } from '../utils/straightArrow';
 import { createTaperedArrowGeometryFunction } from '../utils/taperedArrow';
 import { createLineArrowGeometryFunction } from '../utils/lineArrow';
 import { createArcGeometryFunction } from '../utils/arc';
+import { createRectangleGeometryFunction } from '../utils/rectangle';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -66,7 +67,8 @@ export class DrawManager {
     // 根据绘制类型设置相应的 OpenLayers 绘制配置
     if (drawType === DrawType.Rectangle) {
       type = 'Circle';
-      geometryFunction = createBox();
+      geometryFunction = createRectangleGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 2;
     } else if (drawType === DrawType.Ellipse) {
       type = 'Circle';
       geometryFunction = createEllipseGeometryFunction() as unknown as GeometryFunction;

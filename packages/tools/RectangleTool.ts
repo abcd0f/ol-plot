@@ -1,52 +1,31 @@
 import Map from 'ol/Map';
+import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
+import Point from 'ol/geom/Point';
+import VectorSource from 'ol/source/Vector';
+import VectorLayer from 'ol/layer/Vector';
+import Modify from 'ol/interaction/Modify';
+import Style from 'ol/style/Style';
+import Stroke from 'ol/style/Stroke';
+import Fill from 'ol/style/Fill';
+import CircleStyle from 'ol/style/Circle';
 import type Geometry from 'ol/geom/Geometry';
-import type Feature from 'ol/Feature';
-import { unByKey } from 'ol/Observable';
-import type { EventsKey } from 'ol/events';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-
-const SHARE_X = [1, 0, 3, 2];
-const SHARE_Y = [3, 2, 1, 0];
-
-/**
- * 计算给定点集的边界框矩形
- *
- * @param pts - 输入的点坐标数组，每个元素为 [x, y] 形式的坐标点
- * @returns 返回边界框矩形的四个顶点坐标，按左下、左上、右上、右下顺序排列
- */
-function bboxRect(pts: number[][]): number[][] {
-  // 提取所有点的 x 坐标和 y 坐标
-  const xs = pts.map((c) => c[0]);
-  const ys = pts.map((c) => c[1]);
-
-  // 计算 x 和 y 坐标的最小值和最大值
-  const minX = Math.min(...xs),
-    maxX = Math.max(...xs);
-  const minY = Math.min(...ys),
-    maxY = Math.max(...ys);
-
-  // 构造边界框矩形的四个顶点：左下、左上、右上、右下
-  return [
-    [minX, minY],
-    [minX, maxY],
-    [maxX, maxY],
-    [maxX, minY],
-  ];
-}
+import { buildModifyStyle } from '../utils';
+import { buildRectangle, getRectangleControlPoints } from '../utils/rectangle';
 
 /**
  * 矩形绘制工具类，继承自BaseTool
- * 提供矩形绘制、约束调整等功能
+ * 通过两个控制点（对角点）确定矩形，支持自定义编辑手柄
  */
 export class RectangleTool extends BaseTool {
-  private geomChangeKey: EventsKey | null = null;
-  private constraining = false;
-  private prevCorners: number[][] | null = null;
-  private dragStartCorners: number[][] | null = null;
+  private handleSource: VectorSource;
+  private handleLayer: VectorLayer;
+  private handleModify: Modify;
+  private syncing = false;
 
   /**
    * 构造函数
@@ -55,159 +34,244 @@ export class RectangleTool extends BaseTool {
    */
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.Rectangle, config);
+
+    // 禁用默认的 ModifyManager，使用自定义 handle 编辑
+    this.modifyManager.setActive(false);
+
+    const ns = this.config.nodeStyle;
+
+    // 创建 handle 图层
+    this.handleSource = new VectorSource();
+    this.handleLayer = new VectorLayer({
+      source: this.handleSource,
+      style: new Style({
+        image: new CircleStyle({
+          radius: ns.radius ?? 6,
+          fill: new Fill({ color: ns.fill ?? '#ffffff' }),
+          stroke: new Stroke({
+            color: ns.stroke ?? this.config.strokeColor,
+            width: ns.strokeWidth ?? 2,
+          }),
+        }),
+      }),
+    });
+    map.addLayer(this.handleLayer);
+
+    // 创建自定义 Modify 交互
+    this.handleModify = new Modify({
+      source: this.handleSource,
+      style: buildModifyStyle(this.config),
+    });
+    this.handleModify.on('modifystart', () => {
+      this.eventBus.emit(DrawEvent.MODIFY_START);
+    });
+    this.handleModify.on('modifyend', () => {
+      this.eventBus.emit(DrawEvent.MODIFY_END, { features: this.activeFeature ? [this.activeFeature] : [] });
+    });
+    map.addInteraction(this.handleModify);
+
     this.bindRectEvents();
   }
 
   /**
    * 绑定矩形相关的事件监听器
-   * 包括绘制结束、选择、取消选择、修改开始和结束等事件
    */
   private bindRectEvents(): void {
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      this.attachConstraint(feature);
+      // 绘制结束后存储控制点
+      const geom = feature.getGeometry() as Polygon;
+      const controlPoints = getRectangleControlPoints(geom);
+      feature.set('plotType', 'rectangle');
+      feature.set('controlPoints', controlPoints);
     });
+
     this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      this.attachConstraint(feature);
+      this.showHandles(feature);
     });
+
     this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.detachConstraint();
-    });
-    this.eventBus.on(DrawEvent.MODIFY_START, () => {
-      if (this.prevCorners) {
-        this.dragStartCorners = this.prevCorners.map((c) => [c[0], c[1]]);
-      }
-    });
-    this.eventBus.on(DrawEvent.MODIFY_END, () => {
-      this.dragStartCorners = null;
+      this.hideHandles();
     });
   }
 
   /**
-   * 为指定要素附加约束功能
-   * 监听几何图形的变化并保持矩形形状
-   * @param feature 需要附加约束的要素
+   * 显示编辑手柄
    */
-  private attachConstraint(feature: Feature): void {
-    this.detachConstraint();
-    const geom = feature.getGeometry() as Polygon;
+  private showHandles(feature: Feature): void {
+    this.hideHandles();
+    const controlPoints = feature.get('controlPoints') as number[][] | undefined;
+    if (!controlPoints) return;
 
-    // createBox() produces [BL, BR, TR, TL] but SHARE tables expect bboxRect order [BL, TL, TR, BR].
-    // Normalize to canonical order before attaching the listener so the first edit applies correct neighbors.
-    const rawRing = geom.getCoordinates()[0] ?? [];
-    const normalized = bboxRect(rawRing.slice(0, rawRing.length - 1));
-    this.constraining = true;
-    geom.setCoordinates([[...normalized, normalized[0]]]);
-    this.constraining = false;
-    this.prevCorners = normalized;
-
-    feature.set('_rectEditIndices', [1, 3]);
-
-    this.geomChangeKey = geom.on('change', () => {
-      if (this.constraining || !this.prevCorners) return;
-
-      const ring = geom.getCoordinates()[0] ?? [];
-      this.constraining = true;
-
-      // 如果顶点数量不是5（包含闭合点），则标准化为边界框矩形
-      if (ring.length !== 5) {
-        const normalized = bboxRect(ring.slice(0, ring.length - 1));
-        geom.setCoordinates([[...normalized, normalized[0]]]);
-        this.prevCorners = normalized;
-        this.constraining = false;
-        return;
-      }
-
-      const corners = ring.slice(0, 4);
-
-      // 找出移动距离最大的顶点索引
-      const ref = this.dragStartCorners ?? this.prevCorners;
-      let movedIdx = -1;
-      let maxDist = 1e-6;
-      for (let i = 0; i < 4; i++) {
-        const p = ref[i];
-        const d = Math.abs(p[0] - corners[i][0]) + Math.abs(p[1] - corners[i][1]);
-        if (d > maxDist) {
-          maxDist = d;
-          movedIdx = i;
-        }
-      }
-
-      if (movedIdx === -1) {
-        this.constraining = false;
-        return;
-      }
-
-      // 根据移动的顶点更新其他顶点以保持矩形形状
-      const next = this.prevCorners.map((c) => [c[0], c[1]]);
-      const moved = corners[movedIdx];
-      next[movedIdx] = [moved[0], moved[1]];
-      next[SHARE_X[movedIdx]] = [moved[0], next[SHARE_X[movedIdx]][1]];
-      next[SHARE_Y[movedIdx]] = [next[SHARE_Y[movedIdx]][0], moved[1]];
-
-      geom.setCoordinates([[...next, next[0]]]);
-      this.prevCorners = next;
-      this.constraining = false;
+    controlPoints.forEach((pt, i) => {
+      const handle = new Feature(new Point(pt));
+      handle.set('_handleIndex', i);
+      handle.getGeometry()!.on('change', () => this.syncFromHandles());
+      this.handleSource.addFeature(handle);
     });
   }
 
   /**
-   * 移除几何图形的约束监听器
+   * 隐藏编辑手柄
    */
-  private detachConstraint(): void {
-    if (this.geomChangeKey) {
-      unByKey(this.geomChangeKey);
-      this.geomChangeKey = null;
-    }
-    this.prevCorners = null;
+  private hideHandles(): void {
+    this.handleSource.clear();
   }
+
+  /**
+   * 从手柄同步到几何图形
+   */
+  private syncFromHandles(): void {
+    if (this.syncing || !this.activeFeature) return;
+    this.syncing = true;
+
+    const handles = this.handleSource.getFeatures();
+    const controlPoints = handles
+      .sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'))
+      .map((h) => (h.getGeometry() as Point).getCoordinates());
+
+    // 更新 feature 中存储的控制点
+    this.activeFeature.set('controlPoints', controlPoints);
+
+    // 重新计算矩形几何
+    const geom = this.activeFeature.getGeometry() as Polygon;
+    geom.setCoordinates(buildRectangle(controlPoints));
+
+    this.syncing = false;
+  }
+
+  // ─── Abstract implementations ─────────────────────────────────────────────
 
   /**
    * 创建矩形几何图形
-   * @param coordinates 坐标数组
+   * @param coordinates 坐标数组，仅使用前两个点（对角点）
    * @returns Polygon几何图形对象
    */
   protected createGeometry(coordinates: number[][]): Geometry {
-    const corners = bboxRect(coordinates.slice(0, 4));
-    return new Polygon([[...corners, corners[0]]]);
+    return new Polygon(buildRectangle(coordinates.slice(0, 2)));
+  }
+
+  /**
+   * 添加矩形要素
+   * @param startPoint 起始点坐标
+   * @param endPoint 结束点坐标
+   * @returns 创建的要素对象
+   */
+  addRectangle(startPoint: number[], endPoint: number[]): Feature {
+    return this.addFeature([startPoint, endPoint]);
   }
 
   /**
    * 设置当前要素的坐标
-   * @param coordinates 坐标数组
+   * @param coordinates 坐标数组，仅使用前两个点
    */
   setCoordinates(coordinates: number[][]): void {
-    if (!this.activeFeature || coordinates.length < 4) return;
-    const corners = bboxRect(coordinates.slice(0, 4));
-    (this.activeFeature.getGeometry() as Polygon).setCoordinates([[...corners, corners[0]]]);
+    if (!this.activeFeature || coordinates.length < 2) return;
+
+    // 存储控制点
+    this.activeFeature.set('controlPoints', coordinates.slice(0, 2));
+
+    // 更新几何
+    const geom = this.activeFeature.getGeometry() as Polygon;
+    geom.setCoordinates(buildRectangle(coordinates.slice(0, 2)));
+
+    // 刷新手柄
+    this.refreshHandles();
   }
 
   /**
    * 获取当前要素的坐标
-   * @returns 坐标数组，包含矩形的四个角点
+   * @returns 控制点坐标数组 [startPoint, endPoint]
    */
   getCoordinates(): number[][] {
     if (!this.activeFeature) return [];
-    const ring = (this.activeFeature.getGeometry() as Polygon).getCoordinates()[0] ?? [];
-    return ring.slice(0, 4);
+    return (this.activeFeature.get('controlPoints') as number[][]) || [];
   }
 
   /**
    * 获取当前要素的点数
-   * @returns 点的数量（对于矩形始终为4）
+   * @returns 控制点数量（始终为2）
    */
   getPointCount(): number {
-    return this.getCoordinates().length;
+    return this.activeFeature ? 2 : 0;
   }
 
   /**
    * 更新指定索引处的点坐标
-   * @param index 要更新的点的索引
+   * @param index 要更新的点的索引（0为起始点，1为结束点）
    * @param coordinate 新的坐标值
    */
   updatePoint(index: number, coordinate: number[]): void {
-    const corners = this.getCoordinates();
-    if (index < 0 || index >= corners.length) return;
-    corners[index] = coordinate;
-    this.setCoordinates(corners);
+    if (index !== 0 && index !== 1) return;
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return;
+    coords[index] = coordinate;
+    this.setCoordinates(coords);
+  }
+
+  // ─── Convenience API ──────────────────────────────────────────────────────
+
+  /**
+   * 获取矩形中心点
+   * @returns 中心点坐标，如果无活动要素则返回null
+   */
+  getCenter(): number[] | null {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return null;
+    return [(coords[0][0] + coords[1][0]) / 2, (coords[0][1] + coords[1][1]) / 2];
+  }
+
+  /**
+   * 获取矩形宽度
+   * @returns 宽度值
+   */
+  getWidth(): number {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return 0;
+    return Math.abs(coords[1][0] - coords[0][0]);
+  }
+
+  /**
+   * 获取矩形高度
+   * @returns 高度值
+   */
+  getHeight(): number {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return 0;
+    return Math.abs(coords[1][1] - coords[0][1]);
+  }
+
+  // ─── Private helpers ──────────────────────────────────────────────────────
+
+  /**
+   * 刷新编辑手柄位置
+   */
+  private refreshHandles(): void {
+    if (!this.activeFeature) return;
+    const controlPoints = this.activeFeature.get('controlPoints') as number[][] | undefined;
+    if (!controlPoints) return;
+
+    const handles = this.handleSource.getFeatures().sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
+    if (handles.length !== controlPoints.length) {
+      this.showHandles(this.activeFeature);
+      return;
+    }
+
+    this.syncing = true;
+    handles.forEach((h, i) => {
+      (h.getGeometry() as Point).setCoordinates(controlPoints[i]);
+    });
+    this.syncing = false;
+  }
+
+  // ─── Lifecycle ─────────────────────────────────────────────────────────────
+
+  /**
+   * 销毁工具，清理所有资源
+   */
+  destroy(): void {
+    this.hideHandles();
+    this.map.removeInteraction(this.handleModify);
+    this.map.removeLayer(this.handleLayer);
+    super.destroy();
   }
 }

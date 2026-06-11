@@ -17,6 +17,14 @@ import { buildEllipse, getEllipseControlPoints, createEllipseGeometryFunction } 
 import { buildStraightArrow, createStraightArrowGeometryFunction } from './straightArrow';
 import { buildTaperedArrow, createTaperedArrowGeometryFunction } from './taperedArrow';
 import { buildLineArrowGeometries, createLineArrowGeometryFunction } from './lineArrow';
+import {
+  buildRectangle,
+  getRectangleControlPoints,
+  createRectangleGeometryFunction,
+  getRectangleCenter,
+  getRectangleWidth,
+  getRectangleHeight,
+} from './rectangle';
 
 export { buildArc, getArcControlPoints, createArcGeometryFunction };
 export { buildSector, getSectorControlPoints, createSectorGeometryFunction };
@@ -24,6 +32,14 @@ export { buildEllipse, getEllipseControlPoints, createEllipseGeometryFunction };
 export { buildStraightArrow, createStraightArrowGeometryFunction };
 export { buildTaperedArrow, createTaperedArrowGeometryFunction };
 export { buildLineArrowGeometries, createLineArrowGeometryFunction };
+export {
+  buildRectangle,
+  getRectangleControlPoints,
+  createRectangleGeometryFunction,
+  getRectangleCenter,
+  getRectangleWidth,
+  getRectangleHeight,
+};
 
 export function mergeConfig(config?: PlotConfig): Required<PlotConfig> {
   return {
@@ -92,7 +108,13 @@ function extractVertices(feature: Feature): number[][] {
     }
     case 'Polygon': {
       const plotType = (feature as Feature).get('plotType');
-      if (plotType === 'ellipse' || plotType === 'sector' || plotType === 'straightArrow' || plotType === 'taperedArrow') {
+      if (
+        plotType === 'ellipse' ||
+        plotType === 'sector' ||
+        plotType === 'straightArrow' ||
+        plotType === 'taperedArrow' ||
+        plotType === 'rectangle'
+      ) {
         return (feature as Feature).get('controlPoints') || [];
       }
       const ring = (geom as Polygon).getCoordinates()[0] ?? [];
