@@ -1,27 +1,18 @@
 import Polygon from 'ol/geom/Polygon';
 import type { Coordinate } from 'ol/coordinate';
+import { dist, computeDirectionAndNormal, createDegeneratePolygon } from './arrow';
 
 /** 箭头身体宽度占箭头总长度的比例 */
-const BODY_WIDTH_RATIO = 0.12;
+const BODY_WIDTH_RATIO = 0.1;
 
 /** 箭头头部宽度占箭头总长度的比例 */
-const HEAD_WIDTH_RATIO = 0.35;
+const HEAD_WIDTH_RATIO = 0.30;
 
 /** 箭头身体长度占箭头总长度的比例 */
 const BODY_LENGTH_RATIO = 0.85;
 
 /** 控制翼展开程度 */
-const WING_SCALE = 0.85;
-
-/**
- * 计算两个二维点之间的欧几里得距离
- * @param a - 第一个点的坐标数组 [x, y]
- * @param b - 第二个点的坐标数组 [x, y]
- * @returns 两点之间的直线距离
- */
-function dist(a: number[], b: number[]): number {
-  return Math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
-}
+const WING_SCALE = 0.9;
 
 /**
  * 根据两个控制点生成直箭头 Polygon 坐标。
@@ -52,17 +43,10 @@ export function buildStraightArrow(controlPoints: number[][]): number[][][] {
   const length = dist(p0, p1);
 
   if (length < 1e-10) {
-    // 两点重合，返回退化 Polygon
-    return [[[...p0], [...p0], [...p0]]];
+    return createDegeneratePolygon(p0);
   }
 
-  // 沿 P0→P1 方向的单位向量
-  const dx = (p1[0] - p0[0]) / length;
-  const dy = (p1[1] - p0[1]) / length;
-
-  // 垂直于箭头方向的单位向量（逆时针旋转 90°）
-  const nx = -dy;
-  const ny = dx;
+  const { dx, dy, nx, ny } = computeDirectionAndNormal(p0, p1, length);
 
   const bodyHalfWidth = (length * BODY_WIDTH_RATIO) / 2;
   const headHalfWidth = (length * HEAD_WIDTH_RATIO) / 2;
@@ -84,7 +68,7 @@ export function buildStraightArrow(controlPoints: number[][]): number[][][] {
     by - ny * headHalfWidth * WING_SCALE - dy * wingBack,
   ];
 
-  // 构建箭头外轮廓（逆时针 / 顺时针均可，OL Polygon 不限绕序）
+  // 构建箭头外轮廓
   const ring: number[][] = [
     // 箭身左下角
     [p0[0] + nx * bodyHalfWidth, p0[1] + ny * bodyHalfWidth],
@@ -131,7 +115,6 @@ export function createStraightArrowGeometryFunction() {
     if (coordinates.length < 2) return geom;
     const controlPoints = coordinates.slice(0, 2);
     geom.setCoordinates(buildStraightArrow(controlPoints));
-    // 将原始控制点存入 Polygon 属性，供 DRAW_END 时读取
     geom.set('_controlPoints', controlPoints);
     return geom;
   };
