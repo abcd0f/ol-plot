@@ -1,259 +1,243 @@
+import Map from 'ol/Map';
+import Feature from 'ol/Feature';
+import Polygon from 'ol/geom/Polygon';
+import Point from 'ol/geom/Point';
+import VectorSource from 'ol/source/Vector';
+import VectorLayer from 'ol/layer/Vector';
+import Modify from 'ol/interaction/Modify';
+import Style from 'ol/style/Style';
+import Stroke from 'ol/style/Stroke';
+import Fill from 'ol/style/Fill';
+import CircleStyle from 'ol/style/Circle';
+import type Geometry from 'ol/geom/Geometry';
+import type { PlotConfig } from '../types/config';
+import { DrawType } from '../constants/drawType';
+import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
-
-export class TaperedArrowTool extends BaseTool {}
+import { buildModifyStyle } from '../utils';
+import { buildTaperedArrow } from '../utils/taperedArrow';
 
 /**
-阅读 packages 目录下现有代码，实现一种新的斜箭头（ObliqueArrow / TaperedArrow）绘图工具。
-
-目标效果参考附件图片。
-
-注意：
-
-该箭头的箭身不是矩形。
-
-箭身宽度从尾部到箭头方向逐渐增大，形成收窄到扩张的过渡效果。
-
-不要实现成普通 StraightArrow。
-
----
-
-## 图形特征
-
-箭头整体由：
-
-* 渐变箭身
-* 箭头头部
-
-组成。
-
-视觉效果：
-
-```text
-           tip
-          /\
-         /  \
-        /    \
-       /      \
-      /        \
-     /          \
-    /            \
-   /              \
-  /                \
- /__________________\
-```
-
-特点：
-
-* 尾部最窄
-* 中部逐渐变宽
-* 箭头头部最宽
-* 左右完全对称
-
----
-
-## 绘制规则
-
-仅使用两个控制点。
-
-第一个点：
-
-```text
-P0
-```
-
-箭尾中心点。
-
-第二个点：
-
-```text
-P1
-```
-
-箭头尖端点。
-
-示意：
-
-```text
-P0 -------------------- P1
-```
-
-用户点击两次完成绘制。
-
----
-
-## Geometry规则
-
-根据：
-
-```ts
-const start = P0;
-const end = P1;
-```
-
-计算：
-
-```ts
-direction = normalize(end - start);
-normal = perpendicular(direction);
-
-length = distance(start, end);
-```
-
----
-
-## 箭头结构
-
-不要生成矩形箭身。
-
-箭身应采用梯形结构。
-
-宽度沿箭头方向逐渐增加。
-
-定义：
-
-```ts
-const TAIL_WIDTH_FACTOR = 0.08;
-const NECK_WIDTH_FACTOR = 0.18;
-const HEAD_WIDTH_FACTOR = 0.32;
-
-const HEAD_LENGTH_FACTOR = 0.25;
-```
-
-要求：
-
-```text
-tailWidth
-      <
-neckWidth
-      <
-headWidth
-```
-
----
-
-## 顶点结构
-
-计算：
-
-```ts
-tailLeft
-tailRight
-
-neckLeft
-neckRight
-
-headLeft
-headRight
-
-tip
-```
-
-形成：
-
-```text
-                  tip
-                 /\
-                /  \
-               /    \
-        headLeft    headRight
-             /        \
-            /          \
-           /            \
-      neckLeft        neckRight
-           \            /
-            \          /
-             \        /
-       tailLeft    tailRight
-```
-
-最终 Polygon：
-
-```ts
-[
-  tailLeft,
-  neckLeft,
-  headLeft,
-  tip,
-  headRight,
-  neckRight,
-  tailRight,
-  tailLeft
-]
-```
-
----
-
-## 编辑规则
-
-编辑状态下仅允许存在两个控制点：
-
-```text
-P0
-P1
-```
-
-禁止出现：
-
-* Polygon顶点
-* 箭头顶点
-* 中间控制点
-
-用户实际编辑的永远只有：
-
-```ts
-[start, end]
-```
-
-Geometry 根据控制点实时重新生成。
-
----
-
-## 对称性要求
-
-必须保证：
-
-```text
-左侧顶点与右侧顶点
-关于箭头中心轴严格镜像
-```
-
-禁止出现：
-
-* 左右不对称
-* 箭头歪斜
-* 箭头头部偏移
-* 自交 Polygon
-
----
-
-## 架构要求
-
-严格遵循 packages 目录现有实现。
-
-参考：
-
-* StraightArrow
-* FineArrow
-* Rectangle
-* Ellipse
-
-实现：
-
-```ts
-createObliqueArrowGeometry()
-
-createObliqueArrowGeometryFunction()
-
-ObliqueArrowTool
-```
-
-并注册：
-
-```ts
-PlotType.OBLIQUE_ARROW
-```
-
-通过公共入口导出。
-
-最终提供完整 TypeScript 实现，不要提供伪代码。
+ * 斜箭头（TaperedArrow）绘制工具类，继承自 BaseTool。
+ *
+ * 仅由两个控制点确定：
+ *  - P0: 箭尾中心点
+ *  - P1: 箭头尖端点
+ *
+ * 与 StraightArrowTool / EllipseTool 相同的 handle 编辑模式：
+ * 禁用默认 ModifyManager，创建独立的 handle 图层，
+ * 只暴露两个控制点供拖拽编辑，拖拽时重新生成箭头 Polygon。
+ *
+ * 箭头结构特点：
+ *  - 箭身宽度从尾部到头部逐渐增大（非矩形箭身）
+ *  - 尾部最窄，中部逐渐变宽，箭头头部最宽
+ *  - 左右完全对称
  */
+export class TaperedArrowTool extends BaseTool {
+  private handleSource: VectorSource;
+  private handleLayer: VectorLayer;
+  private handleModify: Modify;
+  private syncing = false;
+
+  constructor(map: Map, config?: PlotConfig) {
+    super(map, DrawType.TaperedArrow, config);
+
+    // 禁用默认 ModifyManager（箭头 Polygon 顶点不适合直接编辑）
+    this.modifyManager.setActive(false);
+
+    const ns = this.config.nodeStyle;
+
+    // 创建独立的 handle 图层，仅显示 P0、P1 两个控制点
+    this.handleSource = new VectorSource();
+    this.handleLayer = new VectorLayer({
+      source: this.handleSource,
+      style: new Style({
+        image: new CircleStyle({
+          radius: ns.radius ?? 6,
+          fill: new Fill({ color: ns.fill ?? '#ffffff' }),
+          stroke: new Stroke({
+            color: ns.stroke ?? this.config.strokeColor,
+            width: ns.strokeWidth ?? 2,
+          }),
+        }),
+      }),
+    });
+    map.addLayer(this.handleLayer);
+
+    // 创建独立的 Modify interaction，绑定到 handle 图层
+    this.handleModify = new Modify({
+      source: this.handleSource,
+      style: buildModifyStyle(this.config),
+    });
+    this.handleModify.on('modifystart', () => {
+      this.eventBus.emit(DrawEvent.MODIFY_START);
+    });
+    this.handleModify.on('modifyend', () => {
+      this.eventBus.emit(DrawEvent.MODIFY_END, { features: this.activeFeature ? [this.activeFeature] : [] });
+    });
+    map.addInteraction(this.handleModify);
+
+    this.bindArrowEvents();
+  }
+
+  private bindArrowEvents(): void {
+    // 绘制完成后，从 Polygon 属性中读取 geometryFunction 存入的原始控制点
+    this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
+      const geom = feature.getGeometry() as Polygon;
+      const controlPoints = geom.get('_controlPoints') as number[][] | undefined;
+      feature.set('plotType', 'taperedArrow');
+      feature.set('controlPoints', controlPoints || []);
+    });
+
+    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
+      this.showHandles(feature);
+    });
+
+    this.eventBus.on(DrawEvent.DESELECT, () => {
+      this.hideHandles();
+    });
+  }
+
+  private showHandles(feature: Feature): void {
+    this.hideHandles();
+    const controlPoints = feature.get('controlPoints') as number[][] | undefined;
+    if (!controlPoints || controlPoints.length < 2) return;
+
+    controlPoints.forEach((pt, i) => {
+      const handle = new Feature(new Point(pt));
+      handle.set('_handleIndex', i);
+      handle.getGeometry()!.on('change', () => this.syncFromHandles());
+      this.handleSource.addFeature(handle);
+    });
+  }
+
+  private hideHandles(): void {
+    this.handleSource.clear();
+  }
+
+  private syncFromHandles(): void {
+    if (this.syncing || !this.activeFeature) return;
+    this.syncing = true;
+
+    const handles = this.handleSource.getFeatures();
+    const controlPoints = handles
+      .sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'))
+      .map((h) => (h.getGeometry() as Point).getCoordinates());
+
+    this.activeFeature.set('controlPoints', controlPoints);
+    const geom = this.activeFeature.getGeometry() as Polygon;
+    geom.setCoordinates(buildTaperedArrow(controlPoints));
+
+    this.syncing = false;
+  }
+
+  // ─── Abstract implementations ─────────────────────────────────────────────
+
+  protected createGeometry(coordinates: number[][]): Geometry {
+    return new Polygon(buildTaperedArrow(coordinates));
+  }
+
+  addFeature(coordinates: number[][]): Feature {
+    const feature = super.addFeature(coordinates);
+    feature.set('plotType', 'taperedArrow');
+    feature.set('controlPoints', coordinates.slice(0, 2));
+    return feature;
+  }
+
+  setCoordinates(coordinates: number[][]): void {
+    if (!this.activeFeature || coordinates.length < 2) return;
+    this.activeFeature.set('controlPoints', coordinates.slice(0, 2));
+    const geom = this.activeFeature.getGeometry() as Polygon;
+    geom.setCoordinates(buildTaperedArrow(coordinates));
+    this.refreshHandles();
+  }
+
+  getCoordinates(): number[][] {
+    if (!this.activeFeature) return [];
+    return (this.activeFeature.get('controlPoints') as number[][]) || [];
+  }
+
+  getPointCount(): number {
+    return this.activeFeature ? 2 : 0;
+  }
+
+  updatePoint(index: number, coordinate: number[]): void {
+    if (index !== 0 && index !== 1) return;
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return;
+    coords[index] = coordinate;
+    this.setCoordinates(coords);
+  }
+
+  // ─── Convenience API ──────────────────────────────────────────────────────
+
+  /**
+   * 程序化添加一个斜箭头
+   * @param start 箭尾中心点坐标
+   * @param end 箭头尖端点坐标
+   * @returns 创建的要素对象
+   */
+  addArrow(start: number[], end: number[]): Feature {
+    return this.addFeature([start, end]);
+  }
+
+  /**
+   * 获取箭尾中心点坐标
+   * @returns 箭尾中心坐标，如果无活动要素则返回 null
+   */
+  getStart(): number[] | null {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return null;
+    return coords[0];
+  }
+
+  /**
+   * 获取箭头尖端点坐标
+   * @returns 箭头尖端坐标，如果无活动要素则返回 null
+   */
+  getEnd(): number[] | null {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return null;
+    return coords[1];
+  }
+
+  /**
+   * 获取箭头长度（P0 到 P1 的欧几里得距离）
+   * @returns 箭头长度，如果无活动要素则返回 0
+   */
+  getLength(): number {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return 0;
+    const [p0, p1] = coords;
+    return Math.sqrt((p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2);
+  }
+
+  // ─── Private helpers ──────────────────────────────────────────────────────
+
+  private refreshHandles(): void {
+    if (!this.activeFeature) return;
+    const controlPoints = this.activeFeature.get('controlPoints') as number[][] | undefined;
+    if (!controlPoints) return;
+
+    const handles = this.handleSource.getFeatures().sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
+    if (handles.length !== controlPoints.length) {
+      this.showHandles(this.activeFeature);
+      return;
+    }
+
+    this.syncing = true;
+    handles.forEach((h, i) => {
+      (h.getGeometry() as Point).setCoordinates(controlPoints[i]);
+    });
+    this.syncing = false;
+  }
+
+  // ─── Lifecycle ────────────────────────────────────────────────────────────
+
+  destroy(): void {
+    this.hideHandles();
+    this.map.removeInteraction(this.handleModify);
+    this.map.removeLayer(this.handleLayer);
+    super.destroy();
+  }
+}
