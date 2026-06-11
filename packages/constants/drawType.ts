@@ -21,4 +21,6 @@ export enum DrawType {
   TaperedArrow = 'TaperedArrow',
   /** 线箭头 */
   LineArrow = 'LineArrow',
+  /** 弓形 */
+  Arc = 'Arc',
 }

@@ -43,6 +43,7 @@ export default defineConfig({
           { text: '点', link: '/content/point' },
           { text: '折线', link: '/content/line' },
           { text: '自由线', link: '/content/freehand-line' },
+          { text: '弓形', link: '/content/arc' },
           { text: '多边形', link: '/content/polygon' },
           { text: '矩形', link: '/content/rectangle' },
           { text: '圆', link: '/content/circle' },

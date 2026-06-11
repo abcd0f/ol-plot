@@ -11,6 +11,20 @@ import type Point from 'ol/geom/Point';
 import type { PlotConfig } from '../types/config';
 import { DEFAULT_CONFIG } from '../constants/defaultConfig';
 
+import { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc';
+import { buildSector, getSectorControlPoints, createSectorGeometryFunction } from './sector';
+import { buildEllipse, getEllipseControlPoints, createEllipseGeometryFunction } from './ellipse';
+import { buildStraightArrow, createStraightArrowGeometryFunction } from './straightArrow';
+import { buildTaperedArrow, createTaperedArrowGeometryFunction } from './taperedArrow';
+import { buildLineArrowGeometries, createLineArrowGeometryFunction } from './lineArrow';
+
+export { buildArc, getArcControlPoints, createArcGeometryFunction };
+export { buildSector, getSectorControlPoints, createSectorGeometryFunction };
+export { buildEllipse, getEllipseControlPoints, createEllipseGeometryFunction };
+export { buildStraightArrow, createStraightArrowGeometryFunction };
+export { buildTaperedArrow, createTaperedArrowGeometryFunction };
+export { buildLineArrowGeometries, createLineArrowGeometryFunction };
+
 export function mergeConfig(config?: PlotConfig): Required<PlotConfig> {
   return {
     ...DEFAULT_CONFIG,
@@ -69,8 +83,13 @@ function extractVertices(feature: Feature): number[][] {
   if (!geom) return [];
 
   switch (geom.getType()) {
-    case 'LineString':
+    case 'LineString': {
+      const plotType = (feature as Feature).get('plotType');
+      if (plotType === 'arc') {
+        return (feature as Feature).get('controlPoints') || [];
+      }
       return (geom as LineString).getCoordinates();
+    }
     case 'Polygon': {
       const plotType = (feature as Feature).get('plotType');
       if (plotType === 'ellipse' || plotType === 'sector' || plotType === 'straightArrow' || plotType === 'taperedArrow') {
