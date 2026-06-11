@@ -19,4 +19,6 @@ export enum DrawType {
   StraightArrow = 'StraightArrow',
   /** 渐缩箭头 */
   TaperedArrow = 'TaperedArrow',
+  /** 箭头线 */
+  ArrowLine = 'ArrowLine',
 }
