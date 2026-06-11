@@ -10,6 +10,7 @@ import { createEllipseGeometryFunction } from '../utils/ellipse';
 import { createSectorGeometryFunction } from '../utils/sector';
 import { createStraightArrowGeometryFunction } from '../utils/straightArrow';
 import { createTaperedArrowGeometryFunction } from '../utils/taperedArrow';
+import { createLineArrowGeometryFunction } from '../utils/lineArrow';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -79,6 +80,10 @@ export class DrawManager {
     } else if (drawType === DrawType.TaperedArrow) {
       type = 'LineString';
       geometryFunction = createTaperedArrowGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 2;
+    } else if (drawType === DrawType.LineArrow) {
+      type = 'LineString';
+      geometryFunction = createLineArrowGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 2;
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';

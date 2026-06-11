@@ -1,9 +1,7 @@
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
-import LineString from 'ol/geom/LineString';
-import Polygon from 'ol/geom/Polygon';
-import GeometryCollection from 'ol/geom/GeometryCollection';
 import Point from 'ol/geom/Point';
+import GeometryCollection from 'ol/geom/GeometryCollection';
 import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
 import Modify from 'ol/interaction/Modify';
@@ -17,104 +15,38 @@ import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
 import { buildModifyStyle } from '../utils';
-import { dist, computeDirectionAndNormal } from '../utils/arrow';
+import { buildLineArrowGeometries } from '../utils/lineArrow';
 
 /**
- * Calculate arrow dimensions based on total length
+ * 线箭头（LineArrow）绘制工具类，继承自 BaseTool。
+ *
+ * 仅由两个控制点确定：
+ *  - P0: 箭尾点
+ *  - P1: 箭头尖端点
+ *
+ * 图形由 GeometryCollection 组成：
+ *  - LineString: 箭身（P0 → P1），仅描边无填充
+ *  - Polygon: 实心箭头头部（三角形），填充 + 描边
+ *
+ * 与 StraightArrowTool / TaperedArrowTool 相同的 handle 编辑模式：
+ * 禁用默认 ModifyManager，创建独立的 handle 图层，
+ * 只暴露两个控制点供拖拽编辑，拖拽时重新生成箭头几何。
  */
-function calculateArrowHeadSize(length: number): { headLength: number; headWidth: number } {
-  const headLength = Math.max(length * 0.15, 10);
-  const headWidth = Math.max(length * 0.08, 6);
-  return { headLength, headWidth };
-}
-
-/**
- * Build arrow head polygon coordinates
- */
-function buildArrowHead(tail: number[], head: number[]): number[][][] {
-  const length = dist(tail, head);
-
-  if (length < 1e-10) {
-    // Degenerate case - points are the same
-    return [[tail, tail, tail, tail]];
-  }
-
-  const { dx, dy, nx, ny } = computeDirectionAndNormal(tail, head, length);
-  const { headLength, headWidth } = calculateArrowHeadSize(length);
-
-  // Calculate base center of arrowhead (where it meets the line)
-  const baseCenterX = head[0] - dx * headLength;
-  const baseCenterY = head[1] - dy * headLength;
-
-  // Calculate left and right corners of the base
-  const headLeftX = baseCenterX + nx * headWidth / 2;
-  const headLeftY = baseCenterY + ny * headWidth /2;
-
-  const headRightX = baseCenterX - nx * headWidth /2;
-  const headRightY = baseCenterY - ny * headWidth /2;
-
-  // Create the ring for the triangle (closed polygon)
-  const ring: number[][] = [
-    [headLeftX, headLeftY],  // left base corner
-    [head[0], head[1]],     // tip
-    [headRightX, headRightY], // right base corner
-    [headLeftX, headLeftY]   // back to left base corner to close
-  ];
-
-  return [ring];
-}
-
-/**
- * Create the geometries for an arrow line from control points
- */
-function createArrowLineGeometries(controlPoints: number[][]): Geometry[] {
-  if (controlPoints.length < 2) return [];
-
-  const [tail, head] = controlPoints;
-
-  // Create line string for the body
-  const lineString = new LineString([tail, head]);
-
-  // Create polygon for the arrow head
-  const arrowHead = new Polygon(buildArrowHead(tail, head));
-
-  return [lineString, arrowHead];
-}
-
-/**
- * Create a geometry function for real-time preview during drawing
- */
-export function createArrowLineGeometryFunction() {
-  return (coordinates: number[][], geometry?: GeometryCollection): GeometryCollection => {
-    const geom = geometry || new GeometryCollection([]);
-
-    if (coordinates.length < 2) {
-      return geom;
-    }
-
-    const controlPoints = coordinates.slice(0, 2);
-    geom.setGeometries(createArrowLineGeometries(controlPoints));
-    geom.set('_controlPoints', controlPoints);
-
-    return geom;
-  };
-}
-
-export class ArrowLineTool extends BaseTool {
+export class LineArrowTool extends BaseTool {
   private handleSource: VectorSource;
   private handleLayer: VectorLayer;
   private handleModify: Modify;
   private syncing = false;
 
   constructor(map: Map, config?: PlotConfig) {
-    super(map, DrawType.ArrowLine, config);
+    super(map, DrawType.LineArrow, config);
 
-    // Disable default ModifyManager since we have complex geometry
+    // 禁用默认 ModifyManager（GeometryCollection 不能直接用 Modify 编辑）
     this.modifyManager.setActive(false);
 
     const ns = this.config.nodeStyle;
 
-    // Create handle layer for control points
+    // 创建独立的 handle 图层，仅显示 P0、P1 两个控制点
     this.handleSource = new VectorSource();
     this.handleLayer = new VectorLayer({
       source: this.handleSource,
@@ -131,32 +63,28 @@ export class ArrowLineTool extends BaseTool {
     });
     map.addLayer(this.handleLayer);
 
-    // Create modify interaction for handles
+    // 创建独立的 Modify interaction，绑定到 handle 图层
     this.handleModify = new Modify({
       source: this.handleSource,
       style: buildModifyStyle(this.config),
     });
-
-    // Wire up events
     this.handleModify.on('modifystart', () => {
       this.eventBus.emit(DrawEvent.MODIFY_START);
     });
-
     this.handleModify.on('modifyend', () => {
       this.eventBus.emit(DrawEvent.MODIFY_END, { features: this.activeFeature ? [this.activeFeature] : [] });
     });
-
     map.addInteraction(this.handleModify);
 
-    this.bindEvents();
+    this.bindArrowEvents();
   }
 
-  private bindEvents(): void {
-    // On draw end, extract and store control points
+  private bindArrowEvents(): void {
+    // 绘制完成后，从 geometry 属性中读取 geometryFunction 存入的原始控制点
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
       const geom = feature.getGeometry() as GeometryCollection;
       const controlPoints = geom.get('_controlPoints') as number[][] | undefined;
-      feature.set('plotType', 'arrowLine');
+      feature.set('plotType', 'lineArrow');
       feature.set('controlPoints', controlPoints || []);
     });
 
@@ -197,19 +125,22 @@ export class ArrowLineTool extends BaseTool {
 
     this.activeFeature.set('controlPoints', controlPoints);
     const geom = this.activeFeature.getGeometry() as GeometryCollection;
-    geom.setGeometries(createArrowLineGeometries(controlPoints));
+    const [lineString, arrowHead] = buildLineArrowGeometries(controlPoints);
+    geom.setGeometries([lineString, arrowHead]);
 
     this.syncing = false;
   }
 
-  // Abstract method implementations
+  // ─── Abstract implementations ─────────────────────────────────────────────
+
   protected createGeometry(coordinates: number[][]): Geometry {
-    return new GeometryCollection(createArrowLineGeometries(coordinates));
+    const [lineString, arrowHead] = buildLineArrowGeometries(coordinates);
+    return new GeometryCollection([lineString, arrowHead]);
   }
 
   addFeature(coordinates: number[][]): Feature {
     const feature = super.addFeature(coordinates);
-    feature.set('plotType', 'arrowLine');
+    feature.set('plotType', 'lineArrow');
     feature.set('controlPoints', coordinates.slice(0, 2));
     return feature;
   }
@@ -218,7 +149,8 @@ export class ArrowLineTool extends BaseTool {
     if (!this.activeFeature || coordinates.length < 2) return;
     this.activeFeature.set('controlPoints', coordinates.slice(0, 2));
     const geom = this.activeFeature.getGeometry() as GeometryCollection;
-    geom.setGeometries(createArrowLineGeometries(coordinates));
+    const [lineString, arrowHead] = buildLineArrowGeometries(coordinates);
+    geom.setGeometries([lineString, arrowHead]);
     this.refreshHandles();
   }
 
@@ -239,47 +171,50 @@ export class ArrowLineTool extends BaseTool {
     this.setCoordinates(coords);
   }
 
-  // Convenience API
+  // ─── Convenience API ──────────────────────────────────────────────────────
+
   /**
-   * Programmatically add an arrow line
-   * @param tail Tail point coordinates
-   * @param head Head point coordinates
-   * @returns Created feature
+   * 程序化添加一个线箭头
+   * @param start 箭尾点坐标
+   * @param end 箭头尖端点坐标
+   * @returns 创建的要素对象
    */
-  addArrowLine(tail: number[], head: number[]): Feature {
-    return this.addFeature([tail, head]);
+  addArrow(start: number[], end: number[]): Feature {
+    return this.addFeature([start, end]);
   }
 
   /**
-   * Get tail point coordinates
-   * @returns Tail coordinates or null
+   * 获取箭尾点坐标
+   * @returns 箭尾坐标，如果无活动要素则返回 null
    */
-  getTail(): number[] | null {
+  getStart(): number[] | null {
     const coords = this.getCoordinates();
     if (coords.length < 2) return null;
     return coords[0];
   }
 
   /**
-   * Get head point coordinates
-   * @returns Head coordinates or null
+   * 获取箭头尖端点坐标
+   * @returns 箭头尖端坐标，如果无活动要素则返回 null
    */
-  getHead(): number[] | null {
+  getEnd(): number[] | null {
     const coords = this.getCoordinates();
     if (coords.length < 2) return null;
     return coords[1];
   }
 
   /**
-   * Get arrow line length
-   * @returns Length or 0
+   * 获取箭头长度（P0 到 P1 的欧几里得距离）
+   * @returns 箭头长度，如果无活动要素则返回 0
    */
   getLength(): number {
     const coords = this.getCoordinates();
     if (coords.length < 2) return 0;
-    const [tail, head] = coords;
-    return dist(tail, head);
+    const [p0, p1] = coords;
+    return Math.sqrt((p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2);
   }
+
+  // ─── Private helpers ──────────────────────────────────────────────────────
 
   private refreshHandles(): void {
     if (!this.activeFeature) return;
@@ -298,6 +233,8 @@ export class ArrowLineTool extends BaseTool {
     });
     this.syncing = false;
   }
+
+  // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   destroy(): void {
     this.hideHandles();

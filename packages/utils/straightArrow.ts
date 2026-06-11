@@ -6,13 +6,16 @@ import { dist, computeDirectionAndNormal, createDegeneratePolygon } from './arro
 const BODY_WIDTH_RATIO = 0.1;
 
 /** 箭头头部宽度占箭头总长度的比例 */
-const HEAD_WIDTH_RATIO = 0.30;
+const HEAD_WIDTH_RATIO = 0.3;
 
 /** 箭头身体长度占箭头总长度的比例 */
 const BODY_LENGTH_RATIO = 0.85;
 
 /** 控制翼展开程度 */
 const WING_SCALE = 0.9;
+
+/** 箭翼向后收缩比例 */
+const HEAD_BACK_FACTOR = 0.04;
 
 /**
  * 根据两个控制点生成直箭头 Polygon 坐标。
@@ -56,7 +59,7 @@ export function buildStraightArrow(controlPoints: number[][]): number[][][] {
   const bx = p0[0] + dx * bodyLength;
   const by = p0[1] + dy * bodyLength;
 
-  const wingBack = length * 0.02;
+  const wingBack = length * HEAD_BACK_FACTOR;
 
   const leftWing = [
     bx + nx * headHalfWidth * WING_SCALE - dx * wingBack,

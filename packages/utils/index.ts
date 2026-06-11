@@ -82,6 +82,13 @@ function extractVertices(feature: Feature): number[][] {
       if (editIndices) return editIndices.map((i) => verts[i]).filter(Boolean);
       return verts;
     }
+    case 'GeometryCollection': {
+      const plotType = (feature as Feature).get('plotType');
+      if (plotType === 'lineArrow') {
+        return (feature as Feature).get('controlPoints') || [];
+      }
+      return [];
+    }
     case 'Point':
       return [(geom as Point).getCoordinates()];
     case 'Circle': {

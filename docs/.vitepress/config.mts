@@ -50,6 +50,7 @@ export default defineConfig({
           { text: '扇形', link: '/content/sector' },
           { text: '直箭头', link: '/content/straight-arrow' },
           { text: '渐缩箭头', link: '/content/tapered-arrow' },
+          { text: '线箭头', link: '/content/line-arrow' },
         ],
       },
     ],
