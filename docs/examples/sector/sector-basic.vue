@@ -2,7 +2,7 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar color="#1890ff" hint="按住鼠标拖动绘制 · 松开自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中" @clear="handleClear" />
+    <MapToolbar color="#fa8c16" @clear="handleClear" />
   </div>
 </template>
 
@@ -14,17 +14,18 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { FreehandLineTool } from '../../../packages';
+import { SectorTool } from '../../../packages/index.ts';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
 
 let map: OlMap;
-let tool: FreehandLineTool;
+let tool: SectorTool;
 
 onMounted(() => {
+  // 1. 初始化地图
   map = new OlMap({
-    target: el.value,
+    target: el.value!,
     layers: [
       new TileLayer({
         source: new XYZ({
@@ -38,11 +39,24 @@ onMounted(() => {
     }),
   });
 
-  tool = new FreehandLineTool(map, {
-    strokeColor: '#1890ff',
+  // 2. 初始化扇形工具（配置没问题）
+  tool = new SectorTool(map, {
+    strokeColor: '#52c41a',
     strokeWidth: 2,
-    fillColor: 'rgba(24,144,255,0.1)',
-    nodeStyle: { radius: 5, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
+    lineDash: [20, 10],
+    fillColor: 'rgba(82,196,26,0.15)',
+    nodeStyle: {
+      radius: 5,
+      fill: '#fff',
+      stroke: '#52c41a',
+      strokeWidth: 2,
+    },
+  });
+
+  // 可选：监听绘制完成
+  tool.on('drawend', ({ feature }) => {
+    console.log('扇形绘制完成', feature);
+    console.log('3个控制点：', tool.getCoordinates());
   });
 });
 
@@ -60,11 +74,12 @@ function handleClear() {
 .map-container {
   position: relative;
   width: 100%;
+  height: 100%; /* 关键修复 */
   font-size: 13px;
 }
 
 .map-wrapper {
   width: 100%;
-  height: 500px;
+  height: 500px; /* 固定高度没问题 */
 }
 </style>

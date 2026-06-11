@@ -2,7 +2,11 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar color="#fa8c16" @clear="handleClear" />
+    <MapToolbar
+      color="#13c2c2"
+      hint="依次点击三点绘制弓形 · 完成后自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中"
+      @clear="handleClear"
+    />
   </div>
 </template>
 
@@ -14,13 +18,13 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { LineArrowTool } from '../../../packages/index.ts';
+import { ArcTool } from '../../../packages';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
 
 let map: OlMap;
-let tool: LineArrowTool;
+let tool: ArcTool;
 
 onMounted(() => {
   map = new OlMap({
@@ -35,11 +39,11 @@ onMounted(() => {
     view: new View({ center: fromLonLat([116.3974, 39.9093]), zoom: 10 }),
   });
 
-  tool = new LineArrowTool(map, {
-    strokeColor: '#722ed1',
-    strokeWidth: 2,
-    fillColor: 'rgba(114,46,209,0.1)',
-    nodeStyle: { radius: 5, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
+  tool = new ArcTool(map, {
+    strokeColor: '#13c2c2',
+    strokeWidth: 3,
+    lineDash: [6, 3],
+    nodeStyle: { radius: 5, fill: '#fff', stroke: '#13c2c2', strokeWidth: 2 },
   });
 });
 

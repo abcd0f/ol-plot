@@ -5,8 +5,8 @@ import { vitepressDemoPlugin } from 'vitepress-demo-plugin';
 
 export default defineConfig({
   title: 'OL-Plot',
-  titleTemplate: '好用的 ol 封装库',
-  description: '简单使用的工具库',
+  titleTemplate: ':title — OpenLayers 地图绘图工具库',
+  description: '基于 OpenLayers 的矢量图形绘制方案，提供绘制、选择、编辑全生命周期管理',
   // base: './',
   lang: 'zh-CN',
   outDir: '../dist',
@@ -32,26 +32,44 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
+      { text: '指南', link: '/guide/quickstart' },
+      { text: '组件', link: '/components/point' },
       { text: 'API', link: '/api' },
     ],
 
     sidebar: [
       {
-        text: '绘制工具',
-        collapsed: true,
+        text: '指南',
+        collapsed: false,
         items: [
-          { text: '点', link: '/content/point' },
-          { text: '折线', link: '/content/line' },
-          { text: '自由线', link: '/content/freehand-line' },
-          { text: '弓形', link: '/content/arc' },
-          { text: '多边形', link: '/content/polygon' },
-          { text: '矩形', link: '/content/rectangle' },
-          { text: '圆', link: '/content/circle' },
-          { text: '椭圆', link: '/content/ellipse' },
-          { text: '扇形', link: '/content/sector' },
-          { text: '直箭头', link: '/content/straight-arrow' },
-          { text: '渐缩箭头', link: '/content/tapered-arrow' },
-          { text: '线箭头', link: '/content/line-arrow' },
+          { text: '安装', link: '/guide/installation' },
+          { text: '快速开始', link: '/guide/quickstart' },
+          { text: '事件系统', link: '/guide/events' },
+        ],
+      },
+      {
+        text: '绘图组件',
+        collapsed: false,
+        items: [
+          { text: '点 Point', link: '/components/point' },
+          { text: '折线 Line', link: '/components/line' },
+          { text: '自由线 FreehandLine', link: '/components/freehand-line' },
+          { text: '多边形 Polygon', link: '/components/polygon' },
+          { text: '矩形 Rectangle', link: '/components/rectangle' },
+          { text: '圆 Circle', link: '/components/circle' },
+          { text: '椭圆 Ellipse', link: '/components/ellipse' },
+          { text: '扇形 Sector', link: '/components/sector' },
+          { text: '弓形 Arc', link: '/components/arc' },
+          { text: '直箭头 StraightArrow', link: '/components/straight-arrow' },
+          { text: '斜箭头 TaperedArrow', link: '/components/tapered-arrow' },
+          { text: '线箭头 LineArrow', link: '/components/line-arrow' },
+        ],
+      },
+      {
+        text: '参考',
+        collapsed: false,
+        items: [
+          { text: 'API 参考', link: '/api' },
         ],
       },
     ],
