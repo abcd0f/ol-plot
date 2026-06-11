@@ -48,7 +48,7 @@ export default defineConfig({
           { text: '圆', link: '/content/circle' },
           { text: '椭圆', link: '/content/ellipse' },
           { text: '扇形', link: '/content/sector' },
-          { text: '箭头', link: '/content/arrow' },
+          { text: '直箭头', link: '/content/arrow' },
         ],
       },
     ],
