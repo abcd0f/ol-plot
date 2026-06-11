@@ -17,4 +17,6 @@ export enum DrawType {
   Sector = 'Sector',
   /** 直箭头 */
   StraightArrow = 'StraightArrow',
+  /** 渐缩箭头 */
+  TaperedArrow = 'TaperedArrow',
 }

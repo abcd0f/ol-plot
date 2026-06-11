@@ -14,6 +14,7 @@ export { CircleTool } from './tools/CircleTool';
 export { EllipseTool } from './tools/EllipseTool';
 export { SectorTool } from './tools/SectorTool';
 export { StraightArrowTool } from './tools/StraightArrowTool';
+export { TaperedArrowTool } from './tools/TaperedArrowTool';
 
 export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
 export type { DrawEventType } from './constants';

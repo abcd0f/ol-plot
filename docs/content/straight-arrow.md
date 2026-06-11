@@ -8,4 +8,4 @@ title: 直箭头
 
 # 基础圆
 
-<demo vue="../examples/arrow/arrow-base.vue" />
+<demo vue="../examples/straight-arrow/arrow-base.vue" />
