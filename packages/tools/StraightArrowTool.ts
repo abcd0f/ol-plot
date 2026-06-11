@@ -15,21 +15,34 @@ import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
 import { buildModifyStyle } from '../utils';
-import { buildTriangleArrow, getTriangleArrowControlPoints } from '../utils/triangleArrow';
+import { buildStraightArrow } from '../utils/straightArrow';
 
-export class TriangleArrowTool extends BaseTool {
+/**
+ * 直箭头绘制工具类，继承自 BaseTool。
+ *
+ * 仅由两个控制点确定：
+ *  - P0: 箭尾中心点
+ *  - P1: 箭头尖端点
+ *
+ * 与 EllipseTool / SectorTool 相同的 handle 编辑模式：
+ * 禁用默认 ModifyManager，创建独立的 handle 图层，
+ * 只暴露两个控制点供拖拽编辑，拖拽时重新生成箭头 Polygon。
+ */
+export class StraightArrowTool extends BaseTool {
   private handleSource: VectorSource;
   private handleLayer: VectorLayer;
   private handleModify: Modify;
   private syncing = false;
 
   constructor(map: Map, config?: PlotConfig) {
-    super(map, DrawType.TriangleArrow, config);
+    super(map, DrawType.StraightArrow, config);
 
+    // 禁用默认 ModifyManager（箭头 Polygon 顶点过多，不适合直接编辑）
     this.modifyManager.setActive(false);
 
     const ns = this.config.nodeStyle;
 
+    // 创建独立的 handle 图层，仅显示 P0、P1 两个控制点
     this.handleSource = new VectorSource();
     this.handleLayer = new VectorLayer({
       source: this.handleSource,
@@ -46,6 +59,7 @@ export class TriangleArrowTool extends BaseTool {
     });
     map.addLayer(this.handleLayer);
 
+    // 创建独立的 Modify interaction，绑定到 handle 图层
     this.handleModify = new Modify({
       source: this.handleSource,
       style: buildModifyStyle(this.config),
@@ -58,15 +72,16 @@ export class TriangleArrowTool extends BaseTool {
     });
     map.addInteraction(this.handleModify);
 
-    this.bindTriangleArrowEvents();
+    this.bindArrowEvents();
   }
 
-  private bindTriangleArrowEvents(): void {
+  private bindArrowEvents(): void {
+    // 绘制完成后，从 Polygon 属性中读取 geometryFunction 存入的原始控制点
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
       const geom = feature.getGeometry() as Polygon;
-      const controlPoints = getTriangleArrowControlPoints(geom);
-      feature.set('plotType', 'triangleArrow');
-      feature.set('controlPoints', controlPoints);
+      const controlPoints = geom.get('_controlPoints') as number[][] | undefined;
+      feature.set('plotType', 'straightArrow');
+      feature.set('controlPoints', controlPoints || []);
     });
 
     this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
@@ -81,7 +96,7 @@ export class TriangleArrowTool extends BaseTool {
   private showHandles(feature: Feature): void {
     this.hideHandles();
     const controlPoints = feature.get('controlPoints') as number[][] | undefined;
-    if (!controlPoints) return;
+    if (!controlPoints || controlPoints.length < 2) return;
 
     controlPoints.forEach((pt, i) => {
       const handle = new Feature(new Point(pt));
@@ -106,7 +121,7 @@ export class TriangleArrowTool extends BaseTool {
 
     this.activeFeature.set('controlPoints', controlPoints);
     const geom = this.activeFeature.getGeometry() as Polygon;
-    geom.setCoordinates(buildTriangleArrow(controlPoints));
+    geom.setCoordinates(buildStraightArrow(controlPoints));
 
     this.syncing = false;
   }
@@ -114,21 +129,21 @@ export class TriangleArrowTool extends BaseTool {
   // ─── Abstract implementations ─────────────────────────────────────────────
 
   protected createGeometry(coordinates: number[][]): Geometry {
-    return new Polygon(buildTriangleArrow(coordinates));
+    return new Polygon(buildStraightArrow(coordinates));
   }
 
   addFeature(coordinates: number[][]): Feature {
     const feature = super.addFeature(coordinates);
-    feature.set('plotType', 'triangleArrow');
-    feature.set('controlPoints', coordinates.slice(0, 3));
+    feature.set('plotType', 'straightArrow');
+    feature.set('controlPoints', coordinates.slice(0, 2));
     return feature;
   }
 
   setCoordinates(coordinates: number[][]): void {
-    if (!this.activeFeature || coordinates.length < 3) return;
-    this.activeFeature.set('controlPoints', coordinates.slice(0, 3));
+    if (!this.activeFeature || coordinates.length < 2) return;
+    this.activeFeature.set('controlPoints', coordinates.slice(0, 2));
     const geom = this.activeFeature.getGeometry() as Polygon;
-    geom.setCoordinates(buildTriangleArrow(coordinates));
+    geom.setCoordinates(buildStraightArrow(coordinates));
     this.refreshHandles();
   }
 
@@ -138,21 +153,58 @@ export class TriangleArrowTool extends BaseTool {
   }
 
   getPointCount(): number {
-    return this.activeFeature ? 3 : 0;
+    return this.activeFeature ? 2 : 0;
   }
 
   updatePoint(index: number, coordinate: number[]): void {
-    if (index < 0 || index > 2) return;
+    if (index !== 0 && index !== 1) return;
     const coords = this.getCoordinates();
-    if (coords.length < 3) return;
+    if (coords.length < 2) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
   }
 
   // ─── Convenience API ──────────────────────────────────────────────────────
 
-  addTriangleArrow(p0: number[], p1: number[], p2: number[]): Feature {
-    return this.addFeature([p0, p1, p2]);
+  /**
+   * 程序化添加一个直箭头
+   * @param start 箭尾中心点坐标
+   * @param end 箭头尖端点坐标
+   * @returns 创建的要素对象
+   */
+  addArrow(start: number[], end: number[]): Feature {
+    return this.addFeature([start, end]);
+  }
+
+  /**
+   * 获取箭尾中心点坐标
+   * @returns 箭尾中心坐标，如果无活动要素则返回 null
+   */
+  getStart(): number[] | null {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return null;
+    return coords[0];
+  }
+
+  /**
+   * 获取箭头尖端点坐标
+   * @returns 箭头尖端坐标，如果无活动要素则返回 null
+   */
+  getEnd(): number[] | null {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return null;
+    return coords[1];
+  }
+
+  /**
+   * 获取箭头长度（P0 到 P1 的欧几里得距离）
+   * @returns 箭头长度，如果无活动要素则返回 0
+   */
+  getLength(): number {
+    const coords = this.getCoordinates();
+    if (coords.length < 2) return 0;
+    const [p0, p1] = coords;
+    return Math.sqrt((p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2);
   }
 
   // ─── Private helpers ──────────────────────────────────────────────────────

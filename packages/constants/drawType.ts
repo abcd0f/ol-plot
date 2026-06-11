@@ -15,6 +15,6 @@ export enum DrawType {
   Ellipse = 'Ellipse',
   /** 扇形 */
   Sector = 'Sector',
-  /** 三角箭头 */
-  TriangleArrow = 'TriangleArrow',
+  /** 直箭头 */
+  StraightArrow = 'StraightArrow',
 }

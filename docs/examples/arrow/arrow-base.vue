@@ -14,13 +14,13 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { TriangleArrowTool } from '../../../packages';
+import { StraightArrowTool } from '../../../packages';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
 
 let map: OlMap;
-let tool: TriangleArrowTool;
+let tool: StraightArrowTool;
 
 onMounted(() => {
   map = new OlMap({
@@ -35,7 +35,7 @@ onMounted(() => {
     view: new View({ center: fromLonLat([116.3974, 39.9093]), zoom: 10 }),
   });
 
-  tool = new TriangleArrowTool(map, {
+  tool = new StraightArrowTool(map, {
     strokeColor: '#722ed1',
     strokeWidth: 2,
     fillColor: 'rgba(114,46,209,0.1)',
