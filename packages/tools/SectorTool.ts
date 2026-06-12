@@ -104,32 +104,46 @@ export class SectorTool extends BaseTool {
     const controlPoints = sorted.map((h) => (h.getGeometry() as Point).getCoordinates());
 
     const prevControlPoints = this.activeFeature.get('controlPoints') as number[][];
-    const [center, radiusPoint, anglePoint] = controlPoints;
+    const [center, ,] = controlPoints;
+    const [prevCenter] = prevControlPoints;
 
+    // 检测哪个 handle 被拖拽了
+    const centerDragged = center[0] !== prevCenter[0] || center[1] !== prevCenter[1];
+
+    if (centerDragged) {
+      // 圆心被拖拽：只更新几何，不重投影端点
+      this.activeFeature.set('controlPoints', controlPoints);
+      const geom = this.activeFeature.getGeometry() as Polygon;
+      geom.setCoordinates(buildSector(controlPoints));
+      this.syncing = false;
+      return;
+    }
+
+    // 圆弧端点被拖拽：被拖拽的端点决定新半径，另一个端点按新半径重投影
+    const [, radiusPoint, anglePoint] = controlPoints;
     const radiusDist = Math.sqrt((radiusPoint[0] - center[0]) ** 2 + (radiusPoint[1] - center[1]) ** 2);
     const angleDist = Math.sqrt((anglePoint[0] - center[0]) ** 2 + (anglePoint[1] - center[1]) ** 2);
-
     const prevRadius = Math.sqrt(
       (prevControlPoints[1][0] - prevControlPoints[0][0]) ** 2 +
         (prevControlPoints[1][1] - prevControlPoints[0][1]) ** 2,
     );
 
-    // 判断哪个端点被拖拽了（距离发生变化的那个决定新半径）
-    let radius: number;
-    if (Math.abs(radiusDist - prevRadius) > Math.abs(angleDist - prevRadius)) {
-      radius = radiusDist;
-    } else {
-      radius = angleDist;
-    }
+    // 距离变化更大的那个是当前被 Modify 拖拽的 handle
+    const radiusPointDragged = Math.abs(radiusDist - prevRadius) > Math.abs(angleDist - prevRadius);
+    const radius = radiusPointDragged ? radiusDist : angleDist;
 
     if (radius > 0) {
-      const startAngle = Math.atan2(radiusPoint[1] - center[1], radiusPoint[0] - center[0]);
-      controlPoints[1] = [center[0] + radius * Math.cos(startAngle), center[1] + radius * Math.sin(startAngle)];
-      (sorted[1].getGeometry() as Point).setCoordinates(controlPoints[1]);
-
-      const endAngle = Math.atan2(anglePoint[1] - center[1], anglePoint[0] - center[0]);
-      controlPoints[2] = [center[0] + radius * Math.cos(endAngle), center[1] + radius * Math.sin(endAngle)];
-      (sorted[2].getGeometry() as Point).setCoordinates(controlPoints[2]);
+      if (radiusPointDragged) {
+        // handle[1] 被拖拽 → 重投影 handle[2]，不碰 handle[1]（避免与 Modify 冲突）
+        const endAngle = Math.atan2(anglePoint[1] - center[1], anglePoint[0] - center[0]);
+        controlPoints[2] = [center[0] + radius * Math.cos(endAngle), center[1] + radius * Math.sin(endAngle)];
+        (sorted[2].getGeometry() as Point).setCoordinates(controlPoints[2]);
+      } else {
+        // handle[2] 被拖拽 → 重投影 handle[1]，不碰 handle[2]（避免与 Modify 冲突）
+        const startAngle = Math.atan2(radiusPoint[1] - center[1], radiusPoint[0] - center[0]);
+        controlPoints[1] = [center[0] + radius * Math.cos(startAngle), center[1] + radius * Math.sin(startAngle)];
+        (sorted[1].getGeometry() as Point).setCoordinates(controlPoints[1]);
+      }
     }
 
     this.activeFeature.set('controlPoints', controlPoints);
