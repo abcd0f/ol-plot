@@ -7,7 +7,6 @@ import type { EventBus } from './EventBus';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { createEllipseGeometryFunction } from '../geometry/ellipse';
-import { createSectorGeometryFunction } from '../geometry/sector';
 import { createStraightArrowGeometryFunction } from '../geometry/arrow/straight';
 import { createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
 import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
@@ -72,10 +71,6 @@ export class DrawManager {
     } else if (drawType === DrawType.Ellipse) {
       type = 'Circle';
       geometryFunction = createEllipseGeometryFunction() as unknown as GeometryFunction;
-    } else if (drawType === DrawType.Sector) {
-      type = 'LineString';
-      geometryFunction = createSectorGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 3;
     } else if (drawType === DrawType.StraightArrow) {
       type = 'LineString';
       geometryFunction = createStraightArrowGeometryFunction() as unknown as GeometryFunction;
