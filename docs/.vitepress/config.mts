@@ -63,7 +63,6 @@ export default defineConfig({
           { text: '直箭头 StraightArrow', link: '/components/straight-arrow' },
           { text: '斜箭头 TaperedArrow', link: '/components/tapered-arrow' },
           { text: '线箭头 LineArrow', link: '/components/line-arrow' },
-          { text: '钳击箭头', link: '/components/pincer-arrow' },
         ],
       },
       {
