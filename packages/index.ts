@@ -17,7 +17,6 @@ export { StraightArrowTool } from './tools/StraightArrowTool';
 export { TaperedArrowTool } from './tools/TaperedArrowTool';
 export { LineArrowTool } from './tools/LineArrowTool';
 export { ArcTool } from './tools/ArcTool';
-export { PincerArrowTool } from './tools/PincerArrowTool';
 
 export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
 export type { DrawEventType } from './constants';

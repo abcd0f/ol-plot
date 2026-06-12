@@ -2,11 +2,7 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar
-      color="#fa8c16"
-      hint="单击起点再单击对角点完成 · 完成后自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中"
-      @clear="handleClear"
-    />
+    <MapToolbar color="#fa8c16" @clear="handleClear" />
   </div>
 </template>
 
@@ -18,13 +14,13 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { RectangleTool } from '../../../packages';
+import { CircleTool } from '../../../packages/index.ts';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
 
 let map: OlMap;
-let tool: RectangleTool;
+let tool: CircleTool;
 
 onMounted(() => {
   map = new OlMap({
@@ -39,11 +35,11 @@ onMounted(() => {
     view: new View({ center: fromLonLat([116.3974, 39.9093]), zoom: 10 }),
   });
 
-  tool = new RectangleTool(map, {
-    strokeColor: '#fa8c16',
+  tool = new CircleTool(map, {
+    strokeColor: '#722ed1',
     strokeWidth: 2,
-    fillColor: 'rgba(250,140,22,0.15)',
-    nodeStyle: { radius: 5, fill: '#fff', stroke: '#fa8c16', strokeWidth: 2 },
+    fillColor: 'rgba(114,46,209,0.1)',
+    nodeStyle: { radius: 5, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
   });
 });
 

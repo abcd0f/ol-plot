@@ -10,7 +10,7 @@ title: 线箭头
 
 按住鼠标从箭尾拖拽到箭头尖端，松开鼠标完成绘制。编辑时显示 2 个控制点。
 
-<demo vue="../examples/line-arrow/line-arrow-basic.vue" />
+<demo vue="../examples/line-arrow/basic.vue" />
 
 ## 绘制行为
 

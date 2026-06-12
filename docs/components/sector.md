@@ -10,7 +10,7 @@ title: 扇形
 
 绘制时依次确定圆心、半径方向和角度终点，完成扇形绘制。编辑时显示 3 个控制点。
 
-<demo vue="../examples/sector/sector-basic.vue" />
+<demo vue="../examples/sector/basic.vue" />
 
 ## 绘制行为
 

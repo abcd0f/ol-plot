@@ -2,7 +2,11 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar color="#1890ff" @clear="handleClear" />
+    <MapToolbar
+      color="#eb2f96"
+      hint="按住拖拽绘制箭头 · 松开自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中"
+      @clear="handleClear"
+    />
   </div>
 </template>
 
@@ -14,13 +18,13 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { LineTool } from '../../../packages';
+import { LineArrowTool } from '../../../packages/index.ts';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
 
 let map: OlMap;
-let tool: LineTool;
+let tool: LineArrowTool;
 
 onMounted(() => {
   map = new OlMap({
@@ -32,17 +36,14 @@ onMounted(() => {
         }),
       }),
     ],
-    view: new View({
-      center: fromLonLat([116.3974, 39.9093]),
-      zoom: 10,
-    }),
+    view: new View({ center: fromLonLat([116.3974, 39.9093]), zoom: 10 }),
   });
 
-  tool = new LineTool(map, {
-    strokeColor: '#1890ff',
-    strokeWidth: 2,
-    fillColor: 'rgba(24,144,255,0.1)',
-    nodeStyle: { radius: 5, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
+  tool = new LineArrowTool(map, {
+    strokeColor: '#eb2f96',
+    strokeWidth: 3,
+    fillColor: 'rgba(235, 47, 150, 0.3)',
+    nodeStyle: { radius: 5, fill: '#fff', stroke: '#eb2f96', strokeWidth: 2 },
   });
 });
 

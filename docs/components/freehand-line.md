@@ -10,7 +10,7 @@ title: 自由线
 
 按住鼠标拖动绘制自由线条，松开鼠标自动结束绘制并进入编辑态。
 
-<demo vue="../examples/free-line/free-line-basic.vue" />
+<demo vue="../examples/free-line/basic.vue" />
 
 ## 绘制行为
 

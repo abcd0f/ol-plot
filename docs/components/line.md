@@ -10,7 +10,7 @@ title: 折线
 
 单击地图添加节点，双击地图完成绘制。绘制完成后自动选中，进入编辑态可拖拽各顶点。
 
-<demo vue="../examples/line/line-basic.vue" />
+<demo vue="../examples/line/basic.vue" />
 
 ## 绘制行为
 

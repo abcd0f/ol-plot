@@ -10,7 +10,7 @@ title: 点
 
 单击地图即可放置一个点要素。绘制完成后自动选中，支持拖拽编辑位置。
 
-<demo vue="../examples/point/point-basic.vue" />
+<demo vue="../examples/point/basic.vue" />
 
 ## 绘制行为
 

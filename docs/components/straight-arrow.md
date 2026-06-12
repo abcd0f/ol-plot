@@ -10,7 +10,7 @@ title: 直箭头
 
 按住鼠标从箭尾拖拽到箭头尖端，松开鼠标完成绘制。编辑时显示 2 个控制点。
 
-<demo vue="../examples/straight-arrow/arrow-basic.vue" />
+<demo vue="../examples/straight-arrow/basic.vue" />
 
 ## 绘制行为
 

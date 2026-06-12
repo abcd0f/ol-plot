@@ -2,7 +2,7 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar color="#fa8c16" @clear="handleClear" />
+    <MapToolbar color="#1890ff" @clear="handleClear" />
   </div>
 </template>
 
@@ -14,13 +14,13 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { EllipseTool } from '../../../packages';
+import { LineTool } from '../../../packages/index.ts';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
 
 let map: OlMap;
-let tool: EllipseTool;
+let tool: LineTool;
 
 onMounted(() => {
   map = new OlMap({
@@ -32,14 +32,17 @@ onMounted(() => {
         }),
       }),
     ],
-    view: new View({ center: fromLonLat([116.3974, 39.9093]), zoom: 10 }),
+    view: new View({
+      center: fromLonLat([116.3974, 39.9093]),
+      zoom: 10,
+    }),
   });
 
-  tool = new EllipseTool(map, {
-    strokeColor: '#722ed1',
+  tool = new LineTool(map, {
+    strokeColor: '#1890ff',
     strokeWidth: 2,
-    fillColor: 'rgba(114,46,209,0.1)',
-    nodeStyle: { radius: 5, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
+    fillColor: 'rgba(24,144,255,0.1)',
+    nodeStyle: { radius: 5, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
   });
 });
 

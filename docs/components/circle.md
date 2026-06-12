@@ -10,7 +10,7 @@ title: 圆
 
 在地图上按住鼠标确定圆心，拖拽确定半径，松开鼠标完成圆形绘制。
 
-<demo vue="../examples/circle/circle-basic.vue" />
+<demo vue="../examples/circle/basic.vue" />
 
 ## 绘制行为
 

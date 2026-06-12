@@ -10,7 +10,7 @@ title: 多边形
 
 单击地图添加顶点，双击地图（或点击第一个顶点）闭合多边形。绘制完成后自动选中，进入编辑态可拖拽各顶点。
 
-<demo vue="../examples/polygon/polygon-basic.vue" />
+<demo vue="../examples/polygon/basic.vue" />
 
 ## 绘制行为
 

@@ -10,7 +10,7 @@ title: 弓形
 
 绘制时依次点击三个点确定圆弧：起点 → 终点 → 弧上经过点。编辑时显示 3 个控制点。
 
-<demo vue="../examples/arc/arc-basic.vue" />
+<demo vue="../examples/arc/basic.vue" />
 
 ## 绘制行为
 

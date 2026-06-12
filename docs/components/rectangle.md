@@ -10,7 +10,7 @@ title: 矩形
 
 按住鼠标拖拽绘制矩形，从起点到对角点松开鼠标即完成。绘制完成后自动进入编辑态，四个角点可拖拽编辑。
 
-<demo vue="../examples/rectangle/rectangle-basic.vue" />
+<demo vue="../examples/rectangle/basic.vue" />
 
 ## 绘制行为
 
