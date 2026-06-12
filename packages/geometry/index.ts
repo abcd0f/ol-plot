@@ -17,4 +17,10 @@ export { buildSector, getSectorControlPoints, createSectorGeometryFunction } fro
 
 export { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc';
 
+export {
+  buildFlagGeometries,
+  getFlagControlPoints,
+  createFlagGeometryFunction,
+} from './flag';
+
 export * from './arrow';

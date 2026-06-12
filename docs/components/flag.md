@@ -10,7 +10,7 @@ title: 椭圆
 
 按住鼠标拖拽确定椭圆外接矩形的对角点，松开鼠标完成绘制。编辑时仅显示 2 个控制点。
 
-<demo vue="../examples/ellipse/basic.vue" />
+<demo vue="../examples/flag/basic.vue" />
 
 ## 绘制行为
 

@@ -12,6 +12,7 @@ import { createStraightArrowGeometryFunction } from '../geometry/arrow/straight'
 import { createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
 import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
 import { createArcGeometryFunction } from '../geometry/arc';
+import { createFlagGeometryFunction } from '../geometry/flag';
 import { createRectangleGeometryFunction } from '../geometry/rectangle';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
@@ -92,6 +93,10 @@ export class DrawManager {
       type = 'LineString';
       geometryFunction = createArcGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 3;
+    } else if (drawType === DrawType.Flag) {
+      type = 'LineString';
+      geometryFunction = createFlagGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 2;
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';
       freehand = true;
