@@ -1,1 +1,8 @@
-export { dist, computeDirectionAndNormal, createDegeneratePolygon } from './math';
+export {
+  dist,
+  computeDirectionAndNormal,
+  createDegeneratePolygon,
+  mid,
+  getAngleOfThreePoints,
+  getThirdPoint,
+} from './math';

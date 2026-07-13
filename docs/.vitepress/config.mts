@@ -64,6 +64,7 @@ export default defineConfig({
           { text: '斜箭头 TaperedArrow', link: '/components/tapered-arrow' },
           { text: '线箭头 LineArrow', link: '/components/line-arrow' },
           { text: '旗帜', link: '/components/flag' },
+          { text: '双箭头', link: '/components/double-arrow' },
         ],
       },
       {

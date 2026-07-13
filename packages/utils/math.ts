@@ -51,3 +51,59 @@ export function computeDirectionAndNormal(
 export function createDegeneratePolygon(point: number[]): number[][][] {
   return [[[...point], [...point], [...point]]];
 }
+
+/**
+ * 计算两点的中点
+ * @param p1 - 第一个点
+ * @param p2 - 第二个点
+ * @returns 中点坐标
+ */
+export function mid(p1: number[], p2: number[]): number[] {
+  return [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+}
+
+/**
+ * 计算三个点形成的夹角（弧度制）
+ * @param p1 - 第一个点
+ * @param p2 - 中心点（角的顶点）
+ * @param p3 - 第三个点
+ * @returns 夹角（0 到 2π）
+ */
+export function getAngleOfThreePoints(p1: number[], p2: number[], p3: number[]): number {
+  const angle1 = Math.atan2(p1[1] - p2[1], p1[0] - p2[0]);
+  const angle2 = Math.atan2(p3[1] - p2[1], p3[0] - p2[0]);
+  let angle = angle2 - angle1;
+  if (angle < 0) {
+    angle += Math.PI * 2;
+  }
+  return angle;
+}
+
+/**
+ * 从两个点和角度、距离计算第三个点的位置
+ * @param startPnt - 起始参考点
+ * @param basePnt - 基准点（计算方向的基点）
+ * @param angle - 相对于basePnt→startPnt方向的旋转角度（弧度）
+ * @param distance - 从basePnt到目标点的距离
+ * @param clockwise - true为顺时针旋转，false为逆时针旋转
+ * @returns 计算得到的第三个点坐标
+ */
+export function getThirdPoint(
+  startPnt: number[],
+  basePnt: number[],
+  angle: number,
+  distance: number,
+  clockwise: boolean,
+): number[] {
+  // 计算basePnt到startPnt的基准角度
+  const azimuth = Math.atan2(startPnt[1] - basePnt[1], startPnt[0] - basePnt[0]);
+
+  // 根据顺时针或逆时针调整角度
+  const targetAngle = clockwise ? azimuth + angle : azimuth - angle;
+
+  // 计算目标点坐标
+  const x = basePnt[0] + distance * Math.cos(targetAngle);
+  const y = basePnt[1] + distance * Math.sin(targetAngle);
+
+  return [x, y];
+}

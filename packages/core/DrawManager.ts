@@ -11,6 +11,7 @@ import { createSectorGeometryFunction } from '../geometry/sector';
 import { createStraightArrowGeometryFunction } from '../geometry/arrow/straight';
 import { createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
 import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
+import { createPincerArrowGeometryFunction } from '../geometry/arrow/pincer';
 import { createArcGeometryFunction } from '../geometry/arc';
 import { createFlagGeometryFunction } from '../geometry/flag';
 import { createRectangleGeometryFunction } from '../geometry/rectangle';
@@ -89,6 +90,10 @@ export class DrawManager {
       type = 'LineString';
       geometryFunction = createLineArrowGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 2;
+    } else if (drawType === DrawType.PincerArrow) {
+      type = 'LineString';
+      geometryFunction = createPincerArrowGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 4;
     } else if (drawType === DrawType.Arc) {
       type = 'LineString';
       geometryFunction = createArcGeometryFunction() as unknown as GeometryFunction;

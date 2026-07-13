@@ -16,6 +16,7 @@ export { SectorTool } from './tools/SectorTool';
 export { StraightArrowTool } from './tools/StraightArrowTool';
 export { TaperedArrowTool } from './tools/TaperedArrowTool';
 export { LineArrowTool } from './tools/LineArrowTool';
+export { PincerArrowTool } from './tools/PincerArrowTool';
 export { ArcTool } from './tools/ArcTool';
 export { FlagTool } from './tools/FlagTool';
 
