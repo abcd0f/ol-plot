@@ -69,14 +69,26 @@ export function mid(p1: number[], p2: number[]): number[] {
  * @param p3 - 第三个点
  * @returns 夹角（0 到 2π）
  */
-export function getAngleOfThreePoints(p1: number[], p2: number[], p3: number[]): number {
-  const angle1 = Math.atan2(p1[1] - p2[1], p1[0] - p2[0]);
-  const angle2 = Math.atan2(p3[1] - p2[1], p3[0] - p2[0]);
-  let angle = angle2 - angle1;
-  if (angle < 0) {
-    angle += Math.PI * 2;
+function getAzimuth(startPoint: number[], endPoint: number[]): number {
+  const length = dist(startPoint, endPoint);
+  if (length < 1e-10) return 0;
+
+  const angle = Math.asin(Math.abs(endPoint[1] - startPoint[1]) / length);
+  if (endPoint[1] >= startPoint[1] && endPoint[0] >= startPoint[0]) {
+    return angle + Math.PI;
   }
-  return angle;
+  if (endPoint[1] >= startPoint[1] && endPoint[0] < startPoint[0]) {
+    return Math.PI * 2 - angle;
+  }
+  if (endPoint[1] < startPoint[1] && endPoint[0] < startPoint[0]) {
+    return angle;
+  }
+  return Math.PI - angle;
+}
+
+export function getAngleOfThreePoints(p1: number[], p2: number[], p3: number[]): number {
+  const angle = getAzimuth(p2, p1) - getAzimuth(p2, p3);
+  return angle < 0 ? angle + Math.PI * 2 : angle;
 }
 
 /**
@@ -95,15 +107,70 @@ export function getThirdPoint(
   distance: number,
   clockwise: boolean,
 ): number[] {
-  // 计算basePnt到startPnt的基准角度
-  const azimuth = Math.atan2(startPnt[1] - basePnt[1], startPnt[0] - basePnt[0]);
+  const azimuth = getAzimuth(startPnt, basePnt);
+  const alpha = clockwise ? azimuth + angle : azimuth - angle;
+  const dx = distance * Math.cos(alpha);
+  const dy = distance * Math.sin(alpha);
+  return [basePnt[0] + dx, basePnt[1] + dy];
+}
 
-  // 根据顺时针或逆时针调整角度
-  const targetAngle = clockwise ? azimuth + angle : azimuth - angle;
+/**
+ * 判断三点是否按顺时针方向排列。
+ */
+export function isClockWise(p1: number[], p2: number[], p3: number[]): boolean {
+  return (p3[1] - p1[1]) * (p2[0] - p1[0]) > (p2[1] - p1[1]) * (p3[0] - p1[0]);
+}
 
-  // 计算目标点坐标
-  const x = basePnt[0] + distance * Math.cos(targetAngle);
-  const y = basePnt[1] + distance * Math.sin(targetAngle);
+/**
+ * 计算折线控制点的总长度。
+ */
+export function wholeDistance(points: number[][]): number {
+  return points.reduce((total, point, index) => {
+    if (index === points.length - 1) return total;
+    return total + dist(point, points[index + 1]);
+  }, 0);
+}
 
-  return [x, y];
+/**
+ * 获取标绘算法使用的基础长度。
+ */
+export function getBaseLength(points: number[][]): number {
+  return wholeDistance(points) ** 0.99;
+}
+
+function getFactorial(n: number): number {
+  if (n <= 1) return 1;
+  let result = 1;
+  for (let i = 2; i <= n; i++) {
+    result *= i;
+  }
+  return result;
+}
+
+function getBinomialFactor(n: number, index: number): number {
+  return getFactorial(n) / (getFactorial(index) * getFactorial(n - index));
+}
+
+/**
+ * 根据控制点生成贝塞尔曲线采样点。
+ */
+export function getBezierPoints(points: number[][]): number[][] {
+  if (points.length <= 2) return points;
+
+  const bezierPoints: number[][] = [];
+  const n = points.length - 1;
+  for (let t = 0; t <= 1; t += 0.01) {
+    let x = 0;
+    let y = 0;
+    for (let index = 0; index <= n; index++) {
+      const factor = getBinomialFactor(n, index);
+      const a = t ** index;
+      const b = (1 - t) ** (n - index);
+      x += factor * a * b * points[index][0];
+      y += factor * a * b * points[index][1];
+    }
+    bezierPoints.push([x, y]);
+  }
+  bezierPoints.push(points[n]);
+  return bezierPoints;
 }

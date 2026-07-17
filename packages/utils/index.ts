@@ -5,4 +5,8 @@ export {
   mid,
   getAngleOfThreePoints,
   getThirdPoint,
+  isClockWise,
+  wholeDistance,
+  getBaseLength,
+  getBezierPoints,
 } from './math';

@@ -11,6 +11,7 @@ import { createSectorGeometryFunction } from '../geometry/sector';
 import { createStraightArrowGeometryFunction } from '../geometry/arrow/straight';
 import { createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
 import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
+import { createDoubleArrowGeometryFunction } from '../geometry/arrow/double';
 import { createArcGeometryFunction } from '../geometry/arc';
 import { createFlagGeometryFunction } from '../geometry/flag';
 import { createRectangleGeometryFunction } from '../geometry/rectangle';
@@ -63,6 +64,7 @@ export class DrawManager {
     let type: OLType;
     let geometryFunction: GeometryFunction | undefined;
     let freehand = false;
+    let minPoints: number | undefined;
     let maxPoints: number | undefined;
 
     // 根据绘制类型设置相应的 OpenLayers 绘制配置
@@ -89,6 +91,11 @@ export class DrawManager {
       type = 'LineString';
       geometryFunction = createLineArrowGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 2;
+    } else if (drawType === DrawType.DoubleArrow) {
+      type = 'LineString';
+      geometryFunction = createDoubleArrowGeometryFunction() as unknown as GeometryFunction;
+      minPoints = 3;
+      maxPoints = 4;
     } else if (drawType === DrawType.Arc) {
       type = 'LineString';
       geometryFunction = createArcGeometryFunction() as unknown as GeometryFunction;
@@ -109,6 +116,7 @@ export class DrawManager {
       type,
       geometryFunction,
       freehand,
+      minPoints,
       maxPoints,
       style,
       condition: (e) => this.condition(e),

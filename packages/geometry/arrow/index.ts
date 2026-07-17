@@ -3,3 +3,5 @@ export { buildStraightArrow, getStraightArrowCenter, createStraightArrowGeometry
 export { buildTaperedArrow, createTaperedArrowGeometryFunction } from './tapered';
 
 export { buildLineArrowGeometries, createLineArrowGeometryFunction } from './line';
+
+export { buildDoubleArrow, normalizeDoubleArrowControlPoints, createDoubleArrowGeometryFunction } from './double';
