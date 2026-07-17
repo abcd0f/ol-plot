@@ -1,6 +1,6 @@
 {
   "name": "@seedlib/ol-plot",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "OpenLayers plotting library",
   "types": "./dist/index.d.cts",
   "exports": {
@@ -8,8 +8,7 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    "dist-browser"
+    "dist"
   ],
   "scripts": {
     "dev:docs": "pnpm -F @ol-plot/docs run dev",
@@ -20,11 +19,27 @@
     "format": "pnpm run format",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "format:write": "prettier --write \"src/**/*.{ts,js}\"",
-    "clean": "node ./scripts/clean.mjs"
+    "clean": "node ./scripts/clean.mjs",
+    "pub": "npm publish --access public"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "openlayers",
+    "ol",
+    "gis",
+    "plot",
+    "measure",
+    "draw"
+  ],
+  "author": "wlt",
   "license": "ISC",
+  "homepage": "https://github.com/abcd0f/ol-plot",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abcd0f/ol-plot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abcd0f/ol-plot/issues"
+  },
   "packageManager": "pnpm@10.28.2",
   "peerDependencies": {
     "ol": ">=10.8.0"
