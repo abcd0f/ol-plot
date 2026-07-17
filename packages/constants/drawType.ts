@@ -25,6 +25,4 @@ export enum DrawType {
   Arc = 'Arc',
   /** 旗帜 */
   Flag = 'Flag',
-  /** 钳击箭头 */
-  PincerArrow = 'PincerArrow',
 }

@@ -30,7 +30,6 @@ function extractVertices(feature: Feature): number[][] {
         plotType === 'sector' ||
         plotType === 'straightArrow' ||
         plotType === 'taperedArrow' ||
-        plotType === 'pincerArrow' ||
         plotType === 'rectangle'
       ) {
         return (feature as Feature).get('controlPoints') || [];
