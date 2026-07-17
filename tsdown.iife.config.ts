@@ -1,14 +1,10 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  format: ['esm'],
-  dts: true,
+  format: ['iife'],
   external: ['ol'],
-  clean: true,
   entry: ['packages/index.ts'],
-  outDir: 'dist',
-  exports: true,
-  treeshake: true,
-  unbundle: true,
+  outDir: 'dist-browser',
+  globalName: 'OlPlot',
   minify: true,
 });
