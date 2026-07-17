@@ -17,7 +17,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { PolygonTool } from '../../../packages/index.ts';
+import { PolygonTool } from '@seedlib/ol-plot';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();

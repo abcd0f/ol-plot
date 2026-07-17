@@ -14,7 +14,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 
-import { EllipseTool } from '../../../packages/index.ts';
+import { EllipseTool } from '@seedlib/ol-plot';
 import MapToolbar from '../components/MapToolbar.vue';
 
 const el = ref<HTMLDivElement>();
