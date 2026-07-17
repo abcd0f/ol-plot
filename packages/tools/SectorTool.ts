@@ -2,109 +2,57 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
 import Point from 'ol/geom/Point';
-import VectorSource from 'ol/source/Vector';
-import VectorLayer from 'ol/layer/Vector';
-import Modify from 'ol/interaction/Modify';
-import Style from 'ol/style/Style';
-import Stroke from 'ol/style/Stroke';
-import Fill from 'ol/style/Fill';
-import CircleStyle from 'ol/style/Circle';
 import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
-import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle } from '../style/modify';
+import { HandleBasedTool } from '../core/HandleBasedTool';
 import { buildSector, getSectorControlPoints } from '../geometry/sector';
 
-export class SectorTool extends BaseTool {
-  private handleSource: VectorSource;
-  private handleLayer: VectorLayer;
-  private handleModify: Modify;
+/**
+ * 扇形绘制工具类，继承自 HandleBasedTool。
+ *
+ * 由三个控制点确定：
+ *  - P0: 圆心
+ *  - P1: 起始半径端点
+ *  - P2: 结束半径端点
+ *
+ * 特殊编辑逻辑：
+ * 拖拽 P1 或 P2 时，保持两个端点在同一半径上（自动调整另一端点）
+ */
+export class SectorTool extends HandleBasedTool {
   private syncing = false;
 
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.Sector, config);
 
-    this.modifyManager.setActive(false);
-
-    const ns = this.config.nodeStyle;
-
-    this.handleSource = new VectorSource();
-    this.handleLayer = new VectorLayer({
-      source: this.handleSource,
-      style: new Style({
-        image: new CircleStyle({
-          radius: ns.radius ?? 6,
-          fill: new Fill({ color: ns.fill ?? '#ffffff' }),
-          stroke: new Stroke({
-            color: ns.stroke ?? this.config.strokeColor,
-            width: ns.strokeWidth ?? 2,
-          }),
-        }),
-      }),
-    });
-    map.addLayer(this.handleLayer);
-
-    this.handleModify = new Modify({
-      source: this.handleSource,
-      style: buildModifyStyle(this.config),
-    });
-    this.handleModify.on('modifystart', () => {
-      this.eventBus.emit(DrawEvent.MODIFY_START);
-    });
-    this.handleModify.on('modifyend', () => {
-      this.eventBus.emit(DrawEvent.MODIFY_END, { features: this.activeFeature ? [this.activeFeature] : [] });
-    });
-    map.addInteraction(this.handleModify);
-
-    this.bindSectorEvents();
-  }
-
-  private bindSectorEvents(): void {
-    this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      const geom = feature.getGeometry() as Polygon;
-      const controlPoints = getSectorControlPoints(geom);
-      feature.set('plotType', 'sector');
-      feature.set('controlPoints', controlPoints);
-    });
-
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      this.showHandles(feature);
-    });
-
-    this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.hideHandles();
+    // 覆盖 HandleManager 的默认同步回调，使用自定义的半径保持逻辑
+    this.handleManager.setOnSync((controlPoints: number[][]) => {
+      this.syncWithRadiusConstraint(controlPoints);
     });
   }
 
-  private showHandles(feature: Feature): void {
-    this.hideHandles();
-    const controlPoints = feature.get('controlPoints') as number[][] | undefined;
-    if (!controlPoints) return;
+  // ─── HandleBasedTool implementations ──────────────────────────────────────
 
-    controlPoints.forEach((pt, i) => {
-      const handle = new Feature(new Point(pt));
-      handle.set('_handleIndex', i);
-      handle.getGeometry()!.on('change', () => this.syncFromHandles());
-      this.handleSource.addFeature(handle);
-    });
+  protected getPlotType(): string {
+    return 'sector';
   }
 
-  private hideHandles(): void {
-    this.handleSource.clear();
+  protected onHandleSync(controlPoints: number[][]): void {
+    // 不使用默认的同步逻辑，改用 syncWithRadiusConstraint
   }
 
-  private syncFromHandles(): void {
-    if (this.syncing || !this.activeFeature) return;
+  protected extractControlPoints(geom: Geometry): number[][] {
+    return getSectorControlPoints(geom as Polygon);
+  }
+
+  // ─── Custom sync logic ────────────────────────────────────────────────────
+
+  private syncWithRadiusConstraint(controlPoints: number[][]): void {
+    if (this.syncing || !this.activeFeature || controlPoints.length < 3) return;
     this.syncing = true;
 
-    const handles = this.handleSource.getFeatures();
-    const sorted = handles.sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
-    const controlPoints = sorted.map((h) => (h.getGeometry() as Point).getCoordinates());
-
     const prevControlPoints = this.activeFeature.get('controlPoints') as number[][];
-    const [center, ,] = controlPoints;
+    const [center] = controlPoints;
     const [prevCenter] = prevControlPoints;
 
     // 检测哪个 handle 被拖拽了
@@ -133,6 +81,9 @@ export class SectorTool extends BaseTool {
     const radius = radiusPointDragged ? radiusDist : angleDist;
 
     if (radius > 0) {
+      const handles = this.handleManager.handleSource.getFeatures();
+      const sorted = handles.sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
+
       if (radiusPointDragged) {
         // handle[1] 被拖拽 → 重投影 handle[2]，不碰 handle[1]（避免与 Modify 冲突）
         const endAngle = Math.atan2(anglePoint[1] - center[1], anglePoint[0] - center[0]);
@@ -171,7 +122,7 @@ export class SectorTool extends BaseTool {
     this.activeFeature.set('controlPoints', coordinates.slice(0, 3));
     const geom = this.activeFeature.getGeometry() as Polygon;
     geom.setCoordinates(buildSector(coordinates));
-    this.refreshHandles();
+    this.handleManager.refresh(coordinates.slice(0, 3));
   }
 
   getCoordinates(): number[][] {
@@ -217,34 +168,5 @@ export class SectorTool extends BaseTool {
     const start = Math.atan2(radiusPoint[1] - center[1], radiusPoint[0] - center[0]);
     const end = Math.atan2(anglePoint[1] - center[1], anglePoint[0] - center[0]);
     return { start, end };
-  }
-
-  // ─── Private helpers ──────────────────────────────────────────────────────
-
-  private refreshHandles(): void {
-    if (!this.activeFeature) return;
-    const controlPoints = this.activeFeature.get('controlPoints') as number[][] | undefined;
-    if (!controlPoints) return;
-
-    const handles = this.handleSource.getFeatures().sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
-    if (handles.length !== controlPoints.length) {
-      this.showHandles(this.activeFeature);
-      return;
-    }
-
-    this.syncing = true;
-    handles.forEach((h, i) => {
-      (h.getGeometry() as Point).setCoordinates(controlPoints[i]);
-    });
-    this.syncing = false;
-  }
-
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  destroy(): void {
-    this.hideHandles();
-    this.map.removeInteraction(this.handleModify);
-    this.map.removeLayer(this.handleLayer);
-    super.destroy();
   }
 }

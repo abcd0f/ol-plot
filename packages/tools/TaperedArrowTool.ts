@@ -1,31 +1,21 @@
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
-import Point from 'ol/geom/Point';
-import VectorSource from 'ol/source/Vector';
-import VectorLayer from 'ol/layer/Vector';
-import Modify from 'ol/interaction/Modify';
-import Style from 'ol/style/Style';
-import Stroke from 'ol/style/Stroke';
-import Fill from 'ol/style/Fill';
-import CircleStyle from 'ol/style/Circle';
 import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
-import { BaseTool } from '../core/BaseTool';
-import { buildModifyStyle } from '../style/modify';
+import { HandleBasedTool } from '../core/HandleBasedTool';
 import { buildTaperedArrow } from '../geometry/arrow/tapered';
 
 /**
- * 斜箭头（TaperedArrow）绘制工具类，继承自 BaseTool。
+ * 斜箭头（TaperedArrow）绘制工具类，继承自 HandleBasedTool。
  *
  * 仅由两个控制点确定：
  *  - P0: 箭尾中心点
  *  - P1: 箭头尖端点
  *
- * 与 StraightArrowTool / EllipseTool 相同的 handle 编辑模式：
- * 禁用默认 ModifyManager，创建独立的 handle 图层，
+ * 编辑模式：
+ * 禁用默认 ModifyManager，使用 HandleManager 创建独立的 handle 图层，
  * 只暴露两个控制点供拖拽编辑，拖拽时重新生成箭头 Polygon。
  *
  * 箭头结构特点：
@@ -33,102 +23,22 @@ import { buildTaperedArrow } from '../geometry/arrow/tapered';
  *  - 尾部最窄，中部逐渐变宽，箭头头部最宽
  *  - 左右完全对称
  */
-export class TaperedArrowTool extends BaseTool {
-  private handleSource: VectorSource;
-  private handleLayer: VectorLayer;
-  private handleModify: Modify;
-  private syncing = false;
-
+export class TaperedArrowTool extends HandleBasedTool {
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.TaperedArrow, config);
-
-    // 禁用默认 ModifyManager（箭头 Polygon 顶点不适合直接编辑）
-    this.modifyManager.setActive(false);
-
-    const ns = this.config.nodeStyle;
-
-    // 创建独立的 handle 图层，仅显示 P0、P1 两个控制点
-    this.handleSource = new VectorSource();
-    this.handleLayer = new VectorLayer({
-      source: this.handleSource,
-      style: new Style({
-        image: new CircleStyle({
-          radius: ns.radius ?? 6,
-          fill: new Fill({ color: ns.fill ?? '#ffffff' }),
-          stroke: new Stroke({
-            color: ns.stroke ?? this.config.strokeColor,
-            width: ns.strokeWidth ?? 2,
-          }),
-        }),
-      }),
-    });
-    map.addLayer(this.handleLayer);
-
-    // 创建独立的 Modify interaction，绑定到 handle 图层
-    this.handleModify = new Modify({
-      source: this.handleSource,
-      style: buildModifyStyle(this.config),
-    });
-    this.handleModify.on('modifystart', () => {
-      this.eventBus.emit(DrawEvent.MODIFY_START);
-    });
-    this.handleModify.on('modifyend', () => {
-      this.eventBus.emit(DrawEvent.MODIFY_END, { features: this.activeFeature ? [this.activeFeature] : [] });
-    });
-    map.addInteraction(this.handleModify);
-
-    this.bindArrowEvents();
   }
 
-  private bindArrowEvents(): void {
-    // 绘制完成后，从 Polygon 属性中读取 geometryFunction 存入的原始控制点
-    this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      const geom = feature.getGeometry() as Polygon;
-      const controlPoints = geom.get('_controlPoints') as number[][] | undefined;
-      feature.set('plotType', 'taperedArrow');
-      feature.set('controlPoints', controlPoints || []);
-    });
+  // ─── HandleBasedTool implementations ──────────────────────────────────────
 
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      this.showHandles(feature);
-    });
-
-    this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.hideHandles();
-    });
+  protected getPlotType(): string {
+    return 'taperedArrow';
   }
 
-  private showHandles(feature: Feature): void {
-    this.hideHandles();
-    const controlPoints = feature.get('controlPoints') as number[][] | undefined;
-    if (!controlPoints || controlPoints.length < 2) return;
-
-    controlPoints.forEach((pt, i) => {
-      const handle = new Feature(new Point(pt));
-      handle.set('_handleIndex', i);
-      handle.getGeometry()!.on('change', () => this.syncFromHandles());
-      this.handleSource.addFeature(handle);
-    });
-  }
-
-  private hideHandles(): void {
-    this.handleSource.clear();
-  }
-
-  private syncFromHandles(): void {
-    if (this.syncing || !this.activeFeature) return;
-    this.syncing = true;
-
-    const handles = this.handleSource.getFeatures();
-    const controlPoints = handles
-      .sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'))
-      .map((h) => (h.getGeometry() as Point).getCoordinates());
-
+  protected onHandleSync(controlPoints: number[][]): void {
+    if (!this.activeFeature) return;
     this.activeFeature.set('controlPoints', controlPoints);
     const geom = this.activeFeature.getGeometry() as Polygon;
     geom.setCoordinates(buildTaperedArrow(controlPoints));
-
-    this.syncing = false;
   }
 
   // ─── Abstract implementations ─────────────────────────────────────────────
@@ -149,7 +59,7 @@ export class TaperedArrowTool extends BaseTool {
     this.activeFeature.set('controlPoints', coordinates.slice(0, 2));
     const geom = this.activeFeature.getGeometry() as Polygon;
     geom.setCoordinates(buildTaperedArrow(coordinates));
-    this.refreshHandles();
+    this.handleManager.refresh(coordinates.slice(0, 2));
   }
 
   getCoordinates(): number[][] {
@@ -210,34 +120,5 @@ export class TaperedArrowTool extends BaseTool {
     if (coords.length < 2) return 0;
     const [p0, p1] = coords;
     return Math.sqrt((p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2);
-  }
-
-  // ─── Private helpers ──────────────────────────────────────────────────────
-
-  private refreshHandles(): void {
-    if (!this.activeFeature) return;
-    const controlPoints = this.activeFeature.get('controlPoints') as number[][] | undefined;
-    if (!controlPoints) return;
-
-    const handles = this.handleSource.getFeatures().sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
-    if (handles.length !== controlPoints.length) {
-      this.showHandles(this.activeFeature);
-      return;
-    }
-
-    this.syncing = true;
-    handles.forEach((h, i) => {
-      (h.getGeometry() as Point).setCoordinates(controlPoints[i]);
-    });
-    this.syncing = false;
-  }
-
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  destroy(): void {
-    this.hideHandles();
-    this.map.removeInteraction(this.handleModify);
-    this.map.removeLayer(this.handleLayer);
-    super.destroy();
   }
 }

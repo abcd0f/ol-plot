@@ -4,13 +4,11 @@ import GeometryCollection from 'ol/geom/GeometryCollection';
 import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
-import { BaseTool } from '../core/BaseTool';
-import { HandleManager } from '../helper/handle';
+import { HandleBasedTool } from '../core/HandleBasedTool';
 import { buildFlagGeometries, getFlagControlPoints } from '../geometry/flag';
 
 /**
- * 旗帜（Flag）绘制工具类，继承自 BaseTool。
+ * 旗帜（Flag）绘制工具类，继承自 HandleBasedTool。
  *
  * 由两个控制点确定：
  *  - P0: 旗杆顶部（旗帜附着点，同时也是旗面左上角）
@@ -29,60 +27,27 @@ import { buildFlagGeometries, getFlagControlPoints } from '../geometry/flag';
  * 禁用默认 ModifyManager，使用 HandleManager 创建独立的 handle 图层，
  * 只暴露两个控制点（P0 / P1）供拖拽编辑，拖拽时重新生成旗帜几何。
  */
-export class FlagTool extends BaseTool {
-  private handleManager: HandleManager;
-
+export class FlagTool extends HandleBasedTool {
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.Flag, config);
-
-    // 禁用默认 ModifyManager（GeometryCollection 不能直接用 Modify 编辑）
-    this.modifyManager.setActive(false);
-
-    // 创建自定义 handle 管理器，拖拽时实时重建旗帜几何
-    this.handleManager = new HandleManager(
-      map,
-      this.eventBus,
-      this.config,
-      (controlPoints: number[][]) => {
-        if (!this.activeFeature) return;
-        this.activeFeature.set('controlPoints', [...controlPoints]);
-        const geom = this.activeFeature.getGeometry() as GeometryCollection;
-        const [pole, flag] = buildFlagGeometries(controlPoints);
-        geom.setGeometries([pole, flag]);
-      },
-    );
-
-    // 覆盖 modifyend 以携带正确的 activeFeature
-    this.handleManager.handleModify.on('modifyend', () => {
-      this.eventBus.emit(DrawEvent.MODIFY_END, {
-        features: this.activeFeature ? [this.activeFeature] : [],
-      });
-    });
-
-    this.bindFlagEvents();
   }
 
-  // ─── Events ───────────────────────────────────────────────────────────────
+  // ─── HandleBasedTool implementations ──────────────────────────────────────
 
-  private bindFlagEvents(): void {
-    // 绘制完成后，从 geometry 属性中读取 geometryFunction 存入的原始控制点
-    this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      const geom = feature.getGeometry() as GeometryCollection;
-      const controlPoints = getFlagControlPoints(geom);
-      feature.set('plotType', 'flag');
-      feature.set('controlPoints', controlPoints);
-    });
+  protected getPlotType(): string {
+    return 'flag';
+  }
 
-    // 选中要素时显示两个控制点手柄
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      const controlPoints = feature.get('controlPoints') as number[][] | undefined;
-      this.handleManager.show(controlPoints);
-    });
+  protected onHandleSync(controlPoints: number[][]): void {
+    if (!this.activeFeature) return;
+    this.activeFeature.set('controlPoints', [...controlPoints]);
+    const geom = this.activeFeature.getGeometry() as GeometryCollection;
+    const [pole, flag] = buildFlagGeometries(controlPoints);
+    geom.setGeometries([pole, flag]);
+  }
 
-    // 取消选中时隐藏手柄
-    this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.handleManager.hide();
-    });
+  protected extractControlPoints(geom: Geometry): number[][] {
+    return getFlagControlPoints(geom as GeometryCollection);
   }
 
   // ─── Abstract implementations ─────────────────────────────────────────────
@@ -158,12 +123,5 @@ export class FlagTool extends BaseTool {
     const coords = this.getCoordinates();
     if (coords.length < 2) return 0;
     return Math.abs(coords[1][0] - coords[0][0]);
-  }
-
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  destroy(): void {
-    this.handleManager.destroy();
-    super.destroy();
   }
 }

@@ -4,13 +4,11 @@ import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
-import { BaseTool } from '../core/BaseTool';
-import { HandleManager } from '../helper/handle';
+import { HandleBasedTool } from '../core/HandleBasedTool';
 import { buildDoubleArrow, normalizeDoubleArrowControlPoints } from '../geometry/arrow/double';
 
 /**
- * 双箭头绘制工具类，继承自 BaseTool。
+ * 双箭头绘制工具类，继承自 HandleBasedTool。
  *
  * 控制点定义：
  *  - P0 / P1: 双箭头底部两侧点
@@ -20,57 +18,28 @@ import { buildDoubleArrow, normalizeDoubleArrowControlPoints } from '../geometry
  * 编辑模式：
  * 禁用默认 ModifyManager，使用 HandleManager 暴露 5 个控制点，拖拽时重新生成箭头 Polygon。
  */
-export class DoubleArrowTool extends BaseTool {
-  private handleManager: HandleManager;
-
+export class DoubleArrowTool extends HandleBasedTool {
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.DoubleArrow, config);
-
-    // 禁用默认 ModifyManager（双箭头 Polygon 顶点过多，不适合直接编辑）
-    this.modifyManager.setActive(false);
-
-    this.handleManager = new HandleManager(
-      map,
-      this.eventBus,
-      this.config,
-      (controlPoints: number[][]) => {
-        if (!this.activeFeature || controlPoints.length < 3) return;
-
-        const normalized = normalizeDoubleArrowControlPoints(controlPoints);
-        this.activeFeature.set('controlPoints', normalized);
-        const geom = this.activeFeature.getGeometry() as Polygon;
-        geom.setCoordinates(buildDoubleArrow(normalized));
-      },
-    );
-
-    // 覆盖 modifyend 以携带正确的 activeFeature
-    this.handleManager.handleModify.on('modifyend', () => {
-      this.eventBus.emit(DrawEvent.MODIFY_END, {
-        features: this.activeFeature ? [this.activeFeature] : [],
-      });
-    });
-
-    this.bindDoubleArrowEvents();
   }
 
-  // ─── Events ───────────────────────────────────────────────────────────────
+  // ─── HandleBasedTool implementations ──────────────────────────────────────
 
-  private bindDoubleArrowEvents(): void {
-    this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      const geom = feature.getGeometry() as Polygon;
-      const controlPoints = (geom.get('_controlPoints') as number[][] | undefined) || [];
-      feature.set('plotType', 'doubleArrow');
-      feature.set('controlPoints', controlPoints);
-    });
+  protected getPlotType(): string {
+    return 'doubleArrow';
+  }
 
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      const controlPoints = feature.get('controlPoints') as number[][] | undefined;
-      this.handleManager.show(controlPoints);
-    });
+  protected onHandleSync(controlPoints: number[][]): void {
+    if (!this.activeFeature || controlPoints.length < 3) return;
 
-    this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.handleManager.hide();
-    });
+    const normalized = normalizeDoubleArrowControlPoints(controlPoints);
+    this.activeFeature.set('controlPoints', normalized);
+    const geom = this.activeFeature.getGeometry() as Polygon;
+    geom.setCoordinates(buildDoubleArrow(normalized));
+  }
+
+  protected normalizeControlPoints(controlPoints: number[][]): number[][] {
+    return normalizeDoubleArrowControlPoints(controlPoints);
   }
 
   // ─── Abstract implementations ─────────────────────────────────────────────
@@ -130,12 +99,5 @@ export class DoubleArrowTool extends BaseTool {
   getConnectionPoint(): number[] | null {
     const coords = this.getCoordinates();
     return coords.length >= 5 ? coords[4] : null;
-  }
-
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  destroy(): void {
-    this.handleManager.destroy();
-    super.destroy();
   }
 }
