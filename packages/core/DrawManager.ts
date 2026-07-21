@@ -107,6 +107,9 @@ export class DrawManager {
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';
       freehand = true;
+    } else if (drawType === DrawType.Measure) {
+      // 测距：绘制普通折线，距离标签由 MeasureTool 通过 Overlay 单独渲染
+      type = 'LineString';
     } else {
       type = drawType as OLType;
     }

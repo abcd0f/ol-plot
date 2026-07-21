@@ -27,4 +27,6 @@ export enum DrawType {
   Arc = 'Arc',
   /** 旗帜 */
   Flag = 'Flag',
+  /** 测距 */
+  Measure = 'Measure',
 }

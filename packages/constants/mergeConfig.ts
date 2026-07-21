@@ -17,5 +17,9 @@ export function mergeConfig(config?: PlotConfig): Required<PlotConfig> {
       ...DEFAULT_CONFIG.nodeStyle,
       ...config?.nodeStyle,
     },
+    measure: {
+      ...DEFAULT_CONFIG.measure,
+      ...config?.measure,
+    },
   };
 }

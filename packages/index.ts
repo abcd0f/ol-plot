@@ -19,7 +19,8 @@ export { LineArrowTool } from './tools/LineArrowTool';
 export { DoubleArrowTool } from './tools/DoubleArrowTool';
 export { ArcTool } from './tools/ArcTool';
 export { FlagTool } from './tools/FlagTool';
+export { MeasureTool } from './tools/MeasureTool';
 
 export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
 export type { DrawEventType } from './constants';
-export type { PlotConfig, NodeStyle } from './types';
+export type { PlotConfig, NodeStyle, MeasureConfig, MeasureMode, MeasureUnit } from './types';

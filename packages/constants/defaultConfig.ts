@@ -20,4 +20,11 @@ export const DEFAULT_CONFIG: Required<PlotConfig> = {
     /** 节点线宽度 */
     strokeWidth: 2,
   },
+  /** 测距配置 */
+  measure: {
+    /** 显示模式：总距离 */
+    mode: 'total',
+    /** 距离单位：自动 */
+    unit: 'auto',
+  },
 };
