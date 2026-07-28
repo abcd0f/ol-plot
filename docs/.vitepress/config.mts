@@ -48,7 +48,7 @@ export default defineConfig({
         ],
       },
       {
-        text: '绘图组件',
+        text: '标绘组件',
         collapsed: false,
         items: [
           { text: '点 Point', link: '/components/point' },
@@ -66,6 +66,11 @@ export default defineConfig({
           { text: '旗帜', link: '/components/flag' },
           { text: '双箭头', link: '/components/double-arrow' },
         ],
+      },
+      {
+        text: '测绘组件',
+        collapsed: false,
+        items: [{ text: '测距', link: '/components/measure' }],
       },
       {
         text: '参考',
