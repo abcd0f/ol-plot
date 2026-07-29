@@ -50,6 +50,7 @@ export abstract class BaseTool {
   protected state: ToolState = ToolState.Idle;
 
   private handleKeyDown: (e: KeyboardEvent) => void;
+  private revision = 0;
 
   /**
    * 初始化地图工具的基本组件和配置，并自动进入绘制态。
@@ -103,7 +104,9 @@ export abstract class BaseTool {
    */
   private bindEvents(): void {
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
+      const revision = this.revision;
       setTimeout(() => {
+        if (revision !== this.revision || !this.layerManager.hasFeature(feature)) return;
         this.activeFeature = feature;
         // 绘制完成后自动选中刚画的要素：显示其顶点节点、Modify 跟随、进入编辑态
         this.selectManager.selectFeature(feature);
@@ -138,6 +141,7 @@ export abstract class BaseTool {
    */
   private deleteActiveFeature(): void {
     const feature = this.activeFeature!;
+    this.revision += 1;
     this.selectManager.clearSelection();
     this.cursorManager.setActive(false);
     this.layerManager.removeFeature(feature);
@@ -158,6 +162,7 @@ export abstract class BaseTool {
    * 清理所有管理器和事件监听器
    */
   destroy(): void {
+    this.revision += 1;
     document.removeEventListener('keydown', this.handleKeyDown);
     this.cursorManager.destroy();
     this.drawManager.destroy();
@@ -177,6 +182,7 @@ export abstract class BaseTool {
    * @returns 返回创建的要素对象
    */
   addFeature(coordinates: number[][]): Feature {
+    this.revision += 1;
     const feature = new Feature({ geometry: this.createGeometry(coordinates) });
     this.layerManager.addFeature(feature);
     return feature;
@@ -199,6 +205,8 @@ export abstract class BaseTool {
    * @returns 返回当前实例以支持链式调用
    */
   clearFeatures(): this {
+    this.revision += 1;
+    this.drawManager.abortDrawing();
     this.selectManager.clearSelection();
     this.activeFeature = null;
     this.cursorManager.setActive(false);

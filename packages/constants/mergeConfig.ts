@@ -20,6 +20,10 @@ export function mergeConfig(config?: PlotConfig): Required<PlotConfig> {
     measure: {
       ...DEFAULT_CONFIG.measure,
       ...config?.measure,
+      labelStyle: {
+        ...DEFAULT_CONFIG.measure.labelStyle,
+        ...config?.measure?.labelStyle,
+      },
     },
     flowLine: {
       ...DEFAULT_CONFIG.flowLine,

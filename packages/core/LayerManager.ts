@@ -64,6 +64,10 @@ export class LayerManager {
     this.source.removeFeature(feature as any);
   }
 
+  hasFeature(feature: Feature): boolean {
+    return this.source.hasFeature(feature as any);
+  }
+
   /**
    * 清空数据源中的所有要素
    */

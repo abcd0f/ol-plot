@@ -1,4 +1,5 @@
 import Map from 'ol/Map';
+import type Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
 import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
@@ -70,6 +71,12 @@ export class MeasureTool extends BaseTool {
     if (index < 0 || index >= coords.length) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
+  }
+
+  addFeature(coordinates: number[][]): Feature {
+    const feature = super.addFeature(coordinates);
+    this.measureManager.attachFeature(feature);
+    return feature;
   }
 
   /**

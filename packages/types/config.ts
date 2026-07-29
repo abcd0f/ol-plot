@@ -16,6 +16,8 @@ export interface MeasureConfig {
   mode?: MeasureMode;
   /** 距离单位，默认 'auto' */
   unit?: MeasureUnit;
+  /** Measure label DOM style. */
+  labelStyle?: Partial<CSSStyleDeclaration>;
 }
 
 export interface FlowLineConfig {

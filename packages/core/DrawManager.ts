@@ -178,6 +178,11 @@ export class DrawManager {
     this.draw.setActive(active);
   }
 
+  abortDrawing(): void {
+    if (!this.sketching) return;
+    this.draw.abortDrawing();
+  }
+
   /**
    * 销毁绘制管理器，清理所有资源
    */

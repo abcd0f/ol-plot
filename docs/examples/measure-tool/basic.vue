@@ -43,7 +43,10 @@ onMounted(() => {
     strokeWidth: 2,
     fillColor: 'rgba(24,144,255,0.1)',
     nodeStyle: { radius: 5, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
-    measure: { mode: 'both', unit: 'auto' },
+    measure: {
+      mode: 'both',
+      unit: 'auto',
+    },
   });
 });
 

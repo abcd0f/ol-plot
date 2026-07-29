@@ -32,6 +32,7 @@ export class MeasureManager {
   private map: OLMap;
   private mode: MeasureMode;
   private unit: MeasureUnit;
+  private labelStyle: Partial<CSSStyleDeclaration>;
 
   /** 每个已完成要素对应的标签组 */
   private groups = new Map<Feature, Overlay[]>();
@@ -51,6 +52,7 @@ export class MeasureManager {
     this.map = map;
     this.mode = config.measure.mode!;
     this.unit = config.measure.unit!;
+    this.labelStyle = config.measure.labelStyle!;
 
     eventBus.on(DrawEvent.DRAW_START, ({ feature }: { feature: Feature }) => {
       const geom = feature.getGeometry() as LineString;
@@ -60,20 +62,21 @@ export class MeasureManager {
 
     eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
       this.stopSketch();
-      this.attach(feature);
+      this.attachFeature(feature);
     });
 
     eventBus.on(DrawEvent.DRAW_ABORT, () => this.stopSketch());
 
     eventBus.on(DrawEvent.DELETE, ({ feature }: { feature: Feature }) => {
-      this.remove(feature);
+      this.removeFeature(feature);
     });
   }
 
   // ─── 生命周期 ──────────────────────────────────────────────────────────────
 
   /** 为已完成要素建立标签组，并监听其几何变化以在编辑时更新。 */
-  private attach(feature: Feature): void {
+  attachFeature(feature: Feature): void {
+    this.removeFeature(feature);
     const geom = feature.getGeometry() as LineString;
     const group: Overlay[] = [];
     this.groups.set(feature, group);
@@ -85,7 +88,7 @@ export class MeasureManager {
   }
 
   /** 移除指定要素的标签组及其监听。 */
-  private remove(feature: Feature): void {
+  removeFeature(feature: Feature): void {
     const group = this.groups.get(feature);
     if (group) {
       group.forEach((o) => this.map.removeOverlay(o));
@@ -112,7 +115,7 @@ export class MeasureManager {
   clear(): void {
     this.stopSketch();
     for (const feature of [...this.groups.keys()]) {
-      this.remove(feature);
+      this.removeFeature(feature);
     }
   }
 
@@ -178,9 +181,7 @@ export class MeasureManager {
   /** 创建一个带默认样式的标签 Overlay。 */
   private createOverlay(): Overlay {
     const element = document.createElement('div');
-    element.style.cssText =
-      'padding:2px 6px;background:rgba(0,0,0,0.65);color:#fff;font-size:12px;' +
-      'line-height:1.4;border-radius:3px;white-space:nowrap;pointer-events:none;';
+    Object.assign(element.style, this.labelStyle);
     return new Overlay({ element, offset: [0, -12], positioning: 'bottom-center', stopEvent: false });
   }
 }
