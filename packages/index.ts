@@ -8,6 +8,7 @@ export { ModifyManager } from './core/ModifyManager';
 export { PointTool } from './tools/PointTool';
 export { ImagePointTool } from './tools/ImagePointTool';
 export { LineTool } from './tools/LineTool';
+export { FlowLineTool } from './tools/FlowLineTool';
 export { FreehandLineTool } from './tools/FreehandLineTool';
 export { PolygonTool } from './tools/PolygonTool';
 export { RectangleTool } from './tools/RectangleTool';
@@ -24,4 +25,12 @@ export { MeasureTool } from './tools/MeasureTool';
 
 export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
 export type { DrawEventType } from './constants';
-export type { PlotConfig, ImagePointConfig, NodeStyle, MeasureConfig, MeasureMode, MeasureUnit } from './types';
+export type {
+  PlotConfig,
+  ImagePointConfig,
+  NodeStyle,
+  MeasureConfig,
+  MeasureMode,
+  MeasureUnit,
+  FlowLineConfig,
+} from './types';

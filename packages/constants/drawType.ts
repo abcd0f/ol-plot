@@ -5,6 +5,8 @@ export enum DrawType {
   ImagePoint = 'ImagePoint',
   /** 线 */
   Line = 'LineString',
+  /** 流动线 */
+  FlowLine = 'FlowLine',
   /** 自由线 */
   FreehandLine = 'FreehandLine',
   /** 多边形 */

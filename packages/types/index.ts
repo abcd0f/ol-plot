@@ -1,1 +1,9 @@
-export type { PlotConfig, ImagePointConfig, NodeStyle, MeasureConfig, MeasureMode, MeasureUnit } from './config';
+export type {
+  PlotConfig,
+  ImagePointConfig,
+  NodeStyle,
+  MeasureConfig,
+  MeasureMode,
+  MeasureUnit,
+  FlowLineConfig,
+} from './config';

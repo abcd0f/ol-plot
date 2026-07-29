@@ -18,6 +18,15 @@ export interface MeasureConfig {
   unit?: MeasureUnit;
 }
 
+export interface FlowLineConfig {
+  /** Arrow stroke color. Defaults to strokeColor. */
+  arrowColor?: string;
+  /** Distance between arrows in pixels. Defaults to 48. */
+  arrowSpacing?: number;
+  /** Flow speed in pixels per second. Defaults to 60. */
+  speed?: number;
+}
+
 export interface PlotConfig {
   strokeColor?: string;
   strokeWidth?: number;
@@ -25,6 +34,7 @@ export interface PlotConfig {
   lineDash?: number[];
   nodeStyle?: NodeStyle;
   measure?: MeasureConfig;
+  flowLine?: FlowLineConfig;
 }
 
 /** 图片点标记配置 */

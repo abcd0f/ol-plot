@@ -27,4 +27,9 @@ export const DEFAULT_CONFIG: Required<PlotConfig> = {
     /** 距离单位：自动 */
     unit: 'auto',
   },
+  flowLine: {
+    arrowColor: '',
+    arrowSpacing: 48,
+    speed: 60,
+  },
 };

@@ -21,5 +21,9 @@ export function mergeConfig(config?: PlotConfig): Required<PlotConfig> {
       ...DEFAULT_CONFIG.measure,
       ...config?.measure,
     },
+    flowLine: {
+      ...DEFAULT_CONFIG.flowLine,
+      ...config?.flowLine,
+    },
   };
 }

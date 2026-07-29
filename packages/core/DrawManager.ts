@@ -104,6 +104,8 @@ export class DrawManager {
       type = 'LineString';
       geometryFunction = createFlagGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 2;
+    } else if (drawType === DrawType.FlowLine) {
+      type = 'LineString';
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';
       freehand = true;
