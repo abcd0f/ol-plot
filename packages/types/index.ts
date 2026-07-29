@@ -5,5 +5,7 @@ export type {
   MeasureConfig,
   MeasureMode,
   MeasureUnit,
+  AreaMeasureConfig,
+  AreaMeasureUnit,
   FlowLineConfig,
 } from './config';

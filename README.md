@@ -84,6 +84,7 @@ tool.on(DrawEvent.DRAW_END, ({ feature }) => {
 | `LineTool` | LineString | 单击添加顶点，双击结束 |
 | `FreehandLineTool` | LineString | 按住拖动，松开结束 |
 | `PolygonTool` | Polygon | 单击添加顶点，双击闭合 |
+| `AreaMeasureTool` | Polygon | 单击绘制测量区域，闭合后显示面积 |
 | `RectangleTool` | Polygon | 拖拽确定对角点 |
 | `CircleTool` | Circle | 拖拽，起点为圆心，终点定半径 |
 | `EllipseTool` | Polygon | 拖拽确定外接矩形对角点 |

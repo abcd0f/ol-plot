@@ -33,4 +33,5 @@ export enum DrawType {
   Flag = 'Flag',
   /** 测距 */
   Measure = 'Measure',
+  AreaMeasure = 'AreaMeasure',
 }

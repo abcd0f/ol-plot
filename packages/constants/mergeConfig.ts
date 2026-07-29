@@ -25,6 +25,14 @@ export function mergeConfig(config?: PlotConfig): Required<PlotConfig> {
         ...config?.measure?.labelStyle,
       },
     },
+    areaMeasure: {
+      ...DEFAULT_CONFIG.areaMeasure,
+      ...config?.areaMeasure,
+      labelStyle: {
+        ...DEFAULT_CONFIG.areaMeasure.labelStyle,
+        ...config?.areaMeasure?.labelStyle,
+      },
+    },
     flowLine: {
       ...DEFAULT_CONFIG.flowLine,
       ...config?.flowLine,

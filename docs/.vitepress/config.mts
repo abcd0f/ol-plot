@@ -72,7 +72,10 @@ export default defineConfig({
       {
         text: '测绘组件',
         collapsed: false,
-        items: [{ text: '测距', link: '/components/measure' }],
+        items: [
+          { text: '测距', link: '/components/measure' },
+          { text: '测面积', link: '/components/area-measure' },
+        ],
       },
       {
         text: '参考',

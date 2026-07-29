@@ -37,6 +37,19 @@ export const DEFAULT_CONFIG: Required<PlotConfig> = {
       pointerEvents: 'none',
     },
   },
+  areaMeasure: {
+    unit: 'auto',
+    labelStyle: {
+      padding: '2px 6px',
+      background: 'rgba(0,0,0,0.65)',
+      color: '#fff',
+      fontSize: '12px',
+      lineHeight: '1.4',
+      borderRadius: '3px',
+      whiteSpace: 'nowrap',
+      pointerEvents: 'none',
+    },
+  },
   flowLine: {
     arrowColor: '',
     arrowSpacing: 48,
