@@ -25,7 +25,7 @@ export class CursorManager {
     this.getEditableLayers = getEditableLayers;
     this.hitTolerance = hitTolerance;
 
-    this.pointerMoveKey = this.map.on('pointermove', (e) => this.handlePointerMove(e));
+    this.pointerMoveKey = this.map.on('pointermove', (e) => this.handlePointerMove(e as any));
   }
 
   setActive(active: boolean): void {
