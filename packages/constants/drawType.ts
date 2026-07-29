@@ -1,6 +1,8 @@
 export enum DrawType {
   /** 点 */
   Point = 'Point',
+  /** 图片点 */
+  ImagePoint = 'ImagePoint',
   /** 线 */
   Line = 'LineString',
   /** 自由线 */

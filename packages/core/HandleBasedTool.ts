@@ -40,6 +40,7 @@ export abstract class HandleBasedTool extends BaseTool {
       this.config,
       (controlPoints: number[][]) => this.onHandleSync(controlPoints),
     );
+    this.cursorManager.setEditableLayers(() => [this.handleManager.handleLayer]);
 
     // 覆盖 modifyend 以携带正确的 activeFeature
     this.handleManager.handleModify.on('modifyend', () => {

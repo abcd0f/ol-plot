@@ -10,6 +10,7 @@ import { LayerManager } from './LayerManager';
 import { DrawManager } from './DrawManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
+import { CursorManager } from './CursorManager';
 import { mergeConfig } from '../constants';
 import { buildFeatureStyle } from '../style/feature';
 import { buildDrawStyle } from '../style/draw';
@@ -42,6 +43,7 @@ export abstract class BaseTool {
   protected drawManager: DrawManager;
   protected selectManager: SelectManager;
   protected modifyManager: ModifyManager;
+  protected cursorManager: CursorManager;
 
   protected activeFeature: Feature | null = null;
   /** 当前内部状态，由生命周期自动维护 */
@@ -69,6 +71,7 @@ export abstract class BaseTool {
     // 读取到本次点击「尚未被清空」的选中状态，从而正确协调起笔与取消选中。
     this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
     this.modifyManager = new ModifyManager(map, this.selectManager.getSelectedFeatures(), this.config, this.eventBus);
+    this.cursorManager = new CursorManager(map, () => [this.modifyManager.getOverlayLayer()]);
     this.drawManager = new DrawManager(
       map,
       this.layerManager.getLayer(),
@@ -110,11 +113,21 @@ export abstract class BaseTool {
     this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
       this.activeFeature = feature;
       this.state = ToolState.Editing;
+      this.cursorManager.setActive(true);
     });
 
     this.eventBus.on(DrawEvent.DESELECT, () => {
       this.activeFeature = null;
       this.state = ToolState.Drawing;
+      this.cursorManager.setActive(false);
+    });
+
+    this.eventBus.on(DrawEvent.MODIFY_START, () => {
+      this.cursorManager.setDragging(true);
+    });
+
+    this.eventBus.on(DrawEvent.MODIFY_END, () => {
+      this.cursorManager.setDragging(false);
     });
   }
 
@@ -126,6 +139,7 @@ export abstract class BaseTool {
   private deleteActiveFeature(): void {
     const feature = this.activeFeature!;
     this.selectManager.clearSelection();
+    this.cursorManager.setActive(false);
     this.layerManager.removeFeature(feature);
     this.eventBus.emit(DrawEvent.DELETE, { feature });
   }
@@ -145,6 +159,7 @@ export abstract class BaseTool {
    */
   destroy(): void {
     document.removeEventListener('keydown', this.handleKeyDown);
+    this.cursorManager.destroy();
     this.drawManager.destroy();
     this.selectManager.destroy();
     this.modifyManager.destroy();
@@ -186,6 +201,7 @@ export abstract class BaseTool {
   clearFeatures(): this {
     this.selectManager.clearSelection();
     this.activeFeature = null;
+    this.cursorManager.setActive(false);
     this.layerManager.clear();
     this.state = ToolState.Drawing;
     return this;

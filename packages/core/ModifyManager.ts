@@ -2,6 +2,8 @@ import Map from 'ol/Map';
 import Modify from 'ol/interaction/Modify';
 import type Collection from 'ol/Collection';
 import type Feature from 'ol/Feature';
+import type VectorLayer from 'ol/layer/Vector';
+import type { StyleLike } from 'ol/style/Style';
 import type { EventBus } from './EventBus';
 import type { PlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
@@ -53,6 +55,17 @@ export class ModifyManager {
    */
   setActive(active: boolean): void {
     this.modify.setActive(active);
+  }
+
+  /**
+   * Override the style used by the Modify interaction overlay.
+   */
+  setStyle(style: StyleLike): void {
+    this.modify.getOverlay().setStyle(style);
+  }
+
+  getOverlayLayer(): VectorLayer {
+    return this.modify.getOverlay();
   }
 
   /**

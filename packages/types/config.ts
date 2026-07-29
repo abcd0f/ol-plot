@@ -26,3 +26,17 @@ export interface PlotConfig {
   nodeStyle?: NodeStyle;
   measure?: MeasureConfig;
 }
+
+/** 图片点标记配置 */
+export interface ImagePointConfig extends PlotConfig {
+  image?: {
+    /** 图片 URL */
+    src: string;
+    /** 缩放比例，默认 1 */
+    scale?: number;
+    /** 锚点位置 [x, y]，取值范围 0-1，默认 [0.5, 0.5]（图片中心） */
+    anchor?: [number, number];
+    /** 透明度，默认 1 */
+    opacity?: number;
+  };
+}

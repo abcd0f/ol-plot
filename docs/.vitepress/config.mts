@@ -52,6 +52,7 @@ export default defineConfig({
         collapsed: false,
         items: [
           { text: '点 Point', link: '/components/point' },
+          { text: '图片点 ImagePoint', link: '/components/image-point' },
           { text: '折线 Line', link: '/components/line' },
           { text: '自由线 FreehandLine', link: '/components/freehand-line' },
           { text: '多边形 Polygon', link: '/components/polygon' },

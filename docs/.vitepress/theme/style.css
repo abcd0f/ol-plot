@@ -41,6 +41,19 @@ html {
 * - 柔和色必须使用半透明的 Alpha 通道。这一点非常关键，因为它允许多个“soft”颜色相叠加，从而营造出强调效果，例如在自定义容器中放置内联代码块时。
 * -------------------------------------------------------------------------- */
 
+/**
+ * #c98eff #0b0c10
+ * #73ae52 #fbf1d7
+ * #a1e6dd #ff6f2c
+ * #fcf9e8 #41bbcb
+ * #e6397c #1a1a1d
+ * #012696 #a4e2c6
+ * #d82e2f #222222
+ * #122e8a #f5efea
+ * #ffb7c5 #014421
+ * #e72d48 #f1dddf
+ */
+
 :root {
   --vp-c-gray-1: #dddde3;
   --vp-c-gray-2: #e4e4e9;
@@ -201,8 +214,9 @@ html {
  * Typography
  * -------------------------------------------------------------------------- */
 :root {
-  --vp-font-family-base: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
+  --vp-font-family-base:
+    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
   --vp-font-family-mono: ui-monospace, 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
   font-optical-sizing: auto;
 }

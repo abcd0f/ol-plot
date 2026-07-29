@@ -4,6 +4,7 @@ import { click } from 'ol/events/condition';
 import Collection from 'ol/Collection';
 import type Feature from 'ol/Feature';
 import type VectorLayer from 'ol/layer/Vector';
+import type { StyleLike } from 'ol/style/Style';
 import type { EventBus } from './EventBus';
 import type { PlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
@@ -90,6 +91,31 @@ export class SelectManager {
    */
   setActive(active: boolean): void {
     this.select.setActive(active);
+  }
+
+  /**
+   * Override the style applied by the Select interaction.
+   */
+  setStyle(style: StyleLike | null): void {
+    const select = this.select as unknown as {
+      style_: StyleLike | null;
+      applySelectedStyle_: (feature: Feature) => void;
+      restorePreviousStyle_: (feature: Feature) => void;
+    };
+
+    if (select.style_) {
+      this.select.getFeatures().forEach((feature) => {
+        select.restorePreviousStyle_(feature as Feature);
+      });
+    }
+
+    select.style_ = style;
+
+    if (style) {
+      this.select.getFeatures().forEach((feature) => {
+        select.applySelectedStyle_(feature as Feature);
+      });
+    }
   }
 
   /**
