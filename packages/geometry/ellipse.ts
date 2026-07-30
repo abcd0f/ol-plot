@@ -2,36 +2,17 @@ import Polygon from 'ol/geom/Polygon';
 import type { Coordinate } from 'ol/coordinate';
 
 const SEGMENTS = 64;
+const MIN_RADIUS = 1e-6;
 
-/**
- * 根据两个控制点（外接矩形对角顶点）生成椭圆 Polygon 坐标。
- *
- * @param controlPoints - [p1, p2] 外接矩形的两个对角顶点
- * @returns Polygon 坐标格式 number[][][]（单环）
- */
 export function buildEllipse(controlPoints: number[][]): number[][][] {
   if (controlPoints.length < 2) return [[]];
 
   const [p1, p2] = controlPoints;
-  const cx = (p1[0] + p2[0]) / 2;
-  const cy = (p1[1] + p2[1]) / 2;
-  const rx = Math.abs(p2[0] - p1[0]) / 2;
-  const ry = Math.abs(p2[1] - p1[1]) / 2;
-
-  // 处理退化椭圆
-  if (rx === 0 || ry === 0) {
-    const minR = 1e-6;
-    const rxF = rx === 0 ? minR : rx;
-    const ryF = ry === 0 ? minR : ry;
-    const ring: number[][] = [];
-    for (let i = 0; i <= SEGMENTS; i++) {
-      const angle = (Math.PI * 2 * i) / SEGMENTS;
-      ring.push([cx + rxF * Math.cos(angle), cy + ryF * Math.sin(angle)]);
-    }
-    return [ring];
-  }
-
+  const [cx, cy] = getEllipseCenter(controlPoints);
+  const rx = Math.max(Math.abs(p2[0] - p1[0]) / 2, MIN_RADIUS);
+  const ry = Math.max(Math.abs(p2[1] - p1[1]) / 2, MIN_RADIUS);
   const ring: number[][] = [];
+
   for (let i = 0; i <= SEGMENTS; i++) {
     const angle = (Math.PI * 2 * i) / SEGMENTS;
     ring.push([cx + rx * Math.cos(angle), cy + ry * Math.sin(angle)]);
@@ -40,13 +21,12 @@ export function buildEllipse(controlPoints: number[][]): number[][][] {
   return [ring];
 }
 
-/**
- * 从椭圆 Polygon 反推两个控制点（外接矩形对角顶点）。
- *
- * @param polygon - 椭圆 Polygon
- * @returns 控制点数组 [p1, p2]
- */
 export function getEllipseControlPoints(polygon: Polygon): number[][] {
+  const controlPoints = polygon.get('_controlPoints') as number[][] | undefined;
+  if (Array.isArray(controlPoints) && controlPoints.length >= 2) {
+    return controlPoints.slice(0, 2);
+  }
+
   const ring = polygon.getCoordinates()[0];
   if (!ring || ring.length < 4) return [];
 
@@ -68,25 +48,31 @@ export function getEllipseControlPoints(polygon: Polygon): number[][] {
   ];
 }
 
-/**
- * 计算椭圆的中心点（外接矩形对角线交点）。
- *
- * @param controlPoints - [p1, p2] 外接矩形对角顶点
- * @returns 中心点坐标
- */
 export function getEllipseCenter(controlPoints: number[][]): Coordinate {
   const [p1, p2] = controlPoints;
   return [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 }
 
-/**
- * OL Draw 交互的 geometryFunction，用于实时预览椭圆。
- */
+export type EllipseRadii = [number, number] & { rx: number; ry: number };
+
+export function getEllipseRadii(controlPoints: number[][]): EllipseRadii {
+  if (controlPoints.length < 2) return toEllipseRadii(0, 0);
+  const [p1, p2] = controlPoints;
+  return toEllipseRadii(Math.abs(p2[0] - p1[0]) / 2, Math.abs(p2[1] - p1[1]) / 2);
+}
+
 export function createEllipseGeometryFunction() {
   return (coordinates: number[][], geometry?: Polygon): Polygon => {
     const geom = geometry || new Polygon([]);
     if (coordinates.length < 2) return geom;
-    geom.setCoordinates(buildEllipse(coordinates.slice(0, 2)));
+
+    const controlPoints = coordinates.slice(0, 2);
+    geom.setCoordinates(buildEllipse(controlPoints));
+    geom.set('_controlPoints', controlPoints);
     return geom;
   };
+}
+
+function toEllipseRadii(rx: number, ry: number): EllipseRadii {
+  return Object.assign([rx, ry] as [number, number], { rx, ry });
 }

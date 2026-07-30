@@ -14,6 +14,7 @@ import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
 import { createDoubleArrowGeometryFunction } from '../geometry/arrow/double';
 import { createArcGeometryFunction } from '../geometry/arc';
 import { createFlagGeometryFunction } from '../geometry/flag';
+import { createRectangleGeometryFunction } from '../geometry/rectangle';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -68,8 +69,9 @@ export class DrawManager {
 
     // 根据绘制类型设置相应的 OpenLayers 绘制配置
     if (drawType === DrawType.Ellipse) {
-      type = 'Circle';
+      type = 'LineString';
       geometryFunction = createEllipseGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 2;
     } else if (drawType === DrawType.Sector) {
       type = 'LineString';
       geometryFunction = createSectorGeometryFunction() as unknown as GeometryFunction;
@@ -98,6 +100,10 @@ export class DrawManager {
     } else if (drawType === DrawType.Flag) {
       type = 'LineString';
       geometryFunction = createFlagGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 2;
+    } else if (drawType === DrawType.Rectangle) {
+      type = 'LineString';
+      geometryFunction = createRectangleGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 2;
     } else if (drawType === DrawType.FlowLine) {
       type = 'LineString';

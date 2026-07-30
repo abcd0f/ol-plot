@@ -5,14 +5,18 @@ import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { HandleBasedTool } from '../core/HandleBasedTool';
-import { buildEllipse, getEllipseControlPoints } from '../geometry/ellipse';
+import {
+  buildEllipse,
+  type EllipseRadii,
+  getEllipseCenter,
+  getEllipseControlPoints,
+  getEllipseRadii,
+} from '../geometry/ellipse';
 
 export class EllipseTool extends HandleBasedTool {
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.Ellipse, config);
   }
-
-  // ─── HandleBasedTool implementations ──────────────────────────────────────
 
   protected getPlotType(): string {
     return 'ellipse';
@@ -20,19 +24,22 @@ export class EllipseTool extends HandleBasedTool {
 
   protected onHandleSync(controlPoints: number[][]): void {
     if (!this.activeFeature) return;
-    this.activeFeature.set('controlPoints', controlPoints);
+    const points = controlPoints.slice(0, 2);
+    this.activeFeature.set('controlPoints', points);
     const geom = this.activeFeature.getGeometry() as Polygon;
-    geom.setCoordinates(buildEllipse(controlPoints));
+    geom.setCoordinates(buildEllipse(points));
+    geom.set('_controlPoints', points);
   }
 
   protected extractControlPoints(geom: Geometry): number[][] {
     return getEllipseControlPoints(geom as Polygon);
   }
 
-  // ─── Abstract implementations ─────────────────────────────────────────────
-
   protected createGeometry(coordinates: number[][]): Geometry {
-    return new Polygon(buildEllipse(coordinates));
+    const points = coordinates.slice(0, 2);
+    const geom = new Polygon(buildEllipse(points));
+    geom.set('_controlPoints', points);
+    return geom;
   }
 
   addFeature(coordinates: number[][]): Feature {
@@ -44,10 +51,12 @@ export class EllipseTool extends HandleBasedTool {
 
   setCoordinates(coordinates: number[][]): void {
     if (!this.activeFeature || coordinates.length < 2) return;
-    this.activeFeature.set('controlPoints', coordinates.slice(0, 2));
+    const points = coordinates.slice(0, 2);
+    this.activeFeature.set('controlPoints', points);
     const geom = this.activeFeature.getGeometry() as Polygon;
-    geom.setCoordinates(buildEllipse(coordinates));
-    this.handleManager.refresh(coordinates.slice(0, 2));
+    geom.setCoordinates(buildEllipse(points));
+    geom.set('_controlPoints', points);
+    this.handleManager.refresh(points);
   }
 
   getCoordinates(): number[][] {
@@ -67,24 +76,19 @@ export class EllipseTool extends HandleBasedTool {
     this.setCoordinates(coords);
   }
 
-  // ─── Convenience API ──────────────────────────────────────────────────────
-
-  addEllipse(center: number[], edgePoint: number[]): Feature {
-    return this.addFeature([center, edgePoint]);
+  addEllipse(p1: number[], p2: number[]): Feature {
+    return this.addFeature([p1, p2]);
   }
 
   getCenter(): number[] | null {
     const coords = this.getCoordinates();
-    if (coords.length < 1) return null;
-    return coords[0];
+    if (coords.length < 2) return null;
+    return getEllipseCenter(coords);
   }
 
-  getRadii(): { rx: number; ry: number } | null {
+  getRadii(): EllipseRadii | null {
     const coords = this.getCoordinates();
     if (coords.length < 2) return null;
-    const [center, edgePoint] = coords;
-    const rx = Math.abs(edgePoint[0] - center[0]);
-    const ry = Math.abs(edgePoint[1] - center[1]);
-    return { rx, ry };
+    return getEllipseRadii(coords);
   }
 }

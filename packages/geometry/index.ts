@@ -11,6 +11,8 @@ export {
   buildEllipse,
   getEllipseControlPoints,
   createEllipseGeometryFunction,
+  getEllipseCenter,
+  getEllipseRadii,
 } from './ellipse';
 
 export { buildSector, getSectorControlPoints, createSectorGeometryFunction } from './sector';
