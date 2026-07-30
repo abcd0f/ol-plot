@@ -14,7 +14,6 @@ import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
 import { createDoubleArrowGeometryFunction } from '../geometry/arrow/double';
 import { createArcGeometryFunction } from '../geometry/arc';
 import { createFlagGeometryFunction } from '../geometry/flag';
-import { createRectangleGeometryFunction } from '../geometry/rectangle';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -68,11 +67,7 @@ export class DrawManager {
     let maxPoints: number | undefined;
 
     // 根据绘制类型设置相应的 OpenLayers 绘制配置
-    if (drawType === DrawType.Rectangle) {
-      type = 'Circle';
-      geometryFunction = createRectangleGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.Ellipse) {
+    if (drawType === DrawType.Ellipse) {
       type = 'Circle';
       geometryFunction = createEllipseGeometryFunction() as unknown as GeometryFunction;
     } else if (drawType === DrawType.Sector) {
