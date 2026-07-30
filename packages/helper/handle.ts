@@ -159,6 +159,23 @@ export class HandleManager {
     this.syncing = false;
   }
 
+  refreshExcept(controlPoints: number[][] | undefined, excludedIndex: number | null): void {
+    if (!controlPoints) return;
+
+    const handles = this.handleSource
+      .getFeatures()
+      .sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
+
+    if (handles.length !== controlPoints.length) return;
+
+    this.syncing = true;
+    handles.forEach((h, i) => {
+      if (i === excludedIndex) return;
+      (h.getGeometry() as Point).setCoordinates(controlPoints[i]);
+    });
+    this.syncing = false;
+  }
+
   // ─── Sync ─────────────────────────────────────────────────────────────────
 
   /** 更新同步回调（如 activeFeature 切换时需要） */

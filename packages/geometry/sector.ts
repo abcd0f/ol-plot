@@ -40,29 +40,22 @@ export function buildSector(controlPoints: number[][]): number[][][] {
   return [ring];
 }
 
-export function normalizeSectorControlPoints(controlPoints: number[][]): number[][] {
+export function normalizeSectorControlPoints(controlPoints: number[][], radiusSourceIndex: 1 | 2 = 1): number[][] {
   if (controlPoints.length < 3) return controlPoints.slice(0, 2);
 
   const center = controlPoints[0];
   const startPoint = controlPoints[1];
   const endPoint = controlPoints[2];
-  const radius = dist(center, startPoint);
+  const radiusSource = radiusSourceIndex === 2 ? endPoint : startPoint;
+  const radiusTarget = radiusSourceIndex === 2 ? startPoint : endPoint;
+  const radius = dist(center, radiusSource);
 
   if (radius < MIN_RADIUS) {
     return [center, startPoint, endPoint];
   }
 
-  const endDistance = dist(center, endPoint);
-  if (endDistance < MIN_RADIUS) {
-    return [center, startPoint, [center[0] + radius, center[1]]];
-  }
-
-  const scale = radius / endDistance;
-  return [
-    center,
-    startPoint,
-    [center[0] + (endPoint[0] - center[0]) * scale, center[1] + (endPoint[1] - center[1]) * scale],
-  ];
+  const projectedTarget = projectToRadius(center, radiusTarget, radius);
+  return radiusSourceIndex === 2 ? [center, projectedTarget, endPoint] : [center, startPoint, projectedTarget];
 }
 
 export function getSectorControlPoints(polygon: Polygon): number[][] {
@@ -122,4 +115,14 @@ function getPositiveAngleSpan(startAngle: number, endAngle: number): number {
 
 function getSegmentCount(angleSpan: number): number {
   return Math.min(MAX_SEGMENTS, Math.max(MIN_SEGMENTS, Math.ceil(angleSpan * SEGMENTS_PER_RADIAN)));
+}
+
+function projectToRadius(center: number[], point: number[], radius: number): number[] {
+  const pointDistance = dist(center, point);
+  if (pointDistance < MIN_RADIUS) {
+    return [center[0] + radius, center[1]];
+  }
+
+  const scale = radius / pointDistance;
+  return [center[0] + (point[0] - center[0]) * scale, center[1] + (point[1] - center[1]) * scale];
 }

@@ -16,14 +16,23 @@ import {
 } from '../geometry/sector';
 
 const MOVE_TOLERANCE = 1e-9;
+type RadiusSourceIndex = 1 | 2;
 
 export class SectorTool extends HandleBasedTool {
+  private draggingHandleIndex: number | null = null;
+
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.Sector, config);
+
+    this.handleManager.handleModify.on('modifystart', (event) => {
+      const feature = event.features.item(0);
+      this.draggingHandleIndex = feature?.get('_handleIndex') ?? null;
+    });
 
     this.handleManager.handleModify.on('modifyend', () => {
       if (!this.activeFeature) return;
       this.handleManager.refresh(this.getCoordinates());
+      this.draggingHandleIndex = null;
     });
   }
 
@@ -40,6 +49,7 @@ export class SectorTool extends HandleBasedTool {
     const geom = this.activeFeature.getGeometry() as Polygon;
     geom.setCoordinates(buildSector(points));
     geom.set('_controlPoints', points);
+    this.handleManager.refreshExcept(points, this.draggingHandleIndex);
   }
 
   protected extractControlPoints(geom: Geometry): number[][] {
@@ -61,10 +71,10 @@ export class SectorTool extends HandleBasedTool {
     return feature;
   }
 
-  setCoordinates(coordinates: number[][]): void {
+  setCoordinates(coordinates: number[][], radiusSourceIndex: RadiusSourceIndex = 1): void {
     if (!this.activeFeature || coordinates.length < 3) return;
 
-    const points = normalizeSectorControlPoints(coordinates.slice(0, 3));
+    const points = normalizeSectorControlPoints(coordinates.slice(0, 3), radiusSourceIndex);
     this.activeFeature.set('controlPoints', points);
 
     const geom = this.activeFeature.getGeometry() as Polygon;
@@ -87,7 +97,7 @@ export class SectorTool extends HandleBasedTool {
     const coords = this.getCoordinates();
     if (coords.length < 3) return;
     coords[index] = coordinate;
-    this.setCoordinates(coords);
+    this.setCoordinates(coords, index === 2 ? 2 : 1);
   }
 
   addSector(center: number[], radiusPoint: number[], anglePoint: number[]): Feature {
@@ -112,11 +122,9 @@ export class SectorTool extends HandleBasedTool {
     const previous = this.getCoordinates();
     if (previous.length < 3) return normalizeSectorControlPoints(controlPoints.slice(0, 3));
 
-    const centerMoved = moved(previous[0], controlPoints[0]);
-    const startMoved = moved(previous[1], controlPoints[1]);
-    const endMoved = moved(previous[2], controlPoints[2]);
+    const centerMoved = this.draggingHandleIndex === 0 || moved(previous[0], controlPoints[0]);
 
-    if (centerMoved && !startMoved && !endMoved) {
+    if (centerMoved && this.draggingHandleIndex !== 1 && this.draggingHandleIndex !== 2) {
       const dx = controlPoints[0][0] - previous[0][0];
       const dy = controlPoints[0][1] - previous[0][1];
       return [
@@ -126,7 +134,7 @@ export class SectorTool extends HandleBasedTool {
       ];
     }
 
-    return normalizeSectorControlPoints(controlPoints.slice(0, 3));
+    return normalizeSectorControlPoints(controlPoints.slice(0, 3), this.draggingHandleIndex === 2 ? 2 : 1);
   }
 }
 
