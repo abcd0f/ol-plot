@@ -28,6 +28,7 @@ function extractVertices(feature: Feature): number[][] {
       if (
         plotType === 'ellipse' ||
         plotType === 'rectangle' ||
+        plotType === 'sector' ||
         plotType === 'straightArrow' ||
         plotType === 'taperedArrow' ||
         plotType === 'doubleArrow'
