@@ -36,4 +36,11 @@ export type {
   AreaMeasureConfig,
   AreaMeasureUnit,
   FlowLineConfig,
+  PlotCoordinate,
+  PlotCoordinates,
+  PlotDrawType,
+  PlotStyleData,
+  PlotGeometryData,
+  PlotFeatureData,
+  PlotRestoreOptions,
 } from './types';

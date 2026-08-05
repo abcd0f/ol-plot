@@ -9,3 +9,12 @@ export type {
   AreaMeasureUnit,
   FlowLineConfig,
 } from './config';
+export type {
+  PlotCoordinate,
+  PlotCoordinates,
+  PlotDrawType,
+  PlotStyleData,
+  PlotGeometryData,
+  PlotFeatureData,
+  PlotRestoreOptions,
+} from './data';

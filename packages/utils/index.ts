@@ -10,3 +10,4 @@ export {
   getBaseLength,
   getBezierPoints,
 } from './math';
+export { serializeFeature, serializeStyle, buildStyleFromData, setFeatureStyleData } from './data';

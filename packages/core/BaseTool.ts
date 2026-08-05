@@ -2,6 +2,7 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
+import type { PlotFeatureData, PlotRestoreOptions } from '../types/data';
 import { DrawType } from '../constants/drawType';
 import { ToolState } from '../constants/toolState';
 import { DrawEvent } from '../constants/events';
@@ -14,6 +15,7 @@ import { CursorManager } from './CursorManager';
 import { mergeConfig } from '../constants';
 import { buildFeatureStyle } from '../style/feature';
 import { buildDrawStyle } from '../style/draw';
+import { buildStyleFromData, serializeFeature, setFeatureStyleData } from '../utils/data';
 
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。
@@ -51,6 +53,10 @@ export abstract class BaseTool {
 
   private handleKeyDown: (e: KeyboardEvent) => void;
   private revision = 0;
+  private eventWrappers = new globalThis.Map<
+    string,
+    globalThis.Map<(...args: any[]) => void, (...args: any[]) => void>
+  >();
 
   /**
    * 初始化地图工具的基本组件和配置，并自动进入绘制态。
@@ -170,6 +176,7 @@ export abstract class BaseTool {
     this.modifyManager.destroy();
     this.layerManager.destroy();
     this.eventBus.clear();
+    this.eventWrappers.clear();
     this.activeFeature = null;
     this.state = ToolState.Idle;
   }
@@ -188,6 +195,42 @@ export abstract class BaseTool {
     return feature;
   }
 
+  /**
+   * Restore one or more features from serialized plot data.
+   *
+   * Data should usually be restored by the same tool type that created it.
+   */
+  restorePlotData(data: PlotFeatureData | PlotFeatureData[], options: PlotRestoreOptions = {}): Feature[] {
+    if (options.clear) this.clearFeatures();
+
+    const list = Array.isArray(data) ? data : [data];
+    return list.map((item) => {
+      const feature = this.addFeature(item.controlPoints ?? item.coordinates);
+      if (item.id !== undefined) feature.setId(item.id);
+      if (item.plotType) feature.set('plotType', item.plotType);
+      if (item.controlPoints)
+        feature.set(
+          'controlPoints',
+          item.controlPoints.map((point) => [...point]),
+        );
+      Object.entries(item.properties ?? {}).forEach(([key, value]) => feature.set(key, value));
+      if (item.style) {
+        setFeatureStyleData(feature, item.style);
+        if (options.applyStyle !== false && item.type !== DrawType.FlowLine) {
+          feature.setStyle(buildStyleFromData(item.style));
+        }
+      }
+      return feature;
+    });
+  }
+
+  /**
+   * Alias for restorePlotData.
+   */
+  loadPlotData(data: PlotFeatureData | PlotFeatureData[], options: PlotRestoreOptions = {}): Feature[] {
+    return this.restorePlotData(data, options);
+  }
+
   // ─── Features ─────────────────────────────────────────────────────────────
 
   /**
@@ -197,6 +240,27 @@ export abstract class BaseTool {
    */
   getFeatures(): Feature[] {
     return this.layerManager.getFeatures();
+  }
+
+  /**
+   * Serialize one feature into JSON-friendly structured data.
+   */
+  getFeatureData(feature: Feature): PlotFeatureData {
+    return serializeFeature(feature, this.drawType, this.config);
+  }
+
+  /**
+   * Serialize all features managed by this tool.
+   */
+  getPlotData(): PlotFeatureData[] {
+    return this.getFeatures().map((feature) => this.getFeatureData(feature));
+  }
+
+  /**
+   * Alias for getPlotData, named for server persistence workflows.
+   */
+  getStructuredData(): PlotFeatureData[] {
+    return this.getPlotData();
   }
 
   /**
@@ -225,7 +289,10 @@ export abstract class BaseTool {
    * @returns 返回当前实例以支持链式调用
    */
   on(event: string, handler: (...args: any[]) => void): this {
-    this.eventBus.on(event, handler);
+    const wrapper = (...args: any[]) => handler(...args.map((arg) => this.withStructuredData(arg)));
+    if (!this.eventWrappers.has(event)) this.eventWrappers.set(event, new globalThis.Map());
+    this.eventWrappers.get(event)!.set(handler, wrapper);
+    this.eventBus.on(event, wrapper);
     return this;
   }
 
@@ -237,7 +304,9 @@ export abstract class BaseTool {
    * @returns 返回当前实例以支持链式调用
    */
   off(event: string, handler: (...args: any[]) => void): this {
-    this.eventBus.off(event, handler);
+    const wrapper = this.eventWrappers.get(event)?.get(handler);
+    this.eventBus.off(event, wrapper ?? handler);
+    this.eventWrappers.get(event)?.delete(handler);
     return this;
   }
 
@@ -276,4 +345,24 @@ export abstract class BaseTool {
    * @param coordinate - 新的坐标
    */
   abstract updatePoint(index: number, coordinate: number[]): void;
+
+  private withStructuredData(arg: any): any {
+    if (!arg || typeof arg !== 'object') return arg;
+
+    if (arg.feature instanceof Feature) {
+      return {
+        ...arg,
+        data: this.getFeatureData(arg.feature),
+      };
+    }
+
+    if (Array.isArray(arg.features)) {
+      return {
+        ...arg,
+        dataList: arg.features.map((feature: Feature) => this.getFeatureData(feature)),
+      };
+    }
+
+    return arg;
+  }
 }
