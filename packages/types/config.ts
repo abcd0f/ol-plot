@@ -8,11 +8,11 @@ export interface NodeStyle {
 /** 测距标签显示模式 */
 export type MeasureMode = 'total' | 'segment' | 'both';
 
-/** 测距距离单位：auto 自动在米/公里间切换 */
-export type MeasureUnit = 'auto' | 'meter' | 'kilometer';
+/** 测距距离单位 */
+export type MeasureUnit = 'm' | 'km' | 'nm';
 
-/** Area measure unit: auto switches between square meters and square kilometers. */
-export type AreaMeasureUnit = 'auto' | 'square-meter' | 'square-kilometer';
+/** 测面积单位 */
+export type AreaMeasureUnit = 'm' | 'km' | 'nm';
 
 export interface MeasureConfig {
   /** 显示总距离、逐段距离，还是两者都显示，默认 'total' */

@@ -218,7 +218,7 @@ interface NodeStyle {
 
 interface MeasureConfig {
   mode?: 'total' | 'segment' | 'both'
-  unit?: 'auto' | 'meter' | 'kilometer'
+  unit?: 'm' | 'km' | 'nm'
   labelStyle?: Partial<CSSStyleDeclaration>
 }
 
@@ -227,7 +227,7 @@ interface MeasurePlotConfig extends PlotConfig {
 }
 
 interface AreaMeasureConfig {
-  unit?: 'auto' | 'square-meter' | 'square-kilometer'
+  unit?: 'm' | 'km' | 'nm'
   labelStyle?: Partial<CSSStyleDeclaration>
 }
 
@@ -264,8 +264,8 @@ import { DEFAULT_CONFIG } from '@seedlib/ol-plot'
 | `lineDash` | `[]` |
 | `nodeStyle.radius` | `6` |
 | `measure.mode` | `total` |
-| `measure.unit` | `auto` |
-| `areaMeasure.unit` | `auto` |
+| `measure.unit` | `m` |
+| `areaMeasure.unit` | `m` |
 | `flowLine.arrowSpacing` | `48` |
 | `flowLine.speed` | `60` |
 
@@ -298,13 +298,13 @@ import { MeasureTool, AreaMeasureTool } from '@seedlib/ol-plot'
 const measure = new MeasureTool(map, {
   measure: {
     mode: 'both',
-    unit: 'auto',
+    unit: 'nm',
   },
 })
 
 const areaMeasure = new AreaMeasureTool(map, {
   areaMeasure: {
-    unit: 'auto',
+    unit: 'nm',
   },
 })
 ```

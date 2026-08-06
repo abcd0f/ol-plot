@@ -137,7 +137,7 @@ onMounted(() => {
 
   plot = new PlotManager(map, {
     strokeColor: '#1677ff',
-    strokeWidth: 30,
+    strokeWidth: 3,
     fillColor: 'rgba(22, 119, 255, 0.16)',
     nodeStyle: {
       radius: 6,
@@ -157,7 +157,7 @@ onMounted(() => {
     },
     measure: {
       mode: 'both',
-      unit: 'auto',
+      unit: 'm',
     },
   });
 

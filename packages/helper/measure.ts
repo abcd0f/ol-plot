@@ -12,6 +12,8 @@ import { DrawEvent } from '../constants/events';
 import type { DrawType } from '../constants/drawType';
 import { mid } from '../utils/math';
 
+const METERS_PER_NAUTICAL_MILE = 1852;
+
 /** 单条标签的位置与文本 */
 interface Label {
   position: number[];
@@ -232,9 +234,9 @@ export class MeasureManager {
   }
 
   private format(length: number): string {
-    if (this.unit === 'meter') return `${length.toFixed(2)} m`;
-    if (this.unit === 'kilometer') return `${(length / 1000).toFixed(2)} km`;
-    return length > 1000 ? `${(length / 1000).toFixed(2)} km` : `${length.toFixed(2)} m`;
+    if (this.unit === 'km') return `${(length / 1000).toFixed(2)} km`;
+    if (this.unit === 'nm') return `${(length / METERS_PER_NAUTICAL_MILE).toFixed(2)} nm`;
+    return `${length.toFixed(2)} m`;
   }
 
   /** 创建一个带默认样式的标签 Overlay。 */

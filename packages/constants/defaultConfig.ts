@@ -24,8 +24,8 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
   measure: {
     /** 显示模式：总距离 */
     mode: 'total',
-    /** 距离单位：自动 */
-    unit: 'auto',
+    /** 距离单位：米 */
+    unit: 'm',
     labelStyle: {
       padding: '2px 6px',
       background: 'rgba(0,0,0,0.65)',
@@ -38,7 +38,7 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
     },
   },
   areaMeasure: {
-    unit: 'auto',
+    unit: 'm',
     labelStyle: {
       padding: '2px 6px',
       background: 'rgba(0,0,0,0.65)',

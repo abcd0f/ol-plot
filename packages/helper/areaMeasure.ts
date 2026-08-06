@@ -10,6 +10,8 @@ import type { AreaMeasureUnit, ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import type { DrawType } from '../constants/drawType';
 
+const SQUARE_METERS_PER_SQUARE_NAUTICAL_MILE = 1852 * 1852;
+
 interface Label {
   position: number[];
   text: string;
@@ -153,9 +155,9 @@ export class AreaMeasureManager {
   }
 
   private format(area: number): string {
-    if (this.unit === 'square-meter') return `${area.toFixed(2)} m²`;
-    if (this.unit === 'square-kilometer') return `${(area / 1000000).toFixed(2)} km²`;
-    return area > 1000000 ? `${(area / 1000000).toFixed(2)} km²` : `${area.toFixed(2)} m²`;
+    if (this.unit === 'km') return `${(area / 1000000).toFixed(2)} km²`;
+    if (this.unit === 'nm') return `${(area / SQUARE_METERS_PER_SQUARE_NAUTICAL_MILE).toFixed(2)} nm²`;
+    return `${area.toFixed(2)} m²`;
   }
 
   private createOverlay(): Overlay {
