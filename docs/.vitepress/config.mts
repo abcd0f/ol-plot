@@ -34,6 +34,7 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/quickstart' },
       { text: '组件', link: '/components/point' },
+      { text: 'DEMO', link: '/components/demo' },
       { text: 'API', link: '/api' },
     ],
 
