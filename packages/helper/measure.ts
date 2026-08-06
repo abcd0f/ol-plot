@@ -1,7 +1,8 @@
 import OLMap from 'ol/Map';
 import Overlay from 'ol/Overlay';
 import LineString from 'ol/geom/LineString';
-import { getLength } from 'ol/sphere';
+import { getDistance } from 'ol/sphere';
+import { getTransform } from 'ol/proj';
 import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
@@ -24,7 +25,7 @@ interface Label {
  * - `segment`：在每一段的中点显示该段距离
  * - `both`：两者同时显示
  *
- * 距离基于 `ol/sphere` 的 `getLength`，按地图投影换算为真实距离；单位由 `unit` 控制。
+ * 距离基于 `ol/sphere` 的 `getDistance`，按地图投影换算为真实距离；单位由 `unit` 控制。
  * 采用 Overlay 而非矢量文字，标签独立于矢量渲染，在绘制中、绘制完成、编辑状态下都保持可见，
  * 且无需改动其它工具共用的样式逻辑。
  */
@@ -42,6 +43,8 @@ export class MeasureManager {
   private sketchGroup: Overlay[] = [];
   /** 绘制过程中对草图几何变化的监听句柄 */
   private sketchKey: EventsKey | null = null;
+  private renderFrame: number | null = null;
+  private dirtyRenders = new Map<Overlay[], LineString>();
 
   /**
    * @param map      地图实例
@@ -56,8 +59,8 @@ export class MeasureManager {
 
     eventBus.on(DrawEvent.DRAW_START, ({ feature }: { feature: Feature }) => {
       const geom = feature.getGeometry() as LineString;
-      this.sketchKey = geom.on('change', () => this.render(this.sketchGroup, geom));
-      this.render(this.sketchGroup, geom);
+      this.sketchKey = geom.on('change', () => this.requestRender(this.sketchGroup, geom));
+      this.renderNow(this.sketchGroup, geom);
     });
 
     eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
@@ -82,15 +85,16 @@ export class MeasureManager {
     this.groups.set(feature, group);
     this.changeKeys.set(
       feature,
-      geom.on('change', () => this.render(group, geom)),
+      geom.on('change', () => this.requestRender(group, geom)),
     );
-    this.render(group, geom);
+    this.renderNow(group, geom);
   }
 
   /** 移除指定要素的标签组及其监听。 */
   removeFeature(feature: Feature): void {
     const group = this.groups.get(feature);
     if (group) {
+      this.dirtyRenders.delete(group);
       group.forEach((o) => this.map.removeOverlay(o));
       this.groups.delete(feature);
     }
@@ -107,6 +111,7 @@ export class MeasureManager {
       unByKey(this.sketchKey);
       this.sketchKey = null;
     }
+    this.dirtyRenders.delete(this.sketchGroup);
     this.sketchGroup.forEach((o) => this.map.removeOverlay(o));
     this.sketchGroup.length = 0;
   }
@@ -122,6 +127,11 @@ export class MeasureManager {
   /** 销毁：移除全部标签与监听。 */
   destroy(): void {
     this.clear();
+    if (this.renderFrame !== null) {
+      cancelAnimationFrame(this.renderFrame);
+      this.renderFrame = null;
+    }
+    this.dirtyRenders.clear();
   }
 
   // ─── 渲染 ──────────────────────────────────────────────────────────────────
@@ -129,7 +139,19 @@ export class MeasureManager {
   /**
    * 根据几何计算标签，并复用/增减标签组内的 Overlay，使其数量与内容对齐。
    */
-  private render(group: Overlay[], geom: LineString): void {
+  private requestRender(group: Overlay[], geom: LineString): void {
+    this.dirtyRenders.set(group, geom);
+    if (this.renderFrame !== null) return;
+
+    this.renderFrame = requestAnimationFrame(() => {
+      this.renderFrame = null;
+      const pending = [...this.dirtyRenders.entries()];
+      this.dirtyRenders.clear();
+      pending.forEach(([dirtyGroup, dirtyGeom]) => this.renderNow(dirtyGroup, dirtyGeom));
+    });
+  }
+
+  private renderNow(group: Overlay[], geom: LineString): void {
     const labels = this.computeLabels(geom);
 
     while (group.length < labels.length) {
@@ -152,18 +174,16 @@ export class MeasureManager {
     const coords = geom.getCoordinates();
     if (coords.length < 2) return [];
 
-    const projection = this.map.getView().getProjection();
     const labels: Label[] = [];
+    const { segmentLengths, total } = this.computeLengths(coords);
 
     if (this.mode === 'segment' || this.mode === 'both') {
       for (let i = 1; i < coords.length; i++) {
-        const length = getLength(new LineString([coords[i - 1], coords[i]]), { projection });
-        labels.push({ position: mid(coords[i - 1], coords[i]), text: this.format(length) });
+        labels.push({ position: mid(coords[i - 1], coords[i]), text: this.format(segmentLengths[i - 1]) });
       }
     }
 
     if (this.mode === 'total' || this.mode === 'both') {
-      const total = getLength(geom, { projection });
       const prefix = this.mode === 'both' ? '总长 ' : '';
       labels.push({ position: coords[coords.length - 1], text: prefix + this.format(total) });
     }
@@ -172,6 +192,34 @@ export class MeasureManager {
   }
 
   /** 按 unit 配置格式化距离（输入为米）。 */
+  private computeLengths(coords: number[][]): { segmentLengths: number[]; total: number } {
+    const flat = new Array<number>(coords.length * 2);
+    coords.forEach((coord, index) => {
+      flat[index * 2] = coord[0];
+      flat[index * 2 + 1] = coord[1];
+    });
+
+    const transform = getTransform(this.map.getView().getProjection(), 'EPSG:4326');
+    transform(flat, flat, 2, 2);
+
+    const segmentLengths: number[] = [];
+    const a = [0, 0];
+    const b = [0, 0];
+    let total = 0;
+
+    for (let i = 2; i < flat.length; i += 2) {
+      a[0] = flat[i - 2];
+      a[1] = flat[i - 1];
+      b[0] = flat[i];
+      b[1] = flat[i + 1];
+      const length = getDistance(a, b);
+      segmentLengths.push(length);
+      total += length;
+    }
+
+    return { segmentLengths, total };
+  }
+
   private format(length: number): string {
     if (this.unit === 'meter') return `${length.toFixed(2)} m`;
     if (this.unit === 'kilometer') return `${(length / 1000).toFixed(2)} km`;

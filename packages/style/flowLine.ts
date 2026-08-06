@@ -4,6 +4,15 @@ import Stroke from 'ol/style/Stroke';
 import type { ResolvedPlotConfig } from '../types/config';
 
 const MAX_ARROW_COUNT = 200;
+const PHASE_CACHE_STEP_PX = 2;
+
+interface ArrowStyleCache {
+  featureRevision: number;
+  geometryRevision: number;
+  resolution: number;
+  phaseBucket: number;
+  styles: Style[];
+}
 
 function distance(a: number[], b: number[]): number {
   const dx = b[0] - a[0];
@@ -43,6 +52,7 @@ function sampleArrowStyles(
   resolution: number,
   config: ResolvedPlotConfig,
   phasePx: number,
+  arrowStroke: Stroke,
 ): Style[] {
   if (coordinates.length < 2 || resolution <= 0) return [];
 
@@ -50,10 +60,6 @@ function sampleArrowStyles(
   const spacing = spacingPx * resolution;
   const phase = normalizePhase(phasePx, spacingPx) * resolution;
   const arrowStrokeWidth = Math.max(Math.min(config.strokeWidth * 0.32, 2), 1);
-  const arrowStroke = new Stroke({
-    color: config.flowLine.arrowColor || config.strokeColor,
-    width: arrowStrokeWidth,
-  });
   const arrows: Style[] = [];
   let nextDistance = phase;
   let walked = 0;
@@ -95,12 +101,42 @@ export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: () => n
     }),
     zIndex: 0,
   });
+  const arrowStroke = new Stroke({
+    color: config.flowLine.arrowColor || config.strokeColor,
+    width: Math.max(Math.min(config.strokeWidth * 0.32, 2), 1),
+  });
+  const styleCache = new WeakMap<object, ArrowStyleCache>();
 
   return (feature, resolution) => {
     const geom = feature.getGeometry();
     if (!geom || geom.getType() !== 'LineString') return lineStyle;
 
+    const featureRevision = (feature as any).getRevision?.() ?? 0;
+    const geometryRevision = (geom as any).getRevision?.() ?? 0;
+    const spacingPx = Math.max(config.flowLine.arrowSpacing ?? 48, 1);
+    const phaseBucketCount = Math.max(1, Math.ceil(spacingPx / PHASE_CACHE_STEP_PX));
+    const phaseBucket = Math.floor(normalizePhase(getPhase(), spacingPx) / PHASE_CACHE_STEP_PX) % phaseBucketCount;
+    const cached = styleCache.get(feature as object);
+
+    if (
+      cached &&
+      cached.featureRevision === featureRevision &&
+      cached.geometryRevision === geometryRevision &&
+      cached.resolution === resolution &&
+      cached.phaseBucket === phaseBucket
+    ) {
+      return cached.styles;
+    }
+
     const coordinates = (geom as LineString).getCoordinates();
-    return [lineStyle, ...sampleArrowStyles(coordinates, resolution, config, getPhase())];
+    const styles = [lineStyle, ...sampleArrowStyles(coordinates, resolution, config, phaseBucket * PHASE_CACHE_STEP_PX, arrowStroke)];
+    styleCache.set(feature as object, {
+      featureRevision,
+      geometryRevision,
+      resolution,
+      phaseBucket,
+      styles,
+    });
+    return styles;
   };
 }

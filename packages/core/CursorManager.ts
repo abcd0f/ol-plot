@@ -19,6 +19,8 @@ export class CursorManager {
   private cursorApplied = false;
   private previousCursor = '';
   private hitTolerance: number;
+  private pendingPixel: Pixel | null = null;
+  private hitTestFrame: number | null = null;
 
   constructor(map: Map, getEditableLayers: EditableLayerProvider, hitTolerance = 8) {
     this.map = map;
@@ -32,6 +34,7 @@ export class CursorManager {
     this.active = active;
     if (!active) {
       this.dragging = false;
+      this.cancelPendingHitTest();
       this.restoreCursor();
     }
   }
@@ -54,17 +57,41 @@ export class CursorManager {
 
   destroy(): void {
     unByKey(this.pointerMoveKey);
+    this.cancelPendingHitTest();
     this.restoreCursor();
   }
 
   private handlePointerMove(e: MapBrowserEvent<PointerEvent>): void {
-    if (!this.active || this.dragging) return;
+    if (!this.active || this.dragging) {
+      this.cancelPendingHitTest();
+      return;
+    }
 
-    if (this.isOverEditablePoint(e.pixel)) {
+    this.pendingPixel = e.pixel.slice() as Pixel;
+    if (this.hitTestFrame !== null) return;
+
+    this.hitTestFrame = requestAnimationFrame(() => {
+      this.hitTestFrame = null;
+      const pixel = this.pendingPixel;
+      this.pendingPixel = null;
+      if (!this.active || this.dragging || !pixel) return;
+      this.updateCursorForPixel(pixel);
+    });
+  }
+
+  private updateCursorForPixel(pixel: Pixel): void {
+    if (this.isOverEditablePoint(pixel)) {
       this.applyCursor('grab');
     } else {
       this.restoreCursor();
     }
+  }
+
+  private cancelPendingHitTest(): void {
+    this.pendingPixel = null;
+    if (this.hitTestFrame === null) return;
+    cancelAnimationFrame(this.hitTestFrame);
+    this.hitTestFrame = null;
   }
 
   private isOverEditablePoint(pixel: Pixel): boolean {

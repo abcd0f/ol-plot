@@ -21,10 +21,13 @@ export class FlowLineTool extends BaseTool {
   constructor(map: Map, config?: FlowLinePlotConfig) {
     super(map, DrawType.FlowLine, config);
     this.applyFlowLineStyle();
-    this.startAnimation();
 
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
       feature.set('plotType', 'flowLine');
+      this.ensureAnimation();
+    });
+    this.eventBus.on(DrawEvent.DELETE, () => {
+      this.updateAnimationState();
     });
   }
 
@@ -61,6 +64,8 @@ export class FlowLineTool extends BaseTool {
   }
 
   private startAnimation(): void {
+    if (this.animationFrame !== null) return;
+
     const tick = (time: number) => {
       if (this.lastFrameTime === 0) this.lastFrameTime = time;
       const delta = Math.min(time - this.lastFrameTime, 100);
@@ -71,7 +76,32 @@ export class FlowLineTool extends BaseTool {
       this.animationFrame = requestAnimationFrame(tick);
     };
 
+    this.lastFrameTime = 0;
     this.animationFrame = requestAnimationFrame(tick);
+  }
+
+  private stopAnimation(): void {
+    if (this.animationFrame === null) return;
+    cancelAnimationFrame(this.animationFrame);
+    this.animationFrame = null;
+    this.lastFrameTime = 0;
+  }
+
+  private hasRenderableFlowLines(): boolean {
+    return this.layerManager.getSource().getFeatures().length > 0;
+  }
+
+  private ensureAnimation(): void {
+    if ((this.config.flowLine.speed ?? 60) <= 0 || !this.hasRenderableFlowLines()) return;
+    this.startAnimation();
+  }
+
+  private updateAnimationState(): void {
+    if (this.hasRenderableFlowLines()) {
+      this.ensureAnimation();
+    } else {
+      this.stopAnimation();
+    }
   }
 
   protected createGeometry(coordinates: number[][]): Geometry {
@@ -81,6 +111,7 @@ export class FlowLineTool extends BaseTool {
   protected createFeature(coordinates: number[][]): Feature {
     const feature = super.createFeature(coordinates);
     feature.set('plotType', 'flowLine');
+    this.ensureAnimation();
     return feature;
   }
 
@@ -105,11 +136,14 @@ export class FlowLineTool extends BaseTool {
     this.setCoordinates(coords);
   }
 
+  clearFeatures(): this {
+    super.clearFeatures();
+    this.stopAnimation();
+    return this;
+  }
+
   destroy(): void {
-    if (this.animationFrame !== null) {
-      cancelAnimationFrame(this.animationFrame);
-      this.animationFrame = null;
-    }
+    this.stopAnimation();
     super.destroy();
   }
 }

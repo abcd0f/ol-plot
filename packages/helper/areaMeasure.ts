@@ -23,6 +23,8 @@ export class AreaMeasureManager {
   private changeKeys = new Map<Feature, EventsKey>();
   private sketchGroup: Overlay[] = [];
   private sketchKey: EventsKey | null = null;
+  private renderFrame: number | null = null;
+  private dirtyRenders = new Map<Overlay[], Polygon>();
 
   constructor(map: OLMap, eventBus: EventBus, config: ResolvedPlotConfig) {
     this.map = map;
@@ -31,8 +33,8 @@ export class AreaMeasureManager {
 
     eventBus.on(DrawEvent.DRAW_START, ({ feature }: { feature: Feature }) => {
       const geom = feature.getGeometry() as Polygon;
-      this.sketchKey = geom.on('change', () => this.render(this.sketchGroup, geom));
-      this.render(this.sketchGroup, geom);
+      this.sketchKey = geom.on('change', () => this.requestRender(this.sketchGroup, geom));
+      this.renderNow(this.sketchGroup, geom);
     });
 
     eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
@@ -54,14 +56,15 @@ export class AreaMeasureManager {
     this.groups.set(feature, group);
     this.changeKeys.set(
       feature,
-      geom.on('change', () => this.render(group, geom)),
+      geom.on('change', () => this.requestRender(group, geom)),
     );
-    this.render(group, geom);
+    this.renderNow(group, geom);
   }
 
   removeFeature(feature: Feature): void {
     const group = this.groups.get(feature);
     if (group) {
+      this.dirtyRenders.delete(group);
       group.forEach((o) => this.map.removeOverlay(o));
       this.groups.delete(feature);
     }
@@ -78,6 +81,7 @@ export class AreaMeasureManager {
       unByKey(this.sketchKey);
       this.sketchKey = null;
     }
+    this.dirtyRenders.delete(this.sketchGroup);
     this.sketchGroup.forEach((o) => this.map.removeOverlay(o));
     this.sketchGroup.length = 0;
   }
@@ -91,9 +95,26 @@ export class AreaMeasureManager {
 
   destroy(): void {
     this.clear();
+    if (this.renderFrame !== null) {
+      cancelAnimationFrame(this.renderFrame);
+      this.renderFrame = null;
+    }
+    this.dirtyRenders.clear();
   }
 
-  private render(group: Overlay[], geom: Polygon): void {
+  private requestRender(group: Overlay[], geom: Polygon): void {
+    this.dirtyRenders.set(group, geom);
+    if (this.renderFrame !== null) return;
+
+    this.renderFrame = requestAnimationFrame(() => {
+      this.renderFrame = null;
+      const pending = [...this.dirtyRenders.entries()];
+      this.dirtyRenders.clear();
+      pending.forEach(([dirtyGroup, dirtyGeom]) => this.renderNow(dirtyGroup, dirtyGeom));
+    });
+  }
+
+  private renderNow(group: Overlay[], geom: Polygon): void {
     const labels = this.computeLabels(geom);
 
     while (group.length < labels.length) {
