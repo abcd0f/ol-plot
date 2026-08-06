@@ -42,8 +42,8 @@ export class AreaMeasureTool extends BaseTool {
     this.setCoordinates(coords);
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     this.areaMeasureManager.attachFeature(feature);
     return feature;
   }

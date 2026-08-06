@@ -71,12 +71,11 @@ title: 斜箭头
 
 | 方法名                      | 说明                     | 参数                                | 返回值                 |
 | --------------------------- | ------------------------ | ----------------------------------- | ---------------------- |
-| `addFeature(coords)`        | 程序化添加箭头           | `coords: number[][]` — [tail, head] | `Feature`              |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加箭头；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getCoordinates()`          | 获取两个控制点坐标       | —                                   | `number[][]`           |
 | `setCoordinates(coords)`    | 设置控制点并重新计算箭头 | `coords: number[][]`                | `void`                 |
 | `getPointCount()`           | 获取控制点数量           | —                                   | `number`（固定返回 2） |
 | `updatePoint(index, coord)` | 更新指定控制点（0 或 1） | `index: number`, `coord: number[]`  | `void`                 |
-| `addArrow(start, end)`      | 程序化添加斜箭头         | `start: number[]`, `end: number[]`  | `Feature`              |
 | `getStart()`                | 获取箭尾中心点           | —                                   | `number[] \| null`     |
 | `getEnd()`                  | 获取箭头尖端点           | —                                   | `number[] \| null`     |
 | `getLength()`               | 获取箭头长度             | —                                   | `number`               |
@@ -103,10 +102,21 @@ const tool = new TaperedArrowTool(map, {
 ```ts
 const tool = new TaperedArrowTool(map);
 
-tool.addArrow(
-  [12958000, 4857000], // 箭尾
-  [12975000, 4856000], // 箭头尖端
-);
+tool.loadPlotData({
+  type: 'TaperedArrow',
+  coordinates: [
+    [116.3974, 39.9093], // 箭尾
+    [116.4174, 39.9093], // 箭头尖端
+  ],
+  style: {
+    strokeColor: '#fa8c16',
+    strokeWidth: 2,
+    fillColor: 'rgba(250, 140, 22, 0.2)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#fa8c16', strokeWidth: 2 },
+  },
+  properties: {},
+});
 
 console.log('长度：', tool.getLength());
 ```
@@ -119,14 +129,42 @@ const straightTool = new StraightArrowTool(map, {
   strokeColor: '#1890ff',
   fillColor: 'rgba(24, 144, 255, 0.2)',
 });
-straightTool.addArrow([12950000, 4856000], [12960000, 4857000]);
+straightTool.loadPlotData({
+  type: 'StraightArrow',
+  coordinates: [
+    [116.3974, 39.9093],
+    [116.4074, 39.9193],
+  ],
+  style: {
+    strokeColor: '#1890ff',
+    strokeWidth: 2,
+    fillColor: 'rgba(24, 144, 255, 0.2)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
+  },
+  properties: {},
+});
 
 // 斜箭头 — 渐缩箭身
 const taperedTool = new TaperedArrowTool(map, {
   strokeColor: '#fa8c16',
   fillColor: 'rgba(250, 140, 22, 0.2)',
 });
-taperedTool.addArrow([12950000, 4854000], [12960000, 4855000]);
+taperedTool.loadPlotData({
+  type: 'TaperedArrow',
+  coordinates: [
+    [116.3974, 39.8993],
+    [116.4074, 39.9093],
+  ],
+  style: {
+    strokeColor: '#fa8c16',
+    strokeWidth: 2,
+    fillColor: 'rgba(250, 140, 22, 0.2)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#fa8c16', strokeWidth: 2 },
+  },
+  properties: {},
+});
 ```
 
 ## 类型声明

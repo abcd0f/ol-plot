@@ -49,10 +49,11 @@ title: 自由线
 ## Methods
 
 自由线工具的 API 与 [折线 Line](./line) 完全相同。
+事件回调中的 `data` 坐标会自动转换为经纬度。
 
 | 方法名                      | 说明             | 参数                               | 返回值       |
 | --------------------------- | ---------------- | ---------------------------------- | ------------ |
-| `addFeature(coords)`        | 程序化添加自由线 | `coords: number[][]`               | `Feature`    |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加自由线；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getCoordinates()`          | 获取全部顶点坐标 | —                                  | `number[][]` |
 | `setCoordinates(coords)`    | 设置全部顶点坐标 | `coords: number[][]`               | `void`       |
 | `getPointCount()`           | 获取顶点数量     | —                                  | `number`     |

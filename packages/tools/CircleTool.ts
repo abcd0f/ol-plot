@@ -1,7 +1,6 @@
 import Map from 'ol/Map';
 import Circle from 'ol/geom/Circle';
 import type Geometry from 'ol/geom/Geometry';
-import type Feature from 'ol/Feature';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { BaseTool } from '../core/BaseTool';
@@ -29,16 +28,6 @@ export class CircleTool extends BaseTool {
     const center = coordinates[0];
     const radius = dist(center, coordinates[1]);
     return new Circle(center, radius);
-  }
-
-  /**
-   * 添加圆形要素
-   * @param center 圆心坐标
-   * @param radius 圆的半径
-   * @returns 创建的要素对象
-   */
-  addCircle(center: number[], radius: number): Feature {
-    return this.addFeature([center, [center[0] + radius, center[1]]]);
   }
 
   /**

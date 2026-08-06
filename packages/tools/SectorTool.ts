@@ -63,8 +63,8 @@ export class SectorTool extends HandleBasedTool {
     return geom;
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     const points = normalizeSectorControlPoints(coordinates.slice(0, 3));
     feature.set('plotType', 'sector');
     feature.set('controlPoints', points);
@@ -98,10 +98,6 @@ export class SectorTool extends HandleBasedTool {
     if (coords.length < 3) return;
     coords[index] = coordinate;
     this.setCoordinates(coords, index === 2 ? 2 : 1);
-  }
-
-  addSector(center: number[], radiusPoint: number[], anglePoint: number[]): Feature {
-    return this.addFeature([center, radiusPoint, anglePoint]);
   }
 
   getCenter(): number[] | null {

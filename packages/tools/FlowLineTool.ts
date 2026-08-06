@@ -78,8 +78,8 @@ export class FlowLineTool extends BaseTool {
     return new LineString(coordinates);
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     feature.set('plotType', 'flowLine');
     return feature;
   }

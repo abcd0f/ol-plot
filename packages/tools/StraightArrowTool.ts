@@ -42,8 +42,8 @@ export class StraightArrowTool extends HandleBasedTool {
     return new Polygon(buildStraightArrow(coordinates));
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     feature.set('plotType', 'straightArrow');
     feature.set('controlPoints', coordinates.slice(0, 2));
     return feature;
@@ -72,18 +72,6 @@ export class StraightArrowTool extends HandleBasedTool {
     if (coords.length < 2) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
-  }
-
-  // ─── Convenience API ──────────────────────────────────────────────────────
-
-  /**
-   * 程序化添加一个直箭头
-   * @param start 箭尾中心点坐标
-   * @param end 箭头尖端点坐标
-   * @returns 创建的要素对象
-   */
-  addArrow(start: number[], end: number[]): Feature {
-    return this.addFeature([start, end]);
   }
 
   /**

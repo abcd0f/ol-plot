@@ -42,8 +42,8 @@ export class RectangleTool extends HandleBasedTool {
     return geom;
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     feature.set('plotType', 'rectangle');
     feature.set('controlPoints', coordinates.slice(0, 2));
     return feature;
@@ -74,10 +74,6 @@ export class RectangleTool extends HandleBasedTool {
     if (coords.length < 2) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
-  }
-
-  addRectangle(start: number[], end: number[]): Feature {
-    return this.addFeature([start, end]);
   }
 
   getCenter(): number[] | null {

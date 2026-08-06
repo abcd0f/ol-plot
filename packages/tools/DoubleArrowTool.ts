@@ -48,12 +48,11 @@ export class DoubleArrowTool extends HandleBasedTool {
     return new Polygon(buildDoubleArrow(coordinates));
   }
 
-  addFeature(coordinates: number[][]): Feature {
+  protected createFeature(coordinates: number[][]): Feature {
     const normalized = normalizeDoubleArrowControlPoints(coordinates);
-    const feature = new Feature({ geometry: this.createGeometry(normalized) });
+    const feature = super.createFeature(normalized);
     feature.set('plotType', 'doubleArrow');
     feature.set('controlPoints', normalized);
-    this.layerManager.addFeature(feature);
     return feature;
   }
 
@@ -82,15 +81,6 @@ export class DoubleArrowTool extends HandleBasedTool {
 
     coords[index] = coordinate;
     this.setCoordinates(coords);
-  }
-
-  // ─── Convenience API ──────────────────────────────────────────────────────
-
-  /**
-   * 程序化添加一个双箭头。
-   */
-  addDoubleArrow(p1: number[], p2: number[], p3: number[], p4?: number[], connPoint?: number[]): Feature {
-    return this.addFeature([p1, p2, p3, ...(p4 ? [p4] : []), ...(connPoint ? [connPoint] : [])]);
   }
 
   /**

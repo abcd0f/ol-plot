@@ -57,8 +57,8 @@ export class FlagTool extends HandleBasedTool {
     return new GeometryCollection([pole, flag]);
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     feature.set('plotType', 'flag');
     feature.set('controlPoints', coordinates.slice(0, 2));
     return feature;
@@ -88,19 +88,6 @@ export class FlagTool extends HandleBasedTool {
     if (coords.length < 2) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
-  }
-
-  // ─── Convenience API ──────────────────────────────────────────────────────
-
-  /**
-   * 程序化添加一面旗帜。
-   *
-   * @param poleTop          旗杆顶部（旗帜附着点）
-   * @param poleBottomOffset  旗杆底部 + 旗帜宽度偏移的点
-   * @returns 创建的要素对象
-   */
-  addFlag(poleTop: number[], poleBottomOffset: number[]): Feature {
-    return this.addFeature([poleTop, poleBottomOffset]);
   }
 
   /**

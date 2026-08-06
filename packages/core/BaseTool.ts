@@ -15,7 +15,7 @@ import { CursorManager } from './CursorManager';
 import { mergeConfig } from '../constants';
 import { buildFeatureStyle } from '../style/feature';
 import { buildDrawStyle } from '../style/draw';
-import { buildStyleFromData, serializeFeature, setFeatureStyleData } from '../utils/data';
+import { buildStyleFromData, projectPlotDataCoordinates, serializeFeature, setFeatureStyleData } from '../utils/data';
 
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。
@@ -188,10 +188,10 @@ export abstract class BaseTool {
    * @param coordinates - 坐标数组，用于创建几何对象
    * @returns 返回创建的要素对象
    */
-  addFeature(coordinates: number[][]): Feature {
+  protected createFeature(coordinates: number[][]): Feature {
     this.revision += 1;
     const feature = new Feature({ geometry: this.createGeometry(coordinates) });
-    this.layerManager.addFeature(feature);
+    this.layerManager.appendFeature(feature);
     return feature;
   }
 
@@ -205,13 +205,14 @@ export abstract class BaseTool {
 
     const list = Array.isArray(data) ? data : [data];
     return list.map((item) => {
-      const feature = this.addFeature(item.controlPoints ?? item.coordinates);
+      const projectedItem = projectPlotDataCoordinates(item, this.map.getView().getProjection());
+      const feature = this.createFeature(projectedItem.controlPoints ?? projectedItem.coordinates);
       if (item.id !== undefined) feature.setId(item.id);
       if (item.plotType) feature.set('plotType', item.plotType);
-      if (item.controlPoints)
+      if (projectedItem.controlPoints)
         feature.set(
           'controlPoints',
-          item.controlPoints.map((point) => [...point]),
+          projectedItem.controlPoints.map((point) => [...point]),
         );
       Object.entries(item.properties ?? {}).forEach(([key, value]) => feature.set(key, value));
       if (item.style) {
@@ -246,7 +247,7 @@ export abstract class BaseTool {
    * Serialize one feature into JSON-friendly structured data.
    */
   getFeatureData(feature: Feature): PlotFeatureData {
-    return serializeFeature(feature, this.drawType, this.config);
+    return serializeFeature(feature, this.drawType, this.config, this.map.getView().getProjection());
   }
 
   /**

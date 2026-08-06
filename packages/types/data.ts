@@ -28,7 +28,7 @@ export interface PlotFeatureData {
   plotType?: string;
   coordinates: PlotCoordinates;
   controlPoints?: PlotCoordinates;
-  geometry: PlotGeometryData;
+  geometry?: PlotGeometryData;
   style: PlotStyleData;
   properties: Record<string, unknown>;
 }

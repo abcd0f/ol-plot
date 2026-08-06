@@ -22,12 +22,14 @@ new XxxTool(map: Map, config?: PlotConfig)
 ## BaseTool
 
 所有工具的抽象基类，提供完整的生命周期、要素管理和事件订阅能力。
+事件回调中的 `data.coordinates` / `data.controlPoints` 默认返回经纬度 `[lon, lat]`；`feature.getGeometry()` 仍保持地图投影坐标。
 
 ### 要素管理
 
 | 方法 | 说明 | 参数 | 返回值 |
 |------|------|------|--------|
-| `addFeature(coordinates)` | 以坐标数组创建要素并添加到图层 | `coordinates: number[][]` | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加要素；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
+| `restorePlotData(data, options?)` | `loadPlotData` 的等价方法 | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()` | 返回图层中所有要素 | — | `Feature[]` |
 | `clearFeatures()` | 清空图层中所有要素，取消选中状态 | — | `this` |
 
@@ -159,7 +161,6 @@ const tool = new RectangleTool(map)
 
 | 方法 | 说明 | 参数 | 返回值 |
 |------|------|------|--------|
-| `addRectangle(start, end)` | 程序化添加矩形 | `start: number[]`, `end: number[]` | `Feature` |
 | `getCenter()` | 获取矩形中心点 | — | `number[] \| null` |
 | `getWidth()` | 获取矩形宽度 | — | `number` |
 | `getHeight()` | 获取矩形高度 | — | `number` |
@@ -183,7 +184,6 @@ const tool = new CircleTool(map)
 
 | 方法 | 说明 | 参数 | 返回值 |
 |------|------|------|--------|
-| `addCircle(center, radius)` | 程序化添加圆形 | `center: number[]`, `radius: number` | `Feature` |
 | `getCenter()` | 获取圆心 | — | `number[] \| null` |
 | `getRadius()` | 获取半径 | — | `number` |
 | `setCenter(center)` | 设置圆心 | `center: number[]` | `void` |
@@ -210,7 +210,6 @@ const tool = new EllipseTool(map)
 
 | 方法 | 说明 | 参数 | 返回值 |
 |------|------|------|--------|
-| `addEllipse(p1, p2)` | 程序化添加椭圆 | `p1: number[]`, `p2: number[]` | `Feature` |
 | `getCenter()` | 获取椭圆中心点 | — | `number[] \| null` |
 | `getRadii()` | 获取两个半轴长度 [rx, ry] | — | `[number, number] \| null` |
 
@@ -235,7 +234,6 @@ const tool = new SectorTool(map)
 
 | 方法 | 说明 | 参数 | 返回值 |
 |------|------|------|--------|
-| `addSector(center, radiusPoint, anglePoint)` | 程序化添加扇形 | `center: number[]`, `radiusPoint: number[]`, `anglePoint: number[]` | `Feature` |
 | `getCenter()` | 获取圆心 | — | `number[] \| null` |
 | `getRadius()` | 获取半径 | — | `number` |
 | `getAngles()` | 获取起止角度（弧度） | — | `{ start: number; end: number } \| null` |
@@ -261,7 +259,6 @@ const tool = new ArcTool(map)
 
 | 方法 | 说明 | 参数 | 返回值 |
 |------|------|------|--------|
-| `addArc(start, end, pointOnArc)` | 程序化添加弓形 | `start: number[]`, `end: number[]`, `pointOnArc: number[]` | `Feature` |
 | `getStart()` | 获取起点 | — | `number[] \| null` |
 | `getEnd()` | 获取终点 | — | `number[] \| null` |
 | `getPointOnArc()` | 获取弧上经过点 | — | `number[] \| null` |
@@ -287,7 +284,6 @@ const tool = new StraightArrowTool(map)
 
 | 方法 | 说明 | 参数 | 返回值 |
 |------|------|------|--------|
-| `addArrow(start, end)` | 程序化添加箭头 | `start: number[]`, `end: number[]` | `Feature` |
 | `getStart()` | 获取箭尾中心点 | — | `number[] \| null` |
 | `getEnd()` | 获取箭头尖端点 | — | `number[] \| null` |
 | `getLength()` | 获取箭头长度 | — | `number` |
@@ -481,7 +477,6 @@ import { EventBus } from 'ol-plot'
 | `getSource()` | 获取矢量数据源 |
 | `getLayer()` | 获取矢量图层 |
 | `getFeatures()` | 获取所有要素 |
-| `addFeature(feature)` | 添加要素 |
 | `removeFeature(feature)` | 移除要素 |
 | `clear()` | 清空所有要素 |
 | `destroy()` | 从地图移除图层 |

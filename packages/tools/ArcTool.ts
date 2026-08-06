@@ -53,8 +53,8 @@ export class ArcTool extends HandleBasedTool {
   /**
    * 添加圆弧要素
    */
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     feature.set('plotType', 'arc');
     feature.set('controlPoints', coordinates.slice(0, 3));
     return feature;
@@ -101,18 +101,6 @@ export class ArcTool extends HandleBasedTool {
     if (coords.length < 3) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
-  }
-
-  // ─── Convenience API ─────────────────────────────────────────────────────
-
-  /**
-   * 程序化添加圆弧
-   * @param start 圆弧起点
-   * @param end 圆弧终点
-   * @param pointOnArc 圆弧经过点
-   */
-  addArc(start: number[], end: number[], pointOnArc: number[]): Feature {
-    return this.addFeature([start, end, pointOnArc]);
   }
 
   /**

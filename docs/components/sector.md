@@ -61,7 +61,7 @@ title: 扇形
 
 | 方法名                | 说明           | 参数                                                     | 返回值      |
 | --------------------- | -------------- | -------------------------------------------------------- | ----------- |
-| `addFeature(coords)`  | 程序化添加扇形 | `coords: number[][]` — [center, radiusPoint, anglePoint] | `Feature`   |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加扇形；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()`       | 获取所有要素   | —                                                        | `Feature[]` |
 | `clearFeatures()`     | 清空所有要素   | —                                                        | `this`      |
 | `on(event, handler)`  | 注册事件监听   | `event: string`, `handler: Function`                     | `this`      |
@@ -81,7 +81,6 @@ title: 扇形
 
 | 方法名                                       | 说明                 | 参数                                                                | 返回值                                   |
 | -------------------------------------------- | -------------------- | ------------------------------------------------------------------- | ---------------------------------------- |
-| `addSector(center, radiusPoint, anglePoint)` | 程序化添加扇形       | `center: number[]`, `radiusPoint: number[]`, `anglePoint: number[]` | `Feature`                                |
 | `getCenter()`                                | 获取圆心坐标         | —                                                                   | `number[] \| null`                       |
 | `getRadius()`                                | 获取半径             | —                                                                   | `number`                                 |
 | `getAngles()`                                | 获取起止角度（弧度） | —                                                                   | `{ start: number; end: number } \| null` |
@@ -106,11 +105,22 @@ const tool = new SectorTool(map, {
 ```ts
 const tool = new SectorTool(map);
 
-tool.addSector(
-  [12958000, 4857000], // 圆心
-  [12968000, 4857000], // 半径方向点（确定半径和起始角度）
-  [12958000, 4858000], // 角度终点（确定结束角度）
-);
+tool.loadPlotData({
+  type: 'Sector',
+  coordinates: [
+    [116.3974, 39.9093], // 圆心
+    [116.4074, 39.9093], // 半径方向点
+    [116.3974, 39.9193], // 角度终点
+  ],
+  style: {
+    strokeColor: '#52c41a',
+    strokeWidth: 2,
+    fillColor: 'rgba(82, 196, 26, 0.15)',
+    lineDash: [20, 10],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#52c41a', strokeWidth: 2 },
+  },
+  properties: {},
+});
 
 // 获取扇形参数
 console.log('圆心：', tool.getCenter());

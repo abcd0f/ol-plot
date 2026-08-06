@@ -42,8 +42,8 @@ export class EllipseTool extends HandleBasedTool {
     return geom;
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     feature.set('plotType', 'ellipse');
     feature.set('controlPoints', coordinates.slice(0, 2));
     return feature;
@@ -74,10 +74,6 @@ export class EllipseTool extends HandleBasedTool {
     if (coords.length < 2) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
-  }
-
-  addEllipse(p1: number[], p2: number[]): Feature {
-    return this.addFeature([p1, p2]);
   }
 
   getCenter(): number[] | null {

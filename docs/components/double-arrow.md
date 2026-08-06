@@ -50,15 +50,26 @@ const tool = new DoubleArrowTool(map, {
 
 ## 程序化添加
 
-`addDoubleArrow` 支持传入 3、4 或 5 个控制点：
+使用 `loadPlotData` 加载 3、4 或 5 个控制点：
 
 ```ts
-tool.addDoubleArrow(
-  [12956000, 4855000],
-  [12962000, 4855000],
-  [12965000, 4860000],
-  [12953000, 4860000],
-);
+tool.loadPlotData({
+  type: 'DoubleArrow',
+  coordinates: [
+    [116.3974, 39.9093],
+    [116.4074, 39.9093],
+    [116.4174, 39.9293],
+    [116.3874, 39.9293],
+  ],
+  style: {
+    strokeColor: '#722ed1',
+    strokeWidth: 2,
+    fillColor: 'rgba(114, 46, 209, 0.15)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
+  },
+  properties: {},
+});
 ```
 
 - 3 点：自动计算对称的第二个箭头尖端和连接点
@@ -69,7 +80,7 @@ tool.addDoubleArrow(
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | ------ | ---- | ---- | ------ |
-| `addDoubleArrow(p1, p2, p3, p4?, connPoint?)` | 程序化添加双箭头 | `number[]` 控制点 | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加双箭头；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getConnectionPoint()` | 获取中间连接点 | — | `number[] \| null` |
 | `getCoordinates()` | 获取当前控制点 | — | `number[][]` |
 | `setCoordinates(coords)` | 设置控制点并重建图形 | `number[][]` | `void` |

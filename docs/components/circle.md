@@ -55,7 +55,7 @@ title: 圆
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addFeature(coords)` | 程序化添加圆形 | `coords: number[][]` — [center, radiusPoint] | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加圆形；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()` | 获取所有要素 | — | `Feature[]` |
 | `clearFeatures()` | 清空所有要素 | — | `this` |
 | `on(event, handler)` | 注册事件监听 | `event: string`, `handler: Function` | `this` |
@@ -75,7 +75,6 @@ title: 圆
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addCircle(center, radius)` | 程序化添加圆形 | `center: number[]`, `radius: number` | `Feature` |
 | `getCenter()` | 获取圆心坐标 | — | `number[] \| null` |
 | `getRadius()` | 获取半径 | — | `number` |
 | `setCenter(center)` | 设置圆心（半径不变） | `center: number[]` | `void` |
@@ -100,10 +99,22 @@ const tool = new CircleTool(map, {
 ```ts
 const tool = new CircleTool(map)
 
-// 以 [12958000, 4857000] 为圆心，1000 地图单位为半径
-tool.addCircle([12958000, 4857000], 1000)
+tool.loadPlotData({
+  type: 'Circle',
+  coordinates: [
+    [116.3974, 39.9093], // 圆心
+    [116.4074, 39.9093], // 圆周上一点
+  ],
+  style: {
+    strokeColor: '#722ed1',
+    strokeWidth: 2,
+    fillColor: 'rgba(114, 46, 209, 0.1)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
+  },
+  properties: {},
+})
 
-// 在 EPSG:3857 下，1000 单位 ≈ 1000 米
 console.log('圆心：', tool.getCenter())
 console.log('半径：', tool.getRadius())
 ```
@@ -111,12 +122,23 @@ console.log('半径：', tool.getRadius())
 ### 使用经纬度添加圆形
 
 ```ts
-import { fromLonLat } from 'ol/proj'
-
 const tool = new CircleTool(map)
 
-// 北京天安门附近，半径 5km
-tool.addCircle(fromLonLat([116.3974, 39.9093]), 5000)
+tool.loadPlotData({
+  type: 'Circle',
+  coordinates: [
+    [116.3974, 39.9093],
+    [116.4423, 39.9093],
+  ],
+  style: {
+    strokeColor: '#722ed1',
+    strokeWidth: 2,
+    fillColor: 'rgba(114, 46, 209, 0.1)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
+  },
+  properties: {},
+})
 ```
 
 ### 监听事件

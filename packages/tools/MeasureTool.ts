@@ -73,8 +73,8 @@ export class MeasureTool extends BaseTool {
     this.setCoordinates(coords);
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     this.measureManager.attachFeature(feature);
     return feature;
   }

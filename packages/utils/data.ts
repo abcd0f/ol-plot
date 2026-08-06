@@ -1,10 +1,10 @@
 import type Feature from 'ol/Feature';
 import Circle from 'ol/geom/Circle';
-import GeometryCollection from 'ol/geom/GeometryCollection';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
+import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
@@ -16,22 +16,38 @@ import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData 
 const PLOT_STYLE_PROPERTY = '_plotStyleData';
 const RESERVED_PROPERTY_KEYS = new Set(['geometry', 'controlPoints', 'plotType', PLOT_STYLE_PROPERTY]);
 
-export function serializeFeature(feature: Feature, drawType: DrawType, config: Required<PlotConfig>): PlotFeatureData {
+export function serializeFeature(
+  feature: Feature,
+  drawType: DrawType,
+  config: Required<PlotConfig>,
+  projection?: ProjectionLike,
+): PlotFeatureData {
   const geometry = feature.getGeometry();
   const controlPoints = cloneCoordinates(feature.get('controlPoints') as PlotCoordinates | undefined);
   const coordinates = controlPoints ?? extractPlotCoordinates(geometry);
   const style = (feature.get(PLOT_STYLE_PROPERTY) as PlotStyleData | undefined) ?? serializeStyle(config);
 
-  return {
+  const data = {
     id: normalizeId(feature.getId()),
     type: drawType,
     plotType: feature.get('plotType') as string | undefined,
     coordinates,
     ...(controlPoints ? { controlPoints } : {}),
-    geometry: serializeGeometry(geometry),
     style,
     properties: serializeCustomProperties(feature),
   };
+
+  const transformedData = projection
+    ? transformFeatureDataCoordinates(data, (coordinate) => toLonLat(coordinate, projection))
+    : data;
+
+  return transformedData;
+}
+
+export function projectPlotDataCoordinates(data: PlotFeatureData, projection: ProjectionLike): PlotFeatureData {
+  return transformFeatureDataCoordinates(data, (coordinate) =>
+    isLonLatCoordinate(coordinate) ? fromLonLat(coordinate, projection) : [...coordinate],
+  );
 }
 
 export function serializeStyle(config: Required<PlotConfig>): PlotStyleData {
@@ -77,46 +93,6 @@ export function buildStyleFromData(style: PlotStyleData): Style {
 
 export function setFeatureStyleData(feature: Feature, style: PlotStyleData): void {
   feature.set(PLOT_STYLE_PROPERTY, cloneJson(style));
-}
-
-function serializeGeometry(geometry: Geometry | undefined): PlotGeometryData {
-  if (!geometry) return { type: 'None' };
-
-  if (geometry instanceof Point) {
-    return { type: geometry.getType(), coordinates: cloneCoordinate(geometry.getCoordinates()) };
-  }
-
-  if (geometry instanceof LineString) {
-    return { type: geometry.getType(), coordinates: cloneCoordinates(geometry.getCoordinates()) };
-  }
-
-  if (geometry instanceof Polygon) {
-    return {
-      type: geometry.getType(),
-      coordinates: geometry.getCoordinates().map((ring) => cloneCoordinates(ring)),
-    };
-  }
-
-  if (geometry instanceof Circle) {
-    return {
-      type: geometry.getType(),
-      center: cloneCoordinate(geometry.getCenter()),
-      radius: geometry.getRadius(),
-    };
-  }
-
-  if (geometry instanceof GeometryCollection) {
-    return {
-      type: geometry.getType(),
-      geometries: geometry.getGeometries().map((child) => serializeGeometry(child)),
-    };
-  }
-
-  const maybeCoordinates = (geometry as Geometry & { getCoordinates?: () => unknown }).getCoordinates?.();
-  return {
-    type: geometry.getType(),
-    ...(maybeCoordinates !== undefined ? { coordinates: cloneJson(maybeCoordinates) } : {}),
-  };
 }
 
 function extractPlotCoordinates(geometry: Geometry | undefined): PlotCoordinates {
@@ -180,4 +156,53 @@ function cloneJson<T>(value: T): T {
 
 function normalizeId(id: string | number | undefined): string | number | undefined {
   return id;
+}
+
+function transformFeatureDataCoordinates(
+  data: PlotFeatureData,
+  transformCoordinate: (coordinate: number[]) => number[],
+): PlotFeatureData {
+  return {
+    ...data,
+    coordinates: transformCoordinates(data.coordinates, transformCoordinate),
+    ...(data.controlPoints ? { controlPoints: transformCoordinates(data.controlPoints, transformCoordinate) } : {}),
+    ...(data.geometry ? { geometry: transformGeometryDataCoordinates(data.geometry, transformCoordinate) } : {}),
+  };
+}
+
+function transformGeometryDataCoordinates(
+  geometry: PlotGeometryData,
+  transformCoordinate: (coordinate: number[]) => number[],
+): PlotGeometryData {
+  return {
+    ...geometry,
+    ...(geometry.coordinates !== undefined
+      ? { coordinates: transformCoordinateTree(geometry.coordinates, transformCoordinate) }
+      : {}),
+    ...(geometry.center ? { center: transformCoordinate(geometry.center) } : {}),
+    ...(geometry.geometries
+      ? { geometries: geometry.geometries.map((child) => transformGeometryDataCoordinates(child, transformCoordinate)) }
+      : {}),
+  };
+}
+
+function transformCoordinateTree(value: unknown, transformCoordinate: (coordinate: number[]) => number[]): unknown {
+  if (!Array.isArray(value)) return cloneJson(value);
+  if (isCoordinate(value)) return transformCoordinate(value);
+  return value.map((item) => transformCoordinateTree(item, transformCoordinate));
+}
+
+function transformCoordinates(
+  coordinates: PlotCoordinates,
+  transformCoordinate: (coordinate: number[]) => number[],
+): PlotCoordinates {
+  return coordinates.map(transformCoordinate);
+}
+
+function isCoordinate(value: unknown[]): value is number[] {
+  return value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number';
+}
+
+function isLonLatCoordinate(coordinate: number[]): boolean {
+  return Math.abs(coordinate[0]) <= 180 && Math.abs(coordinate[1]) <= 90;
 }

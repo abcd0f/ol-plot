@@ -48,8 +48,8 @@ export class LineArrowTool extends HandleBasedTool {
     return new GeometryCollection([line, arrowHead]);
   }
 
-  addFeature(coordinates: number[][]): Feature {
-    const feature = super.addFeature(coordinates);
+  protected createFeature(coordinates: number[][]): Feature {
+    const feature = super.createFeature(coordinates);
     feature.set('plotType', 'lineArrow');
     feature.set('controlPoints', coordinates.slice(0, 2));
     return feature;
@@ -79,12 +79,6 @@ export class LineArrowTool extends HandleBasedTool {
     if (coords.length < 2) return;
     coords[index] = coordinate;
     this.setCoordinates(coords);
-  }
-
-  // ─── Convenience API ──────────────────────────────────────────────────────
-
-  addArrow(start: number[], end: number[]): Feature {
-    return this.addFeature([start, end]);
   }
 
   getStart(): number[] | null {

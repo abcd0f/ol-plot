@@ -59,7 +59,7 @@ title: 矩形
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addFeature(coords)` | 程序化添加矩形 | `coords: number[][]` — 两个对角点 | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加矩形；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()` | 获取所有要素 | — | `Feature[]` |
 | `clearFeatures()` | 清空所有要素 | — | `this` |
 | `on(event, handler)` | 注册事件监听 | `event: string`, `handler: Function` | `this` |
@@ -79,7 +79,6 @@ title: 矩形
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addRectangle(start, end)` | 程序化添加矩形 | `start: number[]`, `end: number[]` | `Feature` |
 | `getCenter()` | 获取矩形中心点 | — | `number[] \| null` |
 | `getWidth()` | 获取矩形宽度 | — | `number` |
 | `getHeight()` | 获取矩形高度 | — | `number` |
@@ -103,10 +102,21 @@ const tool = new RectangleTool(map, {
 ```ts
 const tool = new RectangleTool(map)
 
-tool.addRectangle(
-  [12958000, 4857000], // 起点（对角点1）
-  [12975000, 4859000], // 终点（对角点2）
-)
+tool.loadPlotData({
+  type: 'Rectangle',
+  coordinates: [
+    [116.3974, 39.9093], // 对角点 1
+    [116.4174, 39.9293], // 对角点 2
+  ],
+  style: {
+    strokeColor: '#fa8c16',
+    strokeWidth: 2,
+    fillColor: 'rgba(250, 140, 22, 0.15)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#fa8c16', strokeWidth: 2 },
+  },
+  properties: {},
+})
 
 // 获取矩形信息
 console.log('中心点：', tool.getCenter())

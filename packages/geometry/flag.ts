@@ -69,7 +69,7 @@ export function buildFlagGeometries(controlPoints: number[][]): [LineString, Pol
  * 从 GeometryCollection 反推两个控制点 [P0, P1]。
  *
  * 控制点在 drawend 时由 geometryFunction 存入 `_controlPoints` 属性，
- * 并在 addFeature / drawEnd 时存入 feature `controlPoints` 属性。
+ * 并在创建 / drawEnd 时存入 feature `controlPoints` 属性。
  *
  * @param geom 旗帜 GeometryCollection
  * @returns 控制点数组 [P0, P1]

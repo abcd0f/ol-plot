@@ -110,7 +110,7 @@ new XxxTool(map: Map, config?: PlotConfig)
 
 | 方法 | 说明 | 返回值 |
 | --- | --- | --- |
-| `addFeature(coordinates)` | 使用坐标数组创建要素并添加到工具图层 | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加要素；坐标使用经纬度 `[lon, lat]` | `Feature[]` |
 | `getFeatures()` | 获取工具图层内的所有要素 | `Feature[]` |
 | `getCoordinates()` | 获取当前选中要素的坐标；未选中时通常返回空数组 | `number[][]` |
 | `setCoordinates(coordinates)` | 设置当前选中要素的坐标 | `void` |

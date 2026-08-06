@@ -61,7 +61,7 @@ title: 弓形
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addFeature(coords)` | 程序化添加弓形 | `coords: number[][]` — [start, end, pointOnArc] | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加弓形；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()` | 获取所有要素 | — | `Feature[]` |
 | `clearFeatures()` | 清空所有要素 | — | `this` |
 | `on(event, handler)` | 注册事件监听 | `event: string`, `handler: Function` | `this` |
@@ -81,7 +81,6 @@ title: 弓形
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addArc(start, end, pointOnArc)` | 程序化添加弓形 | `start: number[]`, `end: number[]`, `pointOnArc: number[]` | `Feature` |
 | `getStart()` | 获取起点坐标 | — | `number[] \| null` |
 | `getEnd()` | 获取终点坐标 | — | `number[] \| null` |
 | `getPointOnArc()` | 获取弧上经过点坐标 | — | `number[] \| null` |
@@ -104,11 +103,22 @@ const tool = new ArcTool(map, {
 ```ts
 const tool = new ArcTool(map)
 
-tool.addArc(
-  [12958000, 4857000], // 起点
-  [12975000, 4856000], // 终点
-  [12965000, 4858000], // 弧上经过点
-)
+tool.loadPlotData({
+  type: 'Arc',
+  coordinates: [
+    [116.3974, 39.9093], // 起点
+    [116.4174, 39.9093], // 终点
+    [116.4074, 39.9193], // 弧上经过点
+  ],
+  style: {
+    strokeColor: '#13c2c2',
+    strokeWidth: 3,
+    fillColor: 'rgba(19, 194, 194, 0.15)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#13c2c2', strokeWidth: 2 },
+  },
+  properties: {},
+})
 
 // 获取控制点
 console.log('起点：', tool.getStart())

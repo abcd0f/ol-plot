@@ -57,7 +57,7 @@ title: 椭圆
 
 | 方法名                | 说明           | 参数                                 | 返回值      |
 | --------------------- | -------------- | ------------------------------------ | ----------- |
-| `addFeature(coords)`  | 程序化添加椭圆 | `coords: number[][]` — 两个对角点    | `Feature`   |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加椭圆；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()`       | 获取所有要素   | —                                    | `Feature[]` |
 | `clearFeatures()`     | 清空所有要素   | —                                    | `this`      |
 | `on(event, handler)`  | 注册事件监听   | `event: string`, `handler: Function` | `this`      |
@@ -77,7 +77,6 @@ title: 椭圆
 
 | 方法名               | 说明                 | 参数                           | 返回值                     |
 | -------------------- | -------------------- | ------------------------------ | -------------------------- |
-| `addEllipse(p1, p2)` | 程序化添加椭圆       | `p1: number[]`, `p2: number[]` | `Feature`                  |
 | `getCenter()`        | 获取椭圆中心点       | —                              | `number[] \| null`         |
 | `getRadii()`         | 获取椭圆两个半轴长度 | —                              | `[number, number] \| null` |
 
@@ -100,10 +99,21 @@ const tool = new EllipseTool(map, {
 ```ts
 const tool = new EllipseTool(map);
 
-tool.addEllipse(
-  [12958000, 4857000], // 对角点 1
-  [12975000, 4859000], // 对角点 2
-);
+tool.loadPlotData({
+  type: 'Ellipse',
+  coordinates: [
+    [116.3974, 39.9093], // 对角点 1
+    [116.4174, 39.9293], // 对角点 2
+  ],
+  style: {
+    strokeColor: '#722ed1',
+    strokeWidth: 2,
+    fillColor: 'rgba(114, 46, 209, 0.1)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#722ed1', strokeWidth: 2 },
+  },
+  properties: {},
+});
 
 // 获取椭圆参数
 console.log('中心点：', tool.getCenter());

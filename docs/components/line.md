@@ -52,7 +52,7 @@ title: 折线
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addFeature(coords)` | 程序化添加折线 | `coords: number[][]` — 顶点数组 | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加要素；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()` | 获取所有要素 | — | `Feature[]` |
 | `clearFeatures()` | 清空所有要素 | — | `this` |
 | `on(event, handler)` | 注册事件监听 | `event: string`, `handler: Function` | `this` |
@@ -98,15 +98,25 @@ const tool = new LineTool(map, {
 ```ts
 const tool = new LineTool(map)
 
-tool.addFeature([
-  [12958000, 4857000],
-  [12968000, 4858000],
-  [12975000, 4856000],
-])
+tool.loadPlotData({
+  type: 'LineString',
+  coordinates: [
+    [116.3974, 39.9093],
+    [116.4074, 39.9193],
+    [116.4174, 39.9093],
+  ],
+  style: {
+    strokeColor: '#1890ff',
+    strokeWidth: 3,
+    fillColor: 'rgba(24, 144, 255, 0.15)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
+  },
+  properties: {},
+})
 
 // 获取坐标
 const coords = tool.getCoordinates()
-// [[12958000, 4857000], [12968000, 4858000], [12975000, 4856000]]
 ```
 
 ### 监听编辑事件

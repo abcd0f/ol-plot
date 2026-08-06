@@ -49,10 +49,10 @@ export class LayerManager {
   }
 
   /**
-   * 添加要素到数据源
-   * @param feature 要添加的要素
+   * 将内部创建的要素写入数据源。
+   * @param feature 要写入的要素
    */
-  addFeature(feature: Feature): void {
+  appendFeature(feature: Feature): void {
     this.source.addFeature(feature as any);
   }
 

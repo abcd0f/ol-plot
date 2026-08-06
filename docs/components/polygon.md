@@ -52,7 +52,7 @@ title: 多边形
 
 | 方法名 | 说明 | 参数 | 返回值 |
 |--------|------|------|--------|
-| `addFeature(coords)` | 程序化添加多边形 | `coords: number[][]` — 顶点数组（不含闭合点） | `Feature` |
+| `loadPlotData(data, options?)` | 从结构化数据加载/添加要素；坐标使用经纬度 `[lon, lat]` | `PlotFeatureData \| PlotFeatureData[]`, `PlotRestoreOptions` | `Feature[]` |
 | `getFeatures()` | 获取所有要素 | — | `Feature[]` |
 | `clearFeatures()` | 清空所有要素 | — | `this` |
 | `on(event, handler)` | 注册事件监听 | `event: string`, `handler: Function` | `this` |
@@ -107,11 +107,22 @@ const tool = new PolygonTool(map, {
 const tool = new PolygonTool(map)
 
 // 添加一个三角形（无需传入闭合点）
-tool.addFeature([
-  [12958000, 4857000],
-  [12968000, 4858000],
-  [12975000, 4856000],
-])
+tool.loadPlotData({
+  type: 'Polygon',
+  coordinates: [
+    [116.3974, 39.9093],
+    [116.4074, 39.9193],
+    [116.4174, 39.9093],
+  ],
+  style: {
+    strokeColor: '#52c41a',
+    strokeWidth: 2,
+    fillColor: 'rgba(82, 196, 26, 0.15)',
+    lineDash: [],
+    nodeStyle: { radius: 6, fill: '#fff', stroke: '#52c41a', strokeWidth: 2 },
+  },
+  properties: {},
+})
 
 // 获取顶点（不含闭合点）
 const coords = tool.getCoordinates()
