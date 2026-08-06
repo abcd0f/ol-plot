@@ -2,7 +2,7 @@
   <div class="map-container">
     <div ref="el" class="map-wrapper" />
 
-    <MapToolbar color="#1890ff" hint="按住鼠标拖动绘制 · 松开自动进入编辑 · 点击要素切换编辑 · 点击空白取消选中" @clear="handleClear" />
+    <MapToolbar color="#1890ff" hint="点击起点后移动预览 · 再次点击终点完成 · 点击要素切换编辑 · 点击空白取消选中" @clear="handleClear" />
   </div>
 </template>
 

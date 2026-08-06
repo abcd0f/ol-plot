@@ -15,6 +15,7 @@ import { createArcGeometryFunction } from '../geometry/arc';
 import { createFlagGeometryFunction } from '../geometry/flag';
 import { createRectangleGeometryFunction } from '../geometry/rectangle';
 import { createSectorGeometryFunction } from '../geometry/sector';
+import { ClickFreehandDraw } from './ClickFreehandDraw';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -33,6 +34,7 @@ export class DrawManager {
   private layer: VectorLayer;
   private eventBus: EventBus;
   private draw: Draw;
+  private clickFreehandDraw: ClickFreehandDraw | null = null;
 
   /** 是否正在绘制（drawstart 与 drawend/drawabort 之间） */
   private sketching = false;
@@ -66,6 +68,7 @@ export class DrawManager {
     let freehand = false;
     let minPoints: number | undefined;
     let maxPoints: number | undefined;
+    let clickFreehand = false;
 
     // 根据绘制类型设置相应的 OpenLayers 绘制配置
     if (drawType === DrawType.Ellipse) {
@@ -109,7 +112,7 @@ export class DrawManager {
       type = 'LineString';
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';
-      freehand = true;
+      clickFreehand = true;
     } else if (drawType === DrawType.Measure) {
       // 测距：绘制普通折线，距离标签由 MeasureTool 通过 Overlay 单独渲染
       type = 'LineString';
@@ -122,16 +125,21 @@ export class DrawManager {
       type = drawType as OLType;
     }
 
-    this.draw = new Draw({
-      source: layer.getSource()!,
-      type,
-      geometryFunction,
-      freehand,
-      minPoints,
-      maxPoints,
-      style,
-      condition: (e) => this.condition(e),
-    });
+    if (clickFreehand) {
+      this.clickFreehandDraw = new ClickFreehandDraw(map, layer.getSource()!, style, (e) => this.condition(e));
+      this.draw = this.clickFreehandDraw as unknown as Draw;
+    } else {
+      this.draw = new Draw({
+        source: layer.getSource()!,
+        type,
+        geometryFunction,
+        freehand,
+        minPoints,
+        maxPoints,
+        style,
+        condition: (e) => this.condition(e),
+      });
+    }
 
     this.draw.on('drawstart', (e) => {
       this.sketching = true;
@@ -191,5 +199,7 @@ export class DrawManager {
    */
   destroy(): void {
     this.map.removeInteraction(this.draw);
+    this.clickFreehandDraw?.destroy();
+    this.clickFreehandDraw = null;
   }
 }

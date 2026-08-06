@@ -103,14 +103,14 @@ const tool = new LineTool(map)
 
 ## 自由线 FreehandLineTool
 
-按住拖动绘制自由轨迹。
+通过两次点击绘制自由线。
 
 ```ts
 import { FreehandLineTool } from 'ol-plot'
 const tool = new FreehandLineTool(map)
 ```
 
-**绘制方式：** 按住鼠标拖动，松开结束
+**绘制方式：** 第一次点击确定起点，移动鼠标预览终点，第二次点击确定终点
 
 **几何类型：** `ol/geom/LineString`
 

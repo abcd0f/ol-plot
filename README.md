@@ -85,7 +85,7 @@ tool.on(DrawEvent.DRAW_END, ({ feature }) => {
 | `ImagePointTool` | `Point` | 单击放置图片点 |
 | `LineTool` | `LineString` | 单击添加顶点，双击结束 |
 | `FlowLineTool` | `LineString` | 单击绘制带动画箭头的流向线 |
-| `FreehandLineTool` | `LineString` | 按住拖动绘制，松开结束 |
+| `FreehandLineTool` | `LineString` | 点击起点，移动预览，点击终点结束 |
 | `PolygonTool` | `Polygon` | 单击添加顶点，双击或闭合结束 |
 | `RectangleTool` | `Polygon` | 拖拽确定对角点 |
 | `CircleTool` | `Circle` | 拖拽确定圆心和半径 |
