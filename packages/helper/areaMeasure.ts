@@ -8,6 +8,7 @@ import type { EventsKey } from 'ol/events';
 import type { EventBus } from '../core/EventBus';
 import type { AreaMeasureUnit, ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
+import type { DrawType } from '../constants/drawType';
 
 interface Label {
   position: number[];
@@ -25,19 +26,28 @@ export class AreaMeasureManager {
   private sketchKey: EventsKey | null = null;
   private renderFrame: number | null = null;
   private dirtyRenders = new Map<Overlay[], Polygon>();
+  private shouldHandleFeature: (feature: Feature, drawType?: DrawType) => boolean;
 
-  constructor(map: OLMap, eventBus: EventBus, config: ResolvedPlotConfig) {
+  constructor(
+    map: OLMap,
+    eventBus: EventBus,
+    config: ResolvedPlotConfig,
+    shouldHandleFeature: (feature: Feature, drawType?: DrawType) => boolean = () => true,
+  ) {
     this.map = map;
     this.unit = config.areaMeasure.unit!;
     this.labelStyle = config.areaMeasure.labelStyle!;
+    this.shouldHandleFeature = shouldHandleFeature;
 
-    eventBus.on(DrawEvent.DRAW_START, ({ feature }: { feature: Feature }) => {
+    eventBus.on(DrawEvent.DRAW_START, ({ feature, drawType }: { feature: Feature; drawType?: DrawType }) => {
+      if (!this.shouldHandleFeature(feature, drawType)) return;
       const geom = feature.getGeometry() as Polygon;
       this.sketchKey = geom.on('change', () => this.requestRender(this.sketchGroup, geom));
       this.renderNow(this.sketchGroup, geom);
     });
 
-    eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
+    eventBus.on(DrawEvent.DRAW_END, ({ feature, drawType }: { feature: Feature; drawType?: DrawType }) => {
+      if (!this.shouldHandleFeature(feature, drawType)) return;
       this.stopSketch();
       this.attachFeature(feature);
     });
@@ -45,6 +55,7 @@ export class AreaMeasureManager {
     eventBus.on(DrawEvent.DRAW_ABORT, () => this.stopSketch());
 
     eventBus.on(DrawEvent.DELETE, ({ feature }: { feature: Feature }) => {
+      if (!this.shouldHandleFeature(feature)) return;
       this.removeFeature(feature);
     });
   }

@@ -2,7 +2,7 @@ import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import type Feature from 'ol/Feature';
-import type Style from 'ol/style/Style';
+import type { StyleLike } from 'ol/style/Style';
 
 /**
  * 图层管理器类，用于管理矢量图层及其数据源
@@ -17,7 +17,7 @@ export class LayerManager {
    * @param map 地图实例
    * @param style 图层样式
    */
-  constructor(map: Map, style: Style) {
+  constructor(map: Map, style: StyleLike) {
     this.map = map;
     this.source = new VectorSource();
     this.layer = new VectorLayer({ source: this.source, style });

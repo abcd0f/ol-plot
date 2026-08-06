@@ -35,18 +35,22 @@ const map = new Map({
 
 ## 创建绘图工具
 
-创建绘图工具实例，构造函数接收地图实例和可选的样式配置：
+如果页面需要支持多种标绘类型，推荐创建一个 `PlotManager`，再通过 `setActiveTool()` 切换当前绘制类型：
 
 ```ts
-import { LineTool } from 'ol-plot'
+import { PlotManager, DrawType } from 'ol-plot'
 
-const tool = new LineTool(map, {
+const plot = new PlotManager(map, {
   strokeColor: '#1890ff',
   strokeWidth: 3,
 })
+
+plot.setActiveTool(DrawType.Line)
 ```
 
-工具在实例化后**自动进入绘制态**，无需调用额外的激活方法。
+`PlotManager` 只会在地图上维护一套图层和交互。工具栏切换时调用 `setActiveTool()` 即可，不需要为每个标绘类型都创建一个工具实例。
+
+如果只使用单一类型，也可以继续使用 `LineTool`、`PolygonTool` 等独立工具类。独立工具在实例化后会自动进入绘制态。
 
 ## 完整示例
 
@@ -60,11 +64,11 @@ import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
 import XYZ from 'ol/source/XYZ'
 import { fromLonLat } from 'ol/proj'
-import { LineTool, DrawEvent } from 'ol-plot'
+import { PlotManager, DrawType, DrawEvent } from 'ol-plot'
 
 const mapEl = ref<HTMLDivElement>()
 let map: Map
-let tool: LineTool
+let plot: PlotManager
 
 onMounted(() => {
   map = new Map({
@@ -73,16 +77,18 @@ onMounted(() => {
     view: new View({ center: fromLonLat([116.4, 39.9]), zoom: 10 }),
   })
 
-  tool = new LineTool(map, { strokeColor: '#1890ff' })
+  plot = new PlotManager(map, { strokeColor: '#1890ff' })
+  plot.setActiveTool(DrawType.Line)
 
   // 监听绘制完成事件
-  tool.on(DrawEvent.DRAW_END, ({ feature }) => {
-    console.log('绘制完成:', tool.getCoordinates())
+  plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
+    console.log('绘制完成:', plot.getCoordinates())
+    console.log('结构化数据:', data)
   })
 })
 
 onUnmounted(() => {
-  tool.destroy()
+  plot.destroy()
 })
 </script>
 
@@ -93,7 +99,7 @@ onUnmounted(() => {
 
 ## 交互行为
 
-工具实例化后，默认行为如下：
+工具激活后，默认行为如下：
 
 | 操作 | 行为 |
 |------|------|
@@ -106,10 +112,10 @@ onUnmounted(() => {
 
 ## 销毁工具
 
-切换工具或在组件卸载时，需要销毁当前工具实例：
+组件卸载时，需要销毁管理器实例：
 
 ```ts
-tool.destroy()
+plot.destroy()
 ```
 
 `destroy()` 会移除所有 OL interaction、图层和事件监听。
@@ -117,6 +123,14 @@ tool.destroy()
 ## 常见模式
 
 ### 工具切换
+
+```ts
+plot.setActiveTool(DrawType.Line)
+plot.setActiveTool(DrawType.Rectangle)
+plot.setActiveTool(DrawType.DoubleArrow)
+```
+
+如果使用独立工具类，每个工具实例都会创建自己的图层和 interaction，切换工具时建议销毁旧工具：
 
 ```ts
 let currentTool: BaseTool | null = null
@@ -131,13 +145,13 @@ function switchToTool(ToolClass: typeof BaseTool) {
 
 ```ts
 // 获取所有要素
-const features = tool.getFeatures()
+const features = plot.getFeatures()
 
 // 获取当前选中要素的坐标
-const coords = tool.getCoordinates()
+const coords = plot.getCoordinates()
 
 // 获取控制点数量
-const count = tool.getPointCount()
+const count = plot.getPointCount()
 ```
 
 ## 下一步

@@ -9,6 +9,7 @@ import type { EventsKey } from 'ol/events';
 import type { EventBus } from '../core/EventBus';
 import type { ResolvedPlotConfig, MeasureMode, MeasureUnit } from '../types/config';
 import { DrawEvent } from '../constants/events';
+import type { DrawType } from '../constants/drawType';
 import { mid } from '../utils/math';
 
 /** 单条标签的位置与文本 */
@@ -45,25 +46,34 @@ export class MeasureManager {
   private sketchKey: EventsKey | null = null;
   private renderFrame: number | null = null;
   private dirtyRenders = new Map<Overlay[], LineString>();
+  private shouldHandleFeature: (feature: Feature, drawType?: DrawType) => boolean;
 
   /**
    * @param map      地图实例
    * @param eventBus 事件总线
    * @param config   合并后的完整配置
    */
-  constructor(map: OLMap, eventBus: EventBus, config: ResolvedPlotConfig) {
+  constructor(
+    map: OLMap,
+    eventBus: EventBus,
+    config: ResolvedPlotConfig,
+    shouldHandleFeature: (feature: Feature, drawType?: DrawType) => boolean = () => true,
+  ) {
     this.map = map;
     this.mode = config.measure.mode!;
     this.unit = config.measure.unit!;
     this.labelStyle = config.measure.labelStyle!;
+    this.shouldHandleFeature = shouldHandleFeature;
 
-    eventBus.on(DrawEvent.DRAW_START, ({ feature }: { feature: Feature }) => {
+    eventBus.on(DrawEvent.DRAW_START, ({ feature, drawType }: { feature: Feature; drawType?: DrawType }) => {
+      if (!this.shouldHandleFeature(feature, drawType)) return;
       const geom = feature.getGeometry() as LineString;
       this.sketchKey = geom.on('change', () => this.requestRender(this.sketchGroup, geom));
       this.renderNow(this.sketchGroup, geom);
     });
 
-    eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
+    eventBus.on(DrawEvent.DRAW_END, ({ feature, drawType }: { feature: Feature; drawType?: DrawType }) => {
+      if (!this.shouldHandleFeature(feature, drawType)) return;
       this.stopSketch();
       this.attachFeature(feature);
     });
@@ -71,6 +81,7 @@ export class MeasureManager {
     eventBus.on(DrawEvent.DRAW_ABORT, () => this.stopSketch());
 
     eventBus.on(DrawEvent.DELETE, ({ feature }: { feature: Feature }) => {
+      if (!this.shouldHandleFeature(feature)) return;
       this.removeFeature(feature);
     });
   }

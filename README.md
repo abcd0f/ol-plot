@@ -6,7 +6,7 @@
 
 - **工具丰富**：内置点、图片点、折线、流向线、自由线、多边形、矩形、圆、椭圆、扇形、弧线、旗标、箭头、测距和测面等 18 类工具。
 - **开箱即用的交互**：自动协调 Draw、Select、Modify 三类 OpenLayers interaction，支持绘制后选中、点击切换选中、拖拽控制点编辑和键盘删除。
-- **统一生命周期**：所有工具继承 `BaseTool`，提供一致的构造方式、事件订阅、要素管理和销毁 API。
+- **统一生命周期**：支持单工具 `BaseTool` 用法，也支持一个 `PlotManager` 管理多类型标绘、事件订阅、要素管理和销毁 API。
 - **灵活样式配置**：支持线色、线宽、虚线、填充色、控制点样式、测量标签样式和流向线动画参数。
 - **TypeScript 友好**：导出完整类型、事件常量、状态常量和默认配置。
 
@@ -64,6 +64,31 @@ tool.on(DrawEvent.DRAW_END, ({ feature }) => {
 
 // 切换工具或组件卸载时记得销毁
 // tool.destroy()
+```
+
+如果页面需要同时支持多种标绘类型，推荐只创建一个 `PlotManager`，通过 `setActiveTool()` 切换当前绘制类型。这样地图上只维护一套图层和交互，不需要为每个工具类型都 `new` 一个实例。
+
+```ts
+import { PlotManager, DrawType, DrawEvent } from '@seedlib/ol-plot'
+
+const plot = new PlotManager(map, {
+  strokeColor: '#1890ff',
+  strokeWidth: 3,
+})
+
+plot.setActiveTool(DrawType.Line)
+
+toolbar.onChange((type: DrawType) => {
+  plot.setActiveTool(type)
+})
+
+plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
+  console.log('绘制完成:', feature)
+  console.log('结构化数据:', data)
+})
+
+// 组件卸载时
+// plot.destroy()
 ```
 
 ## 交互行为

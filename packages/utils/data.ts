@@ -14,7 +14,8 @@ import type { ResolvedPlotConfig } from '../types/config';
 import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData } from '../types/data';
 
 const PLOT_STYLE_PROPERTY = '_plotStyleData';
-const RESERVED_PROPERTY_KEYS = new Set(['geometry', 'controlPoints', 'plotType', PLOT_STYLE_PROPERTY]);
+const DRAW_TYPE_PROPERTY = '_drawType';
+const RESERVED_PROPERTY_KEYS = new Set(['geometry', 'controlPoints', 'plotType', DRAW_TYPE_PROPERTY, PLOT_STYLE_PROPERTY]);
 
 export function serializeFeature(
   feature: Feature,

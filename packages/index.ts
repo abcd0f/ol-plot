@@ -4,6 +4,8 @@ export { LayerManager } from './core/LayerManager';
 export { DrawManager } from './core/DrawManager';
 export { SelectManager } from './core/SelectManager';
 export { ModifyManager } from './core/ModifyManager';
+export { PlotManager } from './core/PlotManager';
+export type { PlotManagerConfig } from './core/PlotManager';
 
 export { PointTool } from './tools/PointTool';
 export { ImagePointTool } from './tools/ImagePointTool';

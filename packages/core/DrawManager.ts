@@ -143,15 +143,15 @@ export class DrawManager {
 
     this.draw.on('drawstart', (e) => {
       this.sketching = true;
-      this.eventBus.emit(DrawEvent.DRAW_START, { feature: e.feature });
+      this.eventBus.emit(DrawEvent.DRAW_START, { feature: e.feature, drawType });
     });
     this.draw.on('drawend', (e) => {
       this.sketching = false;
-      this.eventBus.emit(DrawEvent.DRAW_END, { feature: e.feature });
+      this.eventBus.emit(DrawEvent.DRAW_END, { feature: e.feature, drawType });
     });
     this.draw.on('drawabort', () => {
       this.sketching = false;
-      this.eventBus.emit(DrawEvent.DRAW_ABORT);
+      this.eventBus.emit(DrawEvent.DRAW_ABORT, { drawType });
     });
 
     this.map.addInteraction(this.draw);
