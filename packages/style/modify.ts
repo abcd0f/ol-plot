@@ -2,7 +2,7 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import type { PlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../types/config';
 
 /**
  * Modity 交互使用的拖拽手柄样式。
@@ -10,7 +10,7 @@ import type { PlotConfig } from '../types/config';
  * @param config - 合并后的完整配置
  * @returns OL Style 数组
  */
-export function buildModifyStyle(config: Required<PlotConfig>): Style[] {
+export function buildModifyStyle(config: ResolvedPlotConfig): Style[] {
   const ns = config.nodeStyle;
   return [
     new Style({

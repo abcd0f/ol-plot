@@ -1,6 +1,6 @@
-import type { PlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../types/config';
 
-export const DEFAULT_CONFIG: Required<PlotConfig> = {
+export const DEFAULT_CONFIG: ResolvedPlotConfig = {
   /** 线颜色 */
   strokeColor: '#2196f3',
   /** 线宽度 */

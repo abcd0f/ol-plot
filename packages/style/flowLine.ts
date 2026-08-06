@@ -1,7 +1,7 @@
 import LineString from 'ol/geom/LineString';
 import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
-import type { PlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../types/config';
 
 const MAX_ARROW_COUNT = 200;
 
@@ -41,7 +41,7 @@ function createArrowGeometry(
 function sampleArrowStyles(
   coordinates: number[][],
   resolution: number,
-  config: Required<PlotConfig>,
+  config: ResolvedPlotConfig,
   phasePx: number,
 ): Style[] {
   if (coordinates.length < 2 || resolution <= 0) return [];
@@ -86,7 +86,7 @@ function sampleArrowStyles(
   return arrows;
 }
 
-export function buildFlowLineStyle(config: Required<PlotConfig>, getPhase: () => number = () => 0): StyleFunction {
+export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: () => number = () => 0): StyleFunction {
   const lineStyle = new Style({
     stroke: new Stroke({
       color: config.strokeColor,

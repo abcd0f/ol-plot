@@ -8,7 +8,7 @@ import type LineString from 'ol/geom/LineString';
 import type Polygon from 'ol/geom/Polygon';
 import type CircleGeom from 'ol/geom/Circle';
 import type Point from 'ol/geom/Point';
-import type { PlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../types/config';
 
 /** 从要素几何中提取所有顶点坐标。 */
 function extractVertices(feature: Feature): number[][] {
@@ -70,7 +70,7 @@ function extractVertices(feature: Feature): number[][] {
  * @param config - 合并后的完整配置
  * @returns OL Style 数组 `[geometryStyle, vertexStyle]`
  */
-export function buildSelectStyle(config: Required<PlotConfig>): Style[] {
+export function buildSelectStyle(config: ResolvedPlotConfig): Style[] {
   const ns = config.nodeStyle;
 
   const geometryStyle = new Style({

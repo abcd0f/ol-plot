@@ -9,8 +9,8 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import type { DrawType } from '../constants/drawType';
-import type { PlotConfig } from '../types/config';
+import { DrawType } from '../constants/drawType';
+import type { ResolvedPlotConfig } from '../types/config';
 import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData } from '../types/data';
 
 const PLOT_STYLE_PROPERTY = '_plotStyleData';
@@ -19,13 +19,15 @@ const RESERVED_PROPERTY_KEYS = new Set(['geometry', 'controlPoints', 'plotType',
 export function serializeFeature(
   feature: Feature,
   drawType: DrawType,
-  config: Required<PlotConfig>,
+  config: ResolvedPlotConfig,
   projection?: ProjectionLike,
 ): PlotFeatureData {
   const geometry = feature.getGeometry();
   const controlPoints = cloneCoordinates(feature.get('controlPoints') as PlotCoordinates | undefined);
   const coordinates = controlPoints ?? extractPlotCoordinates(geometry);
-  const style = (feature.get(PLOT_STYLE_PROPERTY) as PlotStyleData | undefined) ?? serializeStyle(config);
+  const includeFlowLine = drawType === DrawType.FlowLine;
+  const storedStyle = feature.get(PLOT_STYLE_PROPERTY) as PlotStyleData | undefined;
+  const style = storedStyle ? normalizeStyleData(storedStyle, includeFlowLine) : serializeStyle(config, includeFlowLine);
 
   const data = {
     id: normalizeId(feature.getId()),
@@ -50,10 +52,10 @@ export function projectPlotDataCoordinates(data: PlotFeatureData, projection: Pr
   );
 }
 
-export function serializeStyle(config: Required<PlotConfig>): PlotStyleData {
+export function serializeStyle(config: ResolvedPlotConfig, includeFlowLine = false): PlotStyleData {
   const nodeStyle = config.nodeStyle;
 
-  return {
+  const style: PlotStyleData = {
     strokeColor: config.strokeColor,
     strokeWidth: config.strokeWidth,
     fillColor: config.fillColor,
@@ -64,8 +66,11 @@ export function serializeStyle(config: Required<PlotConfig>): PlotStyleData {
       stroke: nodeStyle.stroke ?? config.strokeColor,
       strokeWidth: nodeStyle.strokeWidth ?? 2,
     },
-    flowLine: { ...config.flowLine },
   };
+
+  if (includeFlowLine) style.flowLine = { ...config.flowLine };
+
+  return style;
 }
 
 export function buildStyleFromData(style: PlotStyleData): Style {
@@ -152,6 +157,14 @@ function cloneJson<T>(value: T): T {
   } catch {
     return value;
   }
+}
+
+function normalizeStyleData(style: PlotStyleData, includeFlowLine: boolean): PlotStyleData {
+  const cloned = cloneJson(style);
+  if (includeFlowLine) return cloned;
+
+  const { flowLine: _flowLine, ...styleWithoutFlowLine } = cloned;
+  return styleWithoutFlowLine;
 }
 
 function normalizeId(id: string | number | undefined): string | number | undefined {

@@ -391,7 +391,7 @@ import { DEFAULT_CONFIG } from 'ol-plot'
 ```
 
 ```ts
-const DEFAULT_CONFIG: Required<PlotConfig> = {
+const DEFAULT_CONFIG: ResolvedPlotConfig = {
   strokeColor: '#2196f3',
   strokeWidth: 2,
   fillColor: 'rgba(33, 150, 243, 0.15)',
@@ -423,6 +423,22 @@ interface PlotConfig {
   lineDash?: number[]
   /** 控制点样式 */
   nodeStyle?: NodeStyle
+}
+```
+
+`PlotConfig` 只包含所有工具共用的样式配置。工具专属配置只出现在对应工具构造参数中：
+
+```ts
+interface FlowLinePlotConfig extends PlotConfig {
+  flowLine?: FlowLineConfig
+}
+
+interface MeasurePlotConfig extends PlotConfig {
+  measure?: MeasureConfig
+}
+
+interface AreaMeasurePlotConfig extends PlotConfig {
+  areaMeasure?: AreaMeasureConfig
 }
 ```
 

@@ -28,6 +28,9 @@ export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
 export type { DrawEventType } from './constants';
 export type {
   PlotConfig,
+  MeasurePlotConfig,
+  AreaMeasurePlotConfig,
+  FlowLinePlotConfig,
   ImagePointConfig,
   NodeStyle,
   MeasureConfig,

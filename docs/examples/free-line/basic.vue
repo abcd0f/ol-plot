@@ -125,11 +125,6 @@ onMounted(() => {
           stroke: '#1890ff',
           strokeWidth: 2,
         },
-        flowLine: {
-          arrowColor: '',
-          arrowSpacing: 48,
-          speed: 60,
-        },
       },
       properties: {},
     },

@@ -45,8 +45,17 @@ export interface PlotConfig {
   fillColor?: string;
   lineDash?: number[];
   nodeStyle?: NodeStyle;
+}
+
+export interface MeasurePlotConfig extends PlotConfig {
   measure?: MeasureConfig;
+}
+
+export interface AreaMeasurePlotConfig extends PlotConfig {
   areaMeasure?: AreaMeasureConfig;
+}
+
+export interface FlowLinePlotConfig extends PlotConfig {
   flowLine?: FlowLineConfig;
 }
 
@@ -63,3 +72,12 @@ export interface ImagePointConfig extends PlotConfig {
     opacity?: number;
   };
 }
+
+/** Internal fully-supported config shape after merging defaults. */
+export interface InternalPlotConfig extends PlotConfig {
+  measure?: MeasureConfig;
+  areaMeasure?: AreaMeasureConfig;
+  flowLine?: FlowLineConfig;
+}
+
+export type ResolvedPlotConfig = Required<InternalPlotConfig>;

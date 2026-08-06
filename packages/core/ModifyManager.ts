@@ -5,7 +5,7 @@ import type Feature from 'ol/Feature';
 import type VectorLayer from 'ol/layer/Vector';
 import type { StyleLike } from 'ol/style/Style';
 import type { EventBus } from './EventBus';
-import type { PlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import { buildModifyStyle } from '../style/modify';
 
@@ -24,7 +24,7 @@ export class ModifyManager {
    * @param config 绘制配置对象
    * @param eventBus 事件总线实例
    */
-  constructor(map: Map, features: Collection<Feature>, config: Required<PlotConfig>, eventBus: EventBus) {
+  constructor(map: Map, features: Collection<Feature>, config: ResolvedPlotConfig, eventBus: EventBus) {
     this.map = map;
     this.eventBus = eventBus;
 

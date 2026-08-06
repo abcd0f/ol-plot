@@ -9,7 +9,7 @@ import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
 import type { EventBus } from '../core/EventBus';
-import type { PlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import { buildModifyStyle } from '../style/modify';
 
@@ -58,7 +58,7 @@ export class HandleManager {
    * @param config     合并后的完整配置
    * @param onSync     拖拽同步回调 — 接收排序后的控制点坐标，由调用方重建几何
    */
-  constructor(map: Map, eventBus: EventBus, config: Required<PlotConfig>, onSync: SyncCallback) {
+  constructor(map: Map, eventBus: EventBus, config: ResolvedPlotConfig, onSync: SyncCallback) {
     this.map = map;
     this.eventBus = eventBus;
     this.onSync = onSync;

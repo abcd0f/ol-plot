@@ -1,5 +1,8 @@
 export type {
   PlotConfig,
+  MeasurePlotConfig,
+  AreaMeasurePlotConfig,
+  FlowLinePlotConfig,
   ImagePointConfig,
   NodeStyle,
   MeasureConfig,

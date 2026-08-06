@@ -2,7 +2,7 @@ import Map from 'ol/Map';
 import type Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
+import type { MeasurePlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { BaseTool } from '../core/BaseTool';
 import { MeasureManager } from '../helper/measure';
@@ -21,7 +21,7 @@ export class MeasureTool extends BaseTool {
    * @param map 地图实例
    * @param config 绘制配置选项（可选，含 measure 配置）
    */
-  constructor(map: Map, config?: PlotConfig) {
+  constructor(map: Map, config?: MeasurePlotConfig) {
     super(map, DrawType.Measure, config);
     this.measureManager = new MeasureManager(map, this.eventBus, this.config);
   }

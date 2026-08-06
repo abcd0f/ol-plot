@@ -6,7 +6,7 @@ import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
 import type { EventBus } from '../core/EventBus';
-import type { PlotConfig, MeasureMode, MeasureUnit } from '../types/config';
+import type { ResolvedPlotConfig, MeasureMode, MeasureUnit } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import { mid } from '../utils/math';
 
@@ -48,7 +48,7 @@ export class MeasureManager {
    * @param eventBus 事件总线
    * @param config   合并后的完整配置
    */
-  constructor(map: OLMap, eventBus: EventBus, config: Required<PlotConfig>) {
+  constructor(map: OLMap, eventBus: EventBus, config: ResolvedPlotConfig) {
     this.map = map;
     this.mode = config.measure.mode!;
     this.unit = config.measure.unit!;

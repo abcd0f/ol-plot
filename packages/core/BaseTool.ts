@@ -1,7 +1,7 @@
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
+import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotFeatureData, PlotRestoreOptions } from '../types/data';
 import { DrawType } from '../constants/drawType';
 import { ToolState } from '../constants/toolState';
@@ -37,7 +37,7 @@ import { buildStyleFromData, projectPlotDataCoordinates, serializeFeature, setFe
 export abstract class BaseTool {
   /**  */
   protected map: Map;
-  protected config: Required<PlotConfig>;
+  protected config: ResolvedPlotConfig;
   protected drawType: DrawType;
 
   protected eventBus: EventBus;
@@ -65,7 +65,7 @@ export abstract class BaseTool {
    * @param drawType - 绘制类型（由具体子类传入）
    * @param config - 绘制配置项（可选）
    */
-  constructor(map: Map, drawType: DrawType, config?: PlotConfig) {
+  constructor(map: Map, drawType: DrawType, config?: InternalPlotConfig) {
     this.map = map;
     this.drawType = drawType;
     this.config = mergeConfig(config);

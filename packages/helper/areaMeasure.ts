@@ -6,7 +6,7 @@ import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
 import type { EventBus } from '../core/EventBus';
-import type { AreaMeasureUnit, PlotConfig } from '../types/config';
+import type { AreaMeasureUnit, ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
 
 interface Label {
@@ -24,7 +24,7 @@ export class AreaMeasureManager {
   private sketchGroup: Overlay[] = [];
   private sketchKey: EventsKey | null = null;
 
-  constructor(map: OLMap, eventBus: EventBus, config: Required<PlotConfig>) {
+  constructor(map: OLMap, eventBus: EventBus, config: ResolvedPlotConfig) {
     this.map = map;
     this.unit = config.areaMeasure.unit!;
     this.labelStyle = config.areaMeasure.labelStyle!;

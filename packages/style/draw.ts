@@ -1,7 +1,7 @@
 import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
-import type { PlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../types/config';
 
 /**
  * 绘制（草图）阶段使用的样式。
@@ -13,7 +13,7 @@ import type { PlotConfig } from '../types/config';
  * @param config - 合并后的完整配置
  * @returns OL StyleFunction
  */
-export function buildDrawStyle(config: Required<PlotConfig>): StyleFunction {
+export function buildDrawStyle(config: ResolvedPlotConfig): StyleFunction {
   const sketchStyle = new Style({
     stroke: new Stroke({
       color: config.strokeColor,

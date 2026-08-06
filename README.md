@@ -182,9 +182,6 @@ interface PlotConfig {
   fillColor?: string
   lineDash?: number[]
   nodeStyle?: NodeStyle
-  measure?: MeasureConfig
-  areaMeasure?: AreaMeasureConfig
-  flowLine?: FlowLineConfig
 }
 
 interface NodeStyle {
@@ -200,9 +197,17 @@ interface MeasureConfig {
   labelStyle?: Partial<CSSStyleDeclaration>
 }
 
+interface MeasurePlotConfig extends PlotConfig {
+  measure?: MeasureConfig
+}
+
 interface AreaMeasureConfig {
   unit?: 'auto' | 'square-meter' | 'square-kilometer'
   labelStyle?: Partial<CSSStyleDeclaration>
+}
+
+interface AreaMeasurePlotConfig extends PlotConfig {
+  areaMeasure?: AreaMeasureConfig
 }
 
 interface FlowLineConfig {
@@ -210,7 +215,13 @@ interface FlowLineConfig {
   arrowSpacing?: number
   speed?: number
 }
+
+interface FlowLinePlotConfig extends PlotConfig {
+  flowLine?: FlowLineConfig
+}
 ```
+
+普通标绘工具只接收 `PlotConfig`，不会提示 `measure`、`areaMeasure`、`flowLine`；只有 `MeasureTool`、`AreaMeasureTool`、`FlowLineTool` 会分别提示自己的专属配置。
 
 默认配置从 `DEFAULT_CONFIG` 导出：
 

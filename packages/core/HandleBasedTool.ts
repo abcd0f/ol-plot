@@ -1,7 +1,7 @@
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
+import type { InternalPlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from './BaseTool';
@@ -27,7 +27,7 @@ import { HandleManager } from '../helper/handle';
 export abstract class HandleBasedTool extends BaseTool {
   protected handleManager: HandleManager;
 
-  constructor(map: Map, drawType: DrawType, config?: PlotConfig) {
+  constructor(map: Map, drawType: DrawType, config?: InternalPlotConfig) {
     super(map, drawType, config);
 
     // 禁用默认 ModifyManager

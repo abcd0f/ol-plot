@@ -2,7 +2,7 @@ import Map from 'ol/Map';
 import type Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
+import type { AreaMeasurePlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { BaseTool } from '../core/BaseTool';
 import { AreaMeasureManager } from '../helper/areaMeasure';
@@ -10,7 +10,7 @@ import { AreaMeasureManager } from '../helper/areaMeasure';
 export class AreaMeasureTool extends BaseTool {
   private areaMeasureManager: AreaMeasureManager;
 
-  constructor(map: Map, config?: PlotConfig) {
+  constructor(map: Map, config?: AreaMeasurePlotConfig) {
     super(map, DrawType.AreaMeasure, config);
     this.areaMeasureManager = new AreaMeasureManager(map, this.eventBus, this.config);
   }

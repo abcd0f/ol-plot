@@ -7,7 +7,7 @@ import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
+import type { FlowLinePlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
@@ -18,7 +18,7 @@ export class FlowLineTool extends BaseTool {
   private phase = 0;
   private lastFrameTime = 0;
 
-  constructor(map: Map, config?: PlotConfig) {
+  constructor(map: Map, config?: FlowLinePlotConfig) {
     super(map, DrawType.FlowLine, config);
     this.applyFlowLineStyle();
     this.startAnimation();
