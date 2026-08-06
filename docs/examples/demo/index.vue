@@ -137,7 +137,7 @@ onMounted(() => {
 
   plot = new PlotManager(map, {
     strokeColor: '#1677ff',
-    strokeWidth: 3,
+    strokeWidth: 30,
     fillColor: 'rgba(22, 119, 255, 0.16)',
     nodeStyle: {
       radius: 6,
@@ -160,6 +160,66 @@ onMounted(() => {
       unit: 'auto',
     },
   });
+
+  //   plot.loadPlotData([
+  //     {
+  //       type: 'ImagePoint',
+  //       plotType: 'imagePoint',
+  //       coordinates: [[115.92361459960934, 39.959318129602366]],
+  //       controlPoints: [[115.92361459960934, 39.959318129602366]],
+  //       style: {
+  //         strokeColor: '#1677ff',
+  //         strokeWidth: 3,
+  //         fillColor: 'rgba(22, 119, 255, 0.16)',
+  //         lineDash: [],
+  //         nodeStyle: {
+  //           radius: 6,
+  //           fill: '#ffffff',
+  //           stroke: '#1677ff',
+  //           strokeWidth: 2,
+  //         },
+  //         image: {
+  //           src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
+  //           scale: 0.8,
+  //           anchor: [0.5, 1],
+  //           opacity: 1,
+  //         },
+  //       },
+  //       properties: {},
+  //     },
+  //     {
+  //       type: 'FlowLine',
+  //       plotType: 'flowLine',
+  //       coordinates: [
+  //         [116.24359140624998, 40.01718818364225],
+  //         [117.07168588867187, 40.003514231779576],
+  //         [116.30232600661053, 39.711929884273275],
+  //       ],
+  //       controlPoints: [
+  //         [116.24359140624998, 40.01718818364225],
+  //         [117.07168588867187, 40.003514231779576],
+  //         [116.30232600661053, 39.711929884273275],
+  //       ],
+  //       style: {
+  //         strokeColor: '#1677ff',
+  //         strokeWidth: 3,
+  //         fillColor: 'rgba(22, 119, 255, 0.16)',
+  //         lineDash: [],
+  //         nodeStyle: {
+  //           radius: 6,
+  //           fill: '#ffffff',
+  //           stroke: '#1677ff',
+  //           strokeWidth: 2,
+  //         },
+  //         flowLine: {
+  //           arrowColor: '#00b96b',
+  //           arrowSpacing: 56,
+  //           speed: 72,
+  //         },
+  //       },
+  //       properties: {},
+  //     },
+  //   ]);
 
   plot.setActiveTool(activeType.value);
 

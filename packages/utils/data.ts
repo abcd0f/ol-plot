@@ -9,6 +9,7 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
+import Icon from 'ol/style/Icon';
 import { DrawType } from '../constants/drawType';
 import type { ResolvedPlotConfig } from '../types/config';
 import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData } from '../types/data';
@@ -86,14 +87,23 @@ export function buildStyleFromData(style: PlotStyleData): Style {
     fill: new Fill({
       color: style.fillColor,
     }),
-    image: new CircleStyle({
-      radius: nodeStyle.radius ?? 6,
-      fill: new Fill({ color: nodeStyle.fill ?? '#ffffff' }),
-      stroke: new Stroke({
-        color: nodeStyle.stroke ?? style.strokeColor,
-        width: nodeStyle.strokeWidth ?? 2,
-      }),
-    }),
+    image: style.image?.src
+      ? new Icon({
+          src: style.image.src,
+          scale: style.image.scale ?? 1,
+          anchor: style.image.anchor ?? [0.5, 0.5],
+          opacity: style.image.opacity ?? 1,
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+        })
+      : new CircleStyle({
+          radius: nodeStyle.radius ?? 6,
+          fill: new Fill({ color: nodeStyle.fill ?? '#ffffff' }),
+          stroke: new Stroke({
+            color: nodeStyle.stroke ?? style.strokeColor,
+            width: nodeStyle.strokeWidth ?? 2,
+          }),
+        }),
   });
 }
 

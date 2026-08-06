@@ -1,6 +1,8 @@
 import LineString from 'ol/geom/LineString';
+import Polygon from 'ol/geom/Polygon';
 import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
+import Fill from 'ol/style/Fill';
 import type { ResolvedPlotConfig } from '../types/config';
 
 const MAX_ARROW_COUNT = 200;
@@ -25,26 +27,22 @@ function normalizePhase(phase: number, spacing: number): number {
   return ((phase % spacing) + spacing) % spacing;
 }
 
-function createArrowGeometry(
-  point: number[],
-  angle: number,
-  resolution: number,
-  strokeWidthPx: number,
-  arrowStrokeWidthPx: number,
-): LineString {
-  const arrowLengthPx = Math.max(strokeWidthPx * 1, 6);
-  const length = arrowLengthPx * resolution;
-  const availableWidth = Math.max(strokeWidthPx - arrowStrokeWidthPx, 1);
-  const width = Math.max(Math.min(availableWidth * 0.9, arrowLengthPx * 0.58), 1) * resolution;
-  const backX = Math.cos(angle) * length;
-  const backY = Math.sin(angle) * length;
-  const sideX = Math.cos(angle + Math.PI / 2) * width * 0.5;
-  const sideY = Math.sin(angle + Math.PI / 2) * width * 0.5;
+function createArrowGeometry(point: number[], angle: number, resolution: number, strokeWidthPx: number): Polygon {
+  const widthPx = Math.max(strokeWidthPx, 0.1);
+  const lengthPx = widthPx * 1.2;
+  const length = lengthPx * resolution;
+  const halfWidth = (widthPx * resolution) / 2;
 
-  const left = [point[0] - backX + sideX, point[1] - backY + sideY];
-  const right = [point[0] - backX - sideX, point[1] - backY - sideY];
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const rotate = (x: number, y: number): number[] => [point[0] + x * cos - y * sin, point[1] + x * sin + y * cos];
 
-  return new LineString([left, point, right]);
+  const tip = rotate(length * 0.3, 0);
+  const leftOuter = rotate(-length * 0.3, -halfWidth);
+  const notch = rotate(-length * 0.01, 0);
+  const rightOuter = rotate(-length * 0.3, halfWidth);
+
+  return new Polygon([[tip, leftOuter, notch, rightOuter, tip]]);
 }
 
 function sampleArrowStyles(
@@ -52,14 +50,13 @@ function sampleArrowStyles(
   resolution: number,
   config: ResolvedPlotConfig,
   phasePx: number,
-  arrowStroke: Stroke,
+  arrowFill: Fill,
 ): Style[] {
   if (coordinates.length < 2 || resolution <= 0) return [];
 
   const spacingPx = Math.max(config.flowLine.arrowSpacing ?? 48, 1);
   const spacing = spacingPx * resolution;
   const phase = normalizePhase(phasePx, spacingPx) * resolution;
-  const arrowStrokeWidth = Math.max(Math.min(config.strokeWidth * 0.32, 2), 1);
   const arrows: Style[] = [];
   let nextDistance = phase;
   let walked = 0;
@@ -78,8 +75,8 @@ function sampleArrowStyles(
 
       arrows.push(
         new Style({
-          geometry: createArrowGeometry(point, angle, resolution, config.strokeWidth, arrowStrokeWidth),
-          stroke: arrowStroke,
+          geometry: createArrowGeometry(point, angle, resolution, config.strokeWidth),
+          fill: arrowFill,
           zIndex: 1,
         }),
       );
@@ -101,9 +98,8 @@ export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: () => n
     }),
     zIndex: 0,
   });
-  const arrowStroke = new Stroke({
+  const arrowFill = new Fill({
     color: config.flowLine.arrowColor || config.strokeColor,
-    width: Math.max(Math.min(config.strokeWidth * 0.32, 2), 1),
   });
   const styleCache = new WeakMap<object, ArrowStyleCache>();
 
@@ -129,7 +125,10 @@ export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: () => n
     }
 
     const coordinates = (geom as LineString).getCoordinates();
-    const styles = [lineStyle, ...sampleArrowStyles(coordinates, resolution, config, phaseBucket * PHASE_CACHE_STEP_PX, arrowStroke)];
+    const styles = [
+      lineStyle,
+      ...sampleArrowStyles(coordinates, resolution, config, phaseBucket * PHASE_CACHE_STEP_PX, arrowFill),
+    ];
     styleCache.set(feature as object, {
       featureRevision,
       geometryRevision,

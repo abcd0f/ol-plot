@@ -217,7 +217,11 @@ export abstract class BaseTool {
       Object.entries(item.properties ?? {}).forEach(([key, value]) => feature.set(key, value));
       if (item.style) {
         setFeatureStyleData(feature, item.style);
-        if (options.applyStyle !== false && item.type !== DrawType.FlowLine) {
+        if (
+          options.applyStyle !== false &&
+          item.type !== DrawType.FlowLine &&
+          (item.type !== DrawType.ImagePoint || item.style.image?.src)
+        ) {
           feature.setStyle(buildStyleFromData(item.style));
         }
       }

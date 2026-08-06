@@ -186,7 +186,14 @@ export class PlotManager {
 
   getFeatureData(feature: Feature): PlotFeatureData {
     const drawType = this.getFeatureDrawType(feature) ?? this.activeDrawType ?? DrawType.Line;
-    return serializeFeature(feature, drawType, this.config, this.map.getView().getProjection());
+    const data = serializeFeature(feature, drawType, this.config, this.map.getView().getProjection());
+    if (drawType === DrawType.ImagePoint && !data.style.image && this.imageConfig.src) {
+      data.style = {
+        ...data.style,
+        image: { ...this.imageConfig },
+      };
+    }
+    return data;
   }
 
   getPlotData(): PlotFeatureData[] {
@@ -216,7 +223,9 @@ export class PlotManager {
       }
       if (item.style) {
         setFeatureStyleData(feature, item.style);
-        if (options.applyStyle !== false && drawType !== DrawType.FlowLine) {
+        if (options.applyStyle !== false && drawType === DrawType.ImagePoint && item.style.image?.src) {
+          feature.setStyle(this.createImageStyle(item.style.image));
+        } else if (options.applyStyle !== false && drawType !== DrawType.FlowLine && drawType !== DrawType.ImagePoint) {
           feature.setStyle(buildStyleFromData(item.style));
         }
       }
@@ -704,15 +713,15 @@ export class PlotManager {
     });
   }
 
-  private createImageStyle(): Style {
-    if (!this.imageConfig.src) return this.pointStyle;
+  private createImageStyle(imageConfig: ImagePointConfig['image'] = this.imageConfig): Style {
+    if (!imageConfig.src) return this.pointStyle;
 
     return new Style({
       image: new Icon({
-        src: this.imageConfig.src,
-        scale: this.imageConfig.scale,
-        anchor: this.imageConfig.anchor,
-        opacity: this.imageConfig.opacity,
+        src: imageConfig.src,
+        scale: imageConfig.scale ?? 1,
+        anchor: imageConfig.anchor ?? [0.5, 0.5],
+        opacity: imageConfig.opacity ?? 1,
         anchorXUnits: 'fraction',
         anchorYUnits: 'fraction',
       }),

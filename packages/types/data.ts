@@ -1,5 +1,5 @@
 import type { DrawType } from '../constants/drawType';
-import type { FlowLineConfig, NodeStyle } from './config';
+import type { FlowLineConfig, ImagePointConfig, NodeStyle } from './config';
 
 export type PlotCoordinate = number[];
 export type PlotCoordinates = PlotCoordinate[];
@@ -12,6 +12,7 @@ export interface PlotStyleData {
   lineDash: number[];
   nodeStyle: NodeStyle;
   flowLine?: FlowLineConfig;
+  image?: ImagePointConfig['image'];
 }
 
 export interface PlotGeometryData {
