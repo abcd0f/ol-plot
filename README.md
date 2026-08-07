@@ -244,6 +244,24 @@ interface FlowLineConfig {
 interface FlowLinePlotConfig extends PlotConfig {
   flowLine?: FlowLineConfig
 }
+
+interface ImageLabelConfig {
+  text?: string
+  fontSize?: number | string
+  color?: string
+  fontFamily?: string
+  fontWeight?: string | number
+  offsetX?: number
+  offsetY?: number
+}
+
+interface ImageConfig {
+  src: string
+  scale?: number
+  anchor?: [number, number]
+  opacity?: number
+  label?: ImageLabelConfig
+}
 ```
 
 普通标绘工具只接收 `PlotConfig`，不会提示 `measure`、`areaMeasure`、`flowLine`；只有 `MeasureTool`、`AreaMeasureTool`、`FlowLineTool` 会分别提示自己的专属配置。
@@ -280,6 +298,11 @@ const imagePoint = new ImagePointTool(map, {
     scale: 1,
     anchor: [0.5, 1],
     opacity: 1,
+    label: {
+      text: '北京',
+      fontSize: 14,
+      color: '#1f2937',
+    },
   },
 })
 

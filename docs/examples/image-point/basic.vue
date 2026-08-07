@@ -40,6 +40,11 @@ onMounted(() => {
       src: 'https://openlayers.org/en/latest/examples/data/icon.png',
       scale: 1,
       anchor: [0.5, 1],
+      label: {
+        text: '北京',
+        fontSize: 14,
+        color: '#1f2937',
+      },
     },
   });
 });

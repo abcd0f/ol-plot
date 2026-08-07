@@ -1,26 +1,22 @@
 import Map from 'ol/Map';
+import type Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Style from 'ol/style/Style';
-import Icon from 'ol/style/Icon';
 import type Geometry from 'ol/geom/Geometry';
 import type { ImagePointConfig } from '../types/config';
+import type { PlotFeatureData } from '../types/data';
 import { DrawType } from '../constants/drawType';
 import { BaseTool } from '../core/BaseTool';
 import { buildStyleFromData, getFeatureStyleData } from '../utils/data';
+import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
 
 export class ImagePointTool extends BaseTool {
-  private imageConfig: Required<ImagePointConfig>['image'];
+  private imageConfig: NonNullable<ImagePointConfig['image']>;
 
   constructor(map: Map, config?: ImagePointConfig) {
     super(map, DrawType.ImagePoint, config);
 
-    const imgCfg = config?.image;
-    this.imageConfig = {
-      src: imgCfg?.src || '',
-      scale: imgCfg?.scale ?? 1,
-      anchor: imgCfg?.anchor ?? [0.5, 0.5],
-      opacity: imgCfg?.opacity ?? 1,
-    };
+    this.imageConfig = resolveImageConfig(config?.image);
 
     this.applyImageStyle();
   }
@@ -30,19 +26,10 @@ export class ImagePointTool extends BaseTool {
    */
   private createImageStyle(): Style {
     if (!this.imageConfig.src) {
-      console.warn('ImagePointTool: image src is not set, icon will not be displayed');
+      console.warn('ImagePointTool: image src is not set, falling back to the default point style');
     }
 
-    return new Style({
-      image: new Icon({
-        src: this.imageConfig.src,
-        scale: this.imageConfig.scale,
-        anchor: this.imageConfig.anchor,
-        opacity: this.imageConfig.opacity,
-        anchorXUnits: 'fraction',
-        anchorYUnits: 'fraction',
-      }),
-    });
+    return buildImagePointStyle(this.imageConfig, this.config.nodeStyle, this.config.strokeColor);
   }
 
   /**
@@ -84,25 +71,40 @@ export class ImagePointTool extends BaseTool {
     return (this.activeFeature.getGeometry() as Point).getCoordinates();
   }
 
+  getFeatureData(feature: Feature): PlotFeatureData {
+    const data = super.getFeatureData(feature);
+    if (!data.style.image && (this.imageConfig.src || this.imageConfig.label?.text)) {
+      data.style = {
+        ...data.style,
+        image: {
+          ...this.imageConfig,
+          label: this.imageConfig.label ? { ...this.imageConfig.label } : undefined,
+        },
+      };
+    }
+    return data;
+  }
+
   /**
    * Update the image config and refresh all render states.
    */
   updateImageConfig(imageConfig: ImagePointConfig['image']): void {
     if (!imageConfig) return;
 
-    this.imageConfig = {
-      src: imageConfig.src || this.imageConfig.src,
-      scale: imageConfig.scale ?? this.imageConfig.scale,
-      anchor: imageConfig.anchor ?? this.imageConfig.anchor,
-      opacity: imageConfig.opacity ?? this.imageConfig.opacity,
-    };
+    this.imageConfig = mergeImageConfig(this.imageConfig, imageConfig);
 
     this.applyImageStyle();
     this.layerManager.getLayer().changed();
   }
 
   setStyleConfig(config?: ImagePointConfig): this {
-    return super.setStyleConfig(config);
+    if (!config?.image) return super.setStyleConfig(config);
+
+    this.imageConfig = mergeImageConfig(this.imageConfig, config.image);
+    return super.setStyleConfig({
+      ...config,
+      image: this.imageConfig,
+    });
   }
 
   protected refreshStyles(): void {

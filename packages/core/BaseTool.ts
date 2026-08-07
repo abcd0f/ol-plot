@@ -26,6 +26,7 @@ import {
   serializeFeature,
   setFeatureStyleData,
 } from '../utils/data';
+import { isEditableTarget } from '../utils/keyboard';
 
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。
@@ -103,6 +104,7 @@ export abstract class BaseTool {
     this.bindEvents();
 
     this.handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.activeFeature) {
         this.deleteActiveFeature();
       }
@@ -253,7 +255,7 @@ export abstract class BaseTool {
         if (
           options.applyStyle !== false &&
           item.type !== DrawType.FlowLine &&
-          (item.type !== DrawType.ImagePoint || item.style.image?.src)
+          (item.type !== DrawType.ImagePoint || item.style.image?.src || item.style.image?.label?.text)
         ) {
           feature.setStyle(buildStyleFromData(item.style));
         }

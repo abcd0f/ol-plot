@@ -118,7 +118,14 @@
 
         <label class="field">
           <span>缩放</span>
-          <input v-model.number="styleForm.imageScale" type="range" min="0.3" max="2" step="0.1" :disabled="!hasSelection" />
+          <input
+            v-model.number="styleForm.imageScale"
+            type="range"
+            min="0.3"
+            max="2"
+            step="0.1"
+            :disabled="!hasSelection"
+          />
           <em>{{ styleForm.imageScale }}</em>
         </label>
 
@@ -126,6 +133,29 @@
           <span>透明</span>
           <input v-model.number="styleForm.imageOpacity" type="range" min="0" max="100" :disabled="!hasSelection" />
           <em>{{ styleForm.imageOpacity }}%</em>
+        </label>
+
+        <label class="field">
+          <span>文字</span>
+          <input v-model="styleForm.imageLabelText" type="text" :disabled="!hasSelection" placeholder="图片点文字" />
+        </label>
+
+        <label class="field">
+          <span>字号</span>
+          <input
+            v-model.number="styleForm.imageLabelFontSize"
+            type="range"
+            min="10"
+            max="32"
+            step="1"
+            :disabled="!hasSelection"
+          />
+          <em>{{ styleForm.imageLabelFontSize }}px</em>
+        </label>
+
+        <label class="field">
+          <span>文字颜色</span>
+          <input v-model="styleForm.imageLabelColor" type="color" :disabled="!hasSelection" />
         </label>
       </template>
     </div>
@@ -202,6 +232,9 @@ const styleForm = reactive({
   flowSpeed: 72,
   imageScale: 0.8,
   imageOpacity: 100,
+  imageLabelText: '图片点',
+  imageLabelFontSize: 14,
+  imageLabelColor: '#1f2937',
 });
 
 let map: OlMap | null = null;
@@ -287,6 +320,11 @@ function applySelectedStyle(): void {
       scale: styleForm.imageScale,
       anchor: [0.5, 1],
       opacity: styleForm.imageOpacity / 100,
+      label: {
+        text: styleForm.imageLabelText,
+        fontSize: styleForm.imageLabelFontSize,
+        color: styleForm.imageLabelColor,
+      },
     };
   }
 
@@ -311,6 +349,9 @@ async function syncStyleForm(style: PlotStyleData): Promise<void> {
   styleForm.flowSpeed = style.flowLine?.speed ?? 72;
   styleForm.imageScale = style.image?.scale ?? 0.8;
   styleForm.imageOpacity = Math.round((style.image?.opacity ?? 1) * 100);
+  styleForm.imageLabelText = style.image?.label?.text ?? '';
+  styleForm.imageLabelFontSize = parseFontSize(style.image?.label?.fontSize, 14);
+  styleForm.imageLabelColor = parseCssColor(style.image?.label?.color ?? '#1f2937', '#1f2937', 1).color;
 
   await nextTick();
   syncingStyle.value = false;
@@ -326,6 +367,13 @@ function getLineDashMode(lineDash?: number[]): LineDashMode {
   if (!lineDash || lineDash.length === 0) return 'solid';
   if (lineDash[0] <= 3) return 'dotted';
   return 'dashed';
+}
+
+function parseFontSize(value: number | string | undefined, fallback: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+  const parsed = Number.parseFloat(value ?? '');
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 function toRgba(hex: string, alpha: number): string {
@@ -392,6 +440,11 @@ onMounted(() => {
       src: markerSrc,
       scale: 0.8,
       anchor: [0.5, 1],
+      label: {
+        text: styleForm.imageLabelText,
+        fontSize: styleForm.imageLabelFontSize,
+        color: styleForm.imageLabelColor,
+      },
     },
     flowLine: {
       arrowColor: '#00b96b',
@@ -427,6 +480,148 @@ onMounted(() => {
     lastEvent.value = '删除';
     refreshFeatureCount();
   });
+
+  plot.loadPlotData([
+    {
+      type: 'ImagePoint',
+      plotType: 'imagePoint',
+      coordinates: [[115.73272714843746, 40.0729074806824]],
+      controlPoints: [[115.73272714843746, 40.0729074806824]],
+      style: {
+        strokeColor: '#1677ff',
+        strokeWidth: 3,
+        fillColor: 'rgba(22, 119, 255, 0.16)',
+        lineDash: [],
+        nodeStyle: {
+          radius: 6,
+          fill: '#ffffff',
+          stroke: '#1677ff',
+          strokeWidth: 2,
+        },
+        image: {
+          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
+          scale: 0.8,
+          anchor: [0.5, 1],
+          opacity: 1,
+          label: {
+            text: '图片点===',
+            fontSize: 14,
+            color: '#1f2937',
+          },
+        },
+      },
+      properties: {},
+    },
+    {
+      type: 'ImagePoint',
+      plotType: 'imagePoint',
+      coordinates: [[116.19415292968746, 40.08761818134971]],
+      controlPoints: [[116.19415292968746, 40.08761818134971]],
+      style: {
+        strokeColor: '#1677ff',
+        strokeWidth: 3,
+        fillColor: 'rgba(22, 119, 255, 0.16)',
+        lineDash: [],
+        nodeStyle: {
+          radius: 6,
+          fill: '#ffffff',
+          stroke: '#1677ff',
+          strokeWidth: 2,
+        },
+        image: {
+          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
+          scale: 0.8,
+          anchor: [0.5, 1],
+          opacity: 1,
+          label: {
+            text: '图片点1111',
+            fontSize: 14,
+            color: '#1f2937',
+          },
+        },
+      },
+      properties: {},
+    },
+    {
+      type: 'Point',
+      plotType: 'point',
+      coordinates: [[115.43334970703121, 39.959318129602366]],
+      controlPoints: [[115.43334970703121, 39.959318129602366]],
+      style: {
+        strokeColor: '#1677ff',
+        strokeWidth: 3,
+        fillColor: 'rgba(22, 119, 255, 0.16)',
+        lineDash: [],
+        nodeStyle: {
+          radius: 6,
+          fill: '#ffffff',
+          stroke: '#1677ff',
+          strokeWidth: 2,
+        },
+      },
+      properties: {},
+    },
+    {
+      type: 'ImagePoint',
+      plotType: 'imagePoint',
+      coordinates: [[116.28753671874996, 39.791745453443525]],
+      controlPoints: [[116.28753671874996, 39.791745453443525]],
+      style: {
+        strokeColor: '#1677ff',
+        strokeWidth: 3,
+        fillColor: 'rgba(22, 119, 255, 0.16)',
+        lineDash: [],
+        nodeStyle: {
+          radius: 6,
+          fill: '#ffffff',
+          stroke: '#1677ff',
+          strokeWidth: 2,
+        },
+        image: {
+          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
+          scale: 0.8,
+          anchor: [0.5, 1],
+          opacity: 1,
+          label: {
+            text: '图片点789',
+            fontSize: 14,
+            color: '#1f2937',
+          },
+        },
+      },
+      properties: {},
+    },
+    {
+      type: 'ImagePoint',
+      plotType: 'imagePoint',
+      coordinates: [[115.91949472656248, 39.74318896907127]],
+      controlPoints: [[115.91949472656248, 39.74318896907127]],
+      style: {
+        strokeColor: '#1677ff',
+        strokeWidth: 3,
+        fillColor: 'rgba(22, 119, 255, 0.16)',
+        lineDash: [],
+        nodeStyle: {
+          radius: 6,
+          fill: '#ffffff',
+          stroke: '#1677ff',
+          strokeWidth: 2,
+        },
+        image: {
+          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
+          scale: 0.8,
+          anchor: [0.5, 1],
+          opacity: 1,
+          label: {
+            text: '图片点===',
+            fontSize: 14,
+            color: '#1f2937',
+          },
+        },
+      },
+      properties: {},
+    },
+  ]);
 });
 
 onUnmounted(() => {
@@ -595,6 +790,18 @@ onUnmounted(() => {
   border: 1px solid #d0d7de;
   border-radius: 6px;
   background: #ffffff;
+}
+
+.field input[type='text'] {
+  grid-column: span 2;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  color: #24292f;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 
 .field input[type='range'] {

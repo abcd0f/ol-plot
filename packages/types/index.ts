@@ -11,6 +11,7 @@ export type {
   AreaMeasureConfig,
   AreaMeasureUnit,
   FlowLineConfig,
+  ImageLabelConfig,
   ImageConfig,
 } from './config';
 export type {

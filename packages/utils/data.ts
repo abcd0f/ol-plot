@@ -9,15 +9,21 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import Icon from 'ol/style/Icon';
 import { DrawType } from '../constants/drawType';
 import { mergeRuntimeConfig } from '../constants';
 import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData } from '../types/data';
+import { buildImagePointStyle } from '../style/imagePoint';
 
 const PLOT_STYLE_PROPERTY = '_plotStyleData';
 const DRAW_TYPE_PROPERTY = '_drawType';
-const RESERVED_PROPERTY_KEYS = new Set(['geometry', 'controlPoints', 'plotType', DRAW_TYPE_PROPERTY, PLOT_STYLE_PROPERTY]);
+const RESERVED_PROPERTY_KEYS = new Set([
+  'geometry',
+  'controlPoints',
+  'plotType',
+  DRAW_TYPE_PROPERTY,
+  PLOT_STYLE_PROPERTY,
+]);
 
 export function serializeFeature(
   feature: Feature,
@@ -30,7 +36,9 @@ export function serializeFeature(
   const coordinates = controlPoints ?? extractPlotCoordinates(geometry);
   const includeFlowLine = drawType === DrawType.FlowLine;
   const storedStyle = feature.get(PLOT_STYLE_PROPERTY) as PlotStyleData | undefined;
-  const style = storedStyle ? normalizeStyleData(storedStyle, includeFlowLine) : serializeStyle(config, includeFlowLine);
+  const style = storedStyle
+    ? normalizeStyleData(storedStyle, includeFlowLine)
+    : serializeStyle(config, includeFlowLine);
 
   const data = {
     id: normalizeId(feature.getId()),
@@ -79,6 +87,10 @@ export function serializeStyle(config: ResolvedPlotConfig, includeFlowLine = fal
 export function buildStyleFromData(style: PlotStyleData): Style {
   const nodeStyle = style.nodeStyle;
 
+  if (style.image) {
+    return buildImagePointStyle(style.image, nodeStyle, style.strokeColor);
+  }
+
   return new Style({
     stroke: new Stroke({
       color: style.strokeColor,
@@ -88,23 +100,14 @@ export function buildStyleFromData(style: PlotStyleData): Style {
     fill: new Fill({
       color: style.fillColor,
     }),
-    image: style.image?.src
-      ? new Icon({
-          src: style.image.src,
-          scale: style.image.scale ?? 1,
-          anchor: style.image.anchor ?? [0.5, 0.5],
-          opacity: style.image.opacity ?? 1,
-          anchorXUnits: 'fraction',
-          anchorYUnits: 'fraction',
-        })
-      : new CircleStyle({
-          radius: nodeStyle.radius ?? 6,
-          fill: new Fill({ color: nodeStyle.fill ?? '#ffffff' }),
-          stroke: new Stroke({
-            color: nodeStyle.stroke ?? style.strokeColor,
-            width: nodeStyle.strokeWidth ?? 2,
-          }),
-        }),
+    image: new CircleStyle({
+      radius: nodeStyle.radius ?? 6,
+      fill: new Fill({ color: nodeStyle.fill ?? '#ffffff' }),
+      stroke: new Stroke({
+        color: nodeStyle.stroke ?? style.strokeColor,
+        width: nodeStyle.strokeWidth ?? 2,
+      }),
+    }),
   });
 }
 

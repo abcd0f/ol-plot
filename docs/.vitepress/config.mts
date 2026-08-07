@@ -5,7 +5,7 @@ import { vitepressDemoPlugin } from 'vitepress-demo-plugin';
 
 export default defineConfig({
   title: 'OL-Plot',
-  titleTemplate: ':title — OpenLayers 地图绘图工具库',
+  titleTemplate: 'title — OpenLayers 地图绘图工具库',
   description: '基于 OpenLayers 的矢量图形绘制方案，提供绘制、选择、编辑全生命周期管理',
   // base: './',
   lang: 'zh-CN',
@@ -130,6 +130,7 @@ export default defineConfig({
     },
     server: {
       host: '0.0.0.0',
+      port: 6688,
     },
   },
 });

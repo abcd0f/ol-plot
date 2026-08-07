@@ -41,6 +41,7 @@ export type {
   AreaMeasureConfig,
   AreaMeasureUnit,
   FlowLineConfig,
+  ImageLabelConfig,
   ImageConfig,
   PlotCoordinate,
   PlotCoordinates,

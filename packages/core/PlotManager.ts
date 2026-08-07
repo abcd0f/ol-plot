@@ -7,16 +7,10 @@ import Circle from 'ol/geom/Circle';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import type Geometry from 'ol/geom/Geometry';
 import Style, { type StyleFunction, type StyleLike } from 'ol/style/Style';
-import Icon from 'ol/style/Icon';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import type {
-  InternalPlotConfig,
-  ImageConfig,
-  ImagePointConfig,
-  ResolvedPlotConfig,
-} from '../types/config';
+import type { InternalPlotConfig, ImageConfig, ImagePointConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotFeatureData, PlotRestoreOptions, PlotDrawType } from '../types/data';
 import { DrawType } from '../constants/drawType';
 import { ToolState } from '../constants/toolState';
@@ -54,6 +48,8 @@ import {
   serializeFeature,
   setFeatureStyleData,
 } from '../utils/data';
+import { isEditableTarget } from '../utils/keyboard';
+import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
 const HANDLE_PLOT_TYPES = new Set([
@@ -96,7 +92,7 @@ export class PlotManager {
   private phase = 0;
   private flowElapsedTime = 0;
   private lastFrameTime = 0;
-  private imageConfig: Required<ImageConfig>;
+  private imageConfig: ImageConfig;
   private activeDrawStyle: StyleFunction = () => undefined;
   private featureStyleCache = new globalThis.Map<DrawType, StyleLike>();
   private selectStyleCache = new globalThis.Map<DrawType, StyleFunction>();
@@ -108,12 +104,7 @@ export class PlotManager {
     this.config = mergeConfig(config);
     this.eventBus = new EventBus();
 
-    this.imageConfig = {
-      src: config?.image?.src || '',
-      scale: config?.image?.scale ?? 1,
-      anchor: config?.image?.anchor ?? [0.5, 0.5],
-      opacity: config?.image?.opacity ?? 1,
-    };
+    this.imageConfig = resolveImageConfig(config?.image);
 
     this.layerManager = new LayerManager(map, this.createLayerStyle());
     this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
@@ -156,6 +147,7 @@ export class PlotManager {
     this.bindEvents();
 
     this.handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.activeFeature) {
         this.deleteActiveFeature();
       }
@@ -205,7 +197,8 @@ export class PlotManager {
     const baseConfig = currentStyle ? mergeRuntimeConfig(this.config, currentStyle) : this.config;
     const styleData = resolveStyleData(baseConfig, config, drawType === DrawType.FlowLine);
     if (drawType === DrawType.ImagePoint && config.image) {
-      styleData.image = { ...config.image };
+      this.imageConfig = mergeImageConfig(this.imageConfig, config.image);
+      styleData.image = { ...this.imageConfig };
     }
 
     setFeatureStyleData(this.activeFeature, styleData);
@@ -235,10 +228,13 @@ export class PlotManager {
     const drawType = this.getFeatureDrawType(feature) ?? this.activeDrawType ?? DrawType.Line;
     const data = serializeFeature(feature, drawType, this.config, this.map.getView().getProjection());
     const imageConfig = this.getImageConfig();
-    if (drawType === DrawType.ImagePoint && !data.style.image && imageConfig.src) {
+    if (drawType === DrawType.ImagePoint && !data.style.image && (imageConfig.src || imageConfig.label?.text)) {
       data.style = {
         ...data.style,
-        image: { ...imageConfig },
+        image: {
+          ...imageConfig,
+          label: imageConfig.label ? { ...imageConfig.label } : undefined,
+        },
       };
     }
     return data;
@@ -271,7 +267,11 @@ export class PlotManager {
       }
       if (item.style) {
         setFeatureStyleData(feature, item.style);
-        if (options.applyStyle !== false && drawType === DrawType.ImagePoint && item.style.image?.src) {
+        if (
+          options.applyStyle !== false &&
+          drawType === DrawType.ImagePoint &&
+          (item.style.image?.src || item.style.image?.label?.text)
+        ) {
           feature.setStyle(this.createImageStyle(item.style.image));
         } else if (options.applyStyle !== false && drawType !== DrawType.FlowLine && drawType !== DrawType.ImagePoint) {
           feature.setStyle(buildStyleFromData(item.style));
@@ -506,10 +506,22 @@ export class PlotManager {
         }
         break;
       case DrawType.Rectangle:
-        this.updateHandleGeometry(feature, geom, drawType, coordinates.slice(0, 2), buildRectangle(coordinates.slice(0, 2)));
+        this.updateHandleGeometry(
+          feature,
+          geom,
+          drawType,
+          coordinates.slice(0, 2),
+          buildRectangle(coordinates.slice(0, 2)),
+        );
         break;
       case DrawType.Ellipse:
-        this.updateHandleGeometry(feature, geom, drawType, coordinates.slice(0, 2), buildEllipse(coordinates.slice(0, 2)));
+        this.updateHandleGeometry(
+          feature,
+          geom,
+          drawType,
+          coordinates.slice(0, 2),
+          buildEllipse(coordinates.slice(0, 2)),
+        );
         break;
       case DrawType.Sector: {
         const points = normalizeSectorControlPoints(coordinates.slice(0, 3));
@@ -517,10 +529,22 @@ export class PlotManager {
         break;
       }
       case DrawType.StraightArrow:
-        this.updateHandleGeometry(feature, geom, drawType, coordinates.slice(0, 2), buildStraightArrow(coordinates.slice(0, 2)));
+        this.updateHandleGeometry(
+          feature,
+          geom,
+          drawType,
+          coordinates.slice(0, 2),
+          buildStraightArrow(coordinates.slice(0, 2)),
+        );
         break;
       case DrawType.TaperedArrow:
-        this.updateHandleGeometry(feature, geom, drawType, coordinates.slice(0, 2), buildTaperedArrow(coordinates.slice(0, 2)));
+        this.updateHandleGeometry(
+          feature,
+          geom,
+          drawType,
+          coordinates.slice(0, 2),
+          buildTaperedArrow(coordinates.slice(0, 2)),
+        );
         break;
       case DrawType.LineArrow: {
         const points = coordinates.slice(0, 2);
@@ -708,11 +732,7 @@ export class PlotManager {
     if (centerMoved && this.draggingHandleIndex !== 1 && this.draggingHandleIndex !== 2) {
       const dx = controlPoints[0][0] - previous[0][0];
       const dy = controlPoints[0][1] - previous[0][1];
-      return [
-        controlPoints[0],
-        [previous[1][0] + dx, previous[1][1] + dy],
-        [previous[2][0] + dx, previous[2][1] + dy],
-      ];
+      return [controlPoints[0], [previous[1][0] + dx, previous[1][1] + dy], [previous[2][0] + dx, previous[2][1] + dy]];
     }
 
     return normalizeSectorControlPoints(controlPoints.slice(0, 3), this.draggingHandleIndex === 2 ? 2 : 1);
@@ -806,31 +826,15 @@ export class PlotManager {
   }
 
   private createImageStyle(imageConfig: ImageConfig): Style {
-    if (!imageConfig.src) return this.createPointStyle(this.config);
-
-    return new Style({
-      image: new Icon({
-        src: imageConfig.src,
-        scale: imageConfig.scale ?? 1,
-        anchor: imageConfig.anchor ?? [0.5, 0.5],
-        opacity: imageConfig.opacity ?? 1,
-        anchorXUnits: 'fraction',
-        anchorYUnits: 'fraction',
-      }),
-    });
+    return buildImagePointStyle(imageConfig, this.config.nodeStyle, this.config.strokeColor);
   }
 
   private renderStyle(style: StyleLike, feature: any, resolution: number): ReturnType<StyleFunction> {
     return typeof style === 'function' ? style(feature, resolution) : style;
   }
 
-  private getImageConfig(): Required<ImageConfig> {
-    return {
-      src: this.imageConfig.src,
-      scale: this.imageConfig.scale,
-      anchor: this.imageConfig.anchor,
-      opacity: this.imageConfig.opacity,
-    };
+  private getImageConfig(): ImageConfig {
+    return resolveImageConfig(this.imageConfig);
   }
 
   private invalidateStyleCache(drawType?: DrawType): void {
@@ -847,12 +851,7 @@ export class PlotManager {
   }
 
   private mergeImageConfig(imageConfig: ImageConfig): void {
-    this.imageConfig = {
-      src: imageConfig.src || this.imageConfig.src,
-      scale: imageConfig.scale ?? this.imageConfig.scale,
-      anchor: imageConfig.anchor ?? this.imageConfig.anchor,
-      opacity: imageConfig.opacity ?? this.imageConfig.opacity,
-    };
+    this.imageConfig = mergeImageConfig(this.imageConfig, imageConfig);
   }
 
   private ensureFlowAnimation(): void {

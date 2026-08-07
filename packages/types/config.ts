@@ -28,11 +28,22 @@ export interface FlowLineConfig {
   speed?: number;
 }
 
+export interface ImageLabelConfig {
+  text?: string;
+  fontSize?: number | string;
+  color?: string;
+  fontFamily?: string;
+  fontWeight?: string | number;
+  offsetX?: number;
+  offsetY?: number;
+}
+
 export interface ImageConfig {
   src: string;
   scale?: number;
   anchor?: [number, number];
   opacity?: number;
+  label?: ImageLabelConfig;
 }
 
 export interface PlotConfig {
@@ -63,6 +74,7 @@ export interface InternalPlotConfig extends PlotConfig {
   measure?: MeasureConfig;
   areaMeasure?: AreaMeasureConfig;
   flowLine?: FlowLineConfig;
+  image?: ImageConfig;
 }
 
 export type ResolvedPlotConfig = Required<InternalPlotConfig>;
