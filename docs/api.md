@@ -120,6 +120,23 @@ API 与 `LineTool` 完全相同。
 
 ---
 
+## 自由面 FreehandPolygonTool
+
+通过两次点击绘制自由面，移动鼠标时持续采样边界轨迹。
+
+```ts
+import { FreehandPolygonTool } from 'ol-plot'
+const tool = new FreehandPolygonTool(map)
+```
+
+**绘制方式：** 第一次点击确定起点，移动鼠标采样边界，第二次点击结束并闭合成面
+
+**几何类型：** `ol/geom/Polygon`
+
+API 与 `PolygonTool` 基本一致。
+
+---
+
 ## 多边形 PolygonTool
 
 绘制任意多边形区域。
@@ -343,6 +360,7 @@ import { DrawType } from 'ol-plot'
 | `DrawType.Point` | `'Point'` | 点 |
 | `DrawType.Line` | `'LineString'` | 折线 |
 | `DrawType.FreehandLine` | `'FreehandLine'` | 自由线 |
+| `DrawType.FreehandPolygon` | `'FreehandPolygon'` | 自由面 |
 | `DrawType.Polygon` | `'Polygon'` | 多边形 |
 | `DrawType.Rectangle` | `'Rectangle'` | 矩形 |
 | `DrawType.Circle` | `'Circle'` | 圆形 |

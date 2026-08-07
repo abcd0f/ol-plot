@@ -68,7 +68,7 @@ export class DrawManager {
     let freehand = false;
     let minPoints: number | undefined;
     let maxPoints: number | undefined;
-    let clickFreehand = false;
+    let clickFreehandType: 'LineString' | 'Polygon' | null = null;
 
     // 根据绘制类型设置相应的 OpenLayers 绘制配置
     if (drawType === DrawType.Ellipse) {
@@ -112,7 +112,10 @@ export class DrawManager {
       type = 'LineString';
     } else if (drawType === DrawType.FreehandLine) {
       type = 'LineString';
-      clickFreehand = true;
+      clickFreehandType = 'LineString';
+    } else if (drawType === DrawType.FreehandPolygon) {
+      type = 'Polygon';
+      clickFreehandType = 'Polygon';
     } else if (drawType === DrawType.Measure) {
       // 测距：绘制普通折线，距离标签由 MeasureTool 通过 Overlay 单独渲染
       type = 'LineString';
@@ -125,8 +128,14 @@ export class DrawManager {
       type = drawType as OLType;
     }
 
-    if (clickFreehand) {
-      this.clickFreehandDraw = new ClickFreehandDraw(map, layer.getSource()!, style, (e) => this.condition(e));
+    if (clickFreehandType) {
+      this.clickFreehandDraw = new ClickFreehandDraw(
+        map,
+        layer.getSource()!,
+        style,
+        (e) => this.condition(e),
+        clickFreehandType,
+      );
       this.draw = this.clickFreehandDraw as unknown as Draw;
     } else {
       this.draw = new Draw({

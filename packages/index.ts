@@ -12,6 +12,7 @@ export { ImagePointTool } from './tools/ImagePointTool';
 export { LineTool } from './tools/LineTool';
 export { FlowLineTool } from './tools/FlowLineTool';
 export { FreehandLineTool } from './tools/FreehandLineTool';
+export { FreehandPolygonTool } from './tools/FreehandPolygonTool';
 export { PolygonTool } from './tools/PolygonTool';
 export { RectangleTool } from './tools/RectangleTool';
 export { CircleTool } from './tools/CircleTool';

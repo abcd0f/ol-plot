@@ -358,10 +358,18 @@ export class PlotManager {
     if (index < 0 || index >= coords.length) return;
 
     const drawType = this.activeFeature ? this.getFeatureDrawType(this.activeFeature) : null;
-    if ((drawType === DrawType.Polygon || drawType === DrawType.AreaMeasure) && index >= coords.length - 1) return;
+    if (
+      (drawType === DrawType.Polygon || drawType === DrawType.FreehandPolygon || drawType === DrawType.AreaMeasure) &&
+      index >= coords.length - 1
+    )
+      return;
 
     coords[index] = coordinate;
-    if ((drawType === DrawType.Polygon || drawType === DrawType.AreaMeasure) && index === 0 && coords.length > 1) {
+    if (
+      (drawType === DrawType.Polygon || drawType === DrawType.FreehandPolygon || drawType === DrawType.AreaMeasure) &&
+      index === 0 &&
+      coords.length > 1
+    ) {
       coords[coords.length - 1] = coordinate;
     }
     this.setCoordinates(coords);
@@ -445,8 +453,9 @@ export class PlotManager {
       case DrawType.Measure:
         return new LineString(coordinates);
       case DrawType.Polygon:
+      case DrawType.FreehandPolygon:
       case DrawType.AreaMeasure:
-        return new Polygon([coordinates]);
+        return new Polygon([closeRing(coordinates)]);
       case DrawType.Circle:
         return new Circle(coordinates[0], coordinates[1] ? dist(coordinates[0], coordinates[1]) : 0);
       case DrawType.Rectangle:
@@ -496,8 +505,9 @@ export class PlotManager {
         (geom as LineString).setCoordinates(coordinates);
         break;
       case DrawType.Polygon:
+      case DrawType.FreehandPolygon:
       case DrawType.AreaMeasure:
-        (geom as Polygon).setCoordinates([coordinates]);
+        (geom as Polygon).setCoordinates([closeRing(coordinates)]);
         break;
       case DrawType.Circle:
         if (coordinates.length >= 2) {
@@ -678,6 +688,7 @@ export class PlotManager {
       case DrawType.Measure:
         return (geom as LineString).getCoordinates();
       case DrawType.Polygon:
+      case DrawType.FreehandPolygon:
       case DrawType.AreaMeasure:
         return (geom as Polygon).getCoordinates()[0] ?? [];
       case DrawType.Circle: {
@@ -972,6 +983,7 @@ const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = {
   [DrawType.Line]: 'line',
   [DrawType.FlowLine]: 'flowLine',
   [DrawType.FreehandLine]: 'freehandLine',
+  [DrawType.FreehandPolygon]: 'freehandPolygon',
   [DrawType.Polygon]: 'polygon',
   [DrawType.Rectangle]: 'rectangle',
   [DrawType.Circle]: 'circle',
@@ -986,6 +998,29 @@ const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = {
   [DrawType.Measure]: 'measure',
   [DrawType.AreaMeasure]: 'areaMeasure',
 };
+
+function closeRing(coordinates: number[][]): number[][] {
+  if (coordinates.length === 0) return [];
+
+  const ring = coordinates.map((point) => point.slice());
+  const first = ring[0];
+  const last = ring[ring.length - 1];
+
+  if (ring.length === 1) {
+    ring.push(first.slice(), first.slice());
+    return ring;
+  }
+
+  if (!last || !coordinatesEqual(first, last)) {
+    ring.push(first.slice());
+  }
+
+  return ring;
+}
+
+function coordinatesEqual(a: number[], b: number[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
 
 function moved(a: number[], b: number[]): boolean {
   return Math.abs(a[0] - b[0]) > 1e-9 || Math.abs(a[1] - b[1]) > 1e-9;

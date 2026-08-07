@@ -4,7 +4,7 @@
 
 ## 特性
 
-- **工具丰富**：内置点、图片点、折线、流向线、自由线、多边形、矩形、圆、椭圆、扇形、弧线、旗标、箭头、测距和测面等 18 类工具。
+- **工具丰富**：内置点、图片点、折线、流向线、自由线、自由面、多边形、矩形、圆、椭圆、扇形、弧线、旗标、箭头、测距和测面等 19 类工具。
 - **开箱即用的交互**：自动协调 Draw、Select、Modify 三类 OpenLayers interaction，支持绘制后选中、点击切换选中、拖拽控制点编辑和键盘删除。
 - **统一生命周期**：支持单工具 `BaseTool` 用法，也支持一个 `PlotManager` 管理多类型标绘、事件订阅、要素管理和销毁 API。
 - **灵活样式配置**：支持线色、线宽、虚线、填充色、控制点样式、测量标签样式和流向线动画参数。
@@ -111,6 +111,7 @@ plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
 | `LineTool` | `LineString` | 单击添加顶点，双击结束 |
 | `FlowLineTool` | `LineString` | 单击绘制带动画箭头的流向线 |
 | `FreehandLineTool` | `LineString` | 点击起点，移动预览，点击终点结束 |
+| `FreehandPolygonTool` | `Polygon` | 点击起点，移动采样边界，点击终点闭合成面 |
 | `PolygonTool` | `Polygon` | 单击添加顶点，双击或闭合结束 |
 | `RectangleTool` | `Polygon` | 拖拽确定对角点 |
 | `CircleTool` | `Circle` | 拖拽确定圆心和半径 |

@@ -3,16 +3,20 @@ import Map from 'ol/Map';
 import MapBrowserEventType from 'ol/MapBrowserEventType';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import LineString from 'ol/geom/LineString';
+import Polygon from 'ol/geom/Polygon';
 import Interaction from 'ol/interaction/Interaction';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import type { StyleFunction } from 'ol/style/Style';
 import BaseEvent from 'ol/events/Event';
 
-class ClickFreehandDrawEvent extends BaseEvent {
-  feature?: Feature<LineString>;
+type ClickFreehandGeometry = LineString | Polygon;
+type ClickFreehandGeometryType = 'LineString' | 'Polygon';
 
-  constructor(type: string, feature?: Feature<LineString>) {
+class ClickFreehandDrawEvent extends BaseEvent {
+  feature?: Feature<ClickFreehandGeometry>;
+
+  constructor(type: string, feature?: Feature<ClickFreehandGeometry>) {
     super(type);
     this.feature = feature;
   }
@@ -29,8 +33,9 @@ export class ClickFreehandDraw extends Interaction {
   private readonly sketchSource = new VectorSource();
   private readonly sketchLayer: VectorLayer;
   private readonly canStartDraw: (event: MapBrowserEvent<any>) => boolean;
+  private readonly geometryType: ClickFreehandGeometryType;
 
-  private sketchFeature: Feature<LineString> | null = null;
+  private sketchFeature: Feature<ClickFreehandGeometry> | null = null;
   private points: number[][] = [];
   private lastPixel: number[] | null = null;
   private sketching = false;
@@ -40,10 +45,12 @@ export class ClickFreehandDraw extends Interaction {
     source: VectorSource,
     style: StyleFunction,
     canStartDraw: (event: MapBrowserEvent<any>) => boolean,
+    geometryType: ClickFreehandGeometryType = 'LineString',
   ) {
     super();
     this.source = source;
     this.canStartDraw = canStartDraw;
+    this.geometryType = geometryType;
     this.sketchLayer = new VectorLayer({
       source: this.sketchSource,
       style,
@@ -109,7 +116,7 @@ export class ClickFreehandDraw extends Interaction {
   private startDrawing(coordinate: number[], pixel: number[]): void {
     this.points = [coordinate.slice()];
     this.lastPixel = pixel.slice();
-    this.sketchFeature = new Feature(new LineString(this.points));
+    this.sketchFeature = new Feature(this.createGeometry(this.points));
     this.sketchSource.addFeature(this.sketchFeature);
     this.sketching = true;
     this.dispatchEvent(new ClickFreehandDrawEvent('drawstart', this.sketchFeature));
@@ -132,7 +139,7 @@ export class ClickFreehandDraw extends Interaction {
 
     this.points.push(point);
     this.lastPixel = pixel?.slice() ?? this.lastPixel;
-    this.sketchFeature.getGeometry()!.setCoordinates(this.points);
+    this.updateGeometry(this.sketchFeature.getGeometry()!, this.points);
   }
 
   private finishDrawing(coordinate: number[], pixel: number[]): void {
@@ -141,7 +148,7 @@ export class ClickFreehandDraw extends Interaction {
 
     if (this.points.length === 1) {
       this.points.push(this.points[0].slice());
-      this.sketchFeature.getGeometry()!.setCoordinates(this.points);
+      this.updateGeometry(this.sketchFeature.getGeometry()!, this.points);
     }
 
     const feature = this.sketchFeature;
@@ -152,5 +159,42 @@ export class ClickFreehandDraw extends Interaction {
     this.lastPixel = null;
     this.sketching = false;
     this.dispatchEvent(new ClickFreehandDrawEvent('drawend', feature));
+  }
+
+  private createGeometry(points: number[][]): ClickFreehandGeometry {
+    if (this.geometryType === 'Polygon') return new Polygon([this.createClosedRing(points)]);
+    return new LineString(points);
+  }
+
+  private updateGeometry(geometry: ClickFreehandGeometry, points: number[][]): void {
+    if (this.geometryType === 'Polygon') {
+      (geometry as Polygon).setCoordinates([this.createClosedRing(points)]);
+      return;
+    }
+
+    (geometry as LineString).setCoordinates(points);
+  }
+
+  private createClosedRing(points: number[][]): number[][] {
+    if (points.length === 0) return [];
+
+    const ring = points.map((point) => point.slice());
+    const first = ring[0];
+    const last = ring[ring.length - 1];
+
+    if (ring.length === 1) {
+      ring.push(first.slice(), first.slice());
+      return ring;
+    }
+
+    if (!last || !this.coordinatesEqual(first, last)) {
+      ring.push(first.slice());
+    }
+
+    return ring;
+  }
+
+  private coordinatesEqual(a: number[], b: number[]): boolean {
+    return a.length === b.length && a.every((value, index) => value === b[index]);
   }
 }

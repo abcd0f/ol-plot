@@ -56,6 +56,7 @@ export default defineConfig({
           { text: '图片点 ImagePoint', link: '/components/image-point' },
           { text: '折线 Line', link: '/components/line' },
           { text: '自由线 FreehandLine', link: '/components/freehand-line' },
+          { text: '自由面 FreehandPolygon', link: '/components/freehand-polygon' },
           { text: '轨迹线 FlowLine', link: '/components/flow-line' },
           { text: '多边形 Polygon', link: '/components/polygon' },
           { text: '矩形 Rectangle', link: '/components/rectangle' },

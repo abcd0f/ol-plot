@@ -187,6 +187,7 @@ const tools: ToolItem[] = [
   { label: '折线', type: DrawType.Line },
   { label: '流向线', type: DrawType.FlowLine },
   { label: '自由线', type: DrawType.FreehandLine },
+  { label: '自由面', type: DrawType.FreehandPolygon },
   { label: '多边形', type: DrawType.Polygon },
   { label: '矩形', type: DrawType.Rectangle },
   { label: '圆', type: DrawType.Circle },

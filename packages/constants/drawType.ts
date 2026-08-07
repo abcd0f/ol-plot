@@ -9,6 +9,8 @@ export enum DrawType {
   FlowLine = 'FlowLine',
   /** 自由线 */
   FreehandLine = 'FreehandLine',
+  /** 自由面 */
+  FreehandPolygon = 'FreehandPolygon',
   /** 多边形 */
   Polygon = 'Polygon',
   /** 矩形 */
