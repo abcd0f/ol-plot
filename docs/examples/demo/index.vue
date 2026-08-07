@@ -653,7 +653,7 @@ onUnmounted(() => {
 .style-panel {
   position: absolute;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(31, 35, 40, 0.12);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(31, 35, 40, 0.12);
@@ -667,11 +667,14 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
+  width: 200px;
+  flex-direction: column;
 }
 
 .tool-grid {
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(10, minmax(64px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   flex: 1;
   min-width: 0;
@@ -679,6 +682,7 @@ onUnmounted(() => {
 
 .tool-btn,
 .action-btn {
+  width: 100%;
   height: 30px;
   padding: 0 10px;
   font: inherit;
@@ -703,10 +707,12 @@ onUnmounted(() => {
 }
 
 .actions {
+  width: 100%;
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  width: 154px;
+  border-top: 1px solid #d0d7de;
+  padding-top: 10px;
 }
 
 .action-btn {
@@ -753,10 +759,12 @@ onUnmounted(() => {
 }
 
 .style-panel {
-  top: 128px;
+  top: 138px;
   right: 12px;
   width: 230px;
   padding: 12px;
+  height: calc(100% - 152px);
+  overflow-y: auto;
 }
 
 .style-panel.disabled {
