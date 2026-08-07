@@ -117,9 +117,7 @@ export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: FlowPha
     const flowLine = styleData?.flowLine ?? config.flowLine;
     const spacingPx = Math.max(flowLine.arrowSpacing ?? 48, 1);
     const arrowColor = flowLine.arrowColor || strokeColor;
-    const styleKey = styleData
-      ? `${strokeColor}|${strokeWidth}|${lineDash.join(',')}|${arrowColor}|${spacingPx}`
-      : '';
+    const styleKey = styleData ? `${strokeColor}|${strokeWidth}|${lineDash.join(',')}|${arrowColor}|${spacingPx}` : '';
 
     const geom = feature.getGeometry();
     if (!geom || geom.getType() !== 'LineString') {

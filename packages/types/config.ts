@@ -46,6 +46,35 @@ export interface ImageConfig {
   label?: ImageLabelConfig;
 }
 
+export interface AlarmPointStyleConfig {
+  /** Core point radius in pixels. Defaults to a slightly larger node radius. */
+  radius?: number;
+  /** Main alarm color used by the pulse rings. */
+  color?: string;
+  /** Core point fill color. Defaults to `color`. */
+  fill?: string;
+  /** Core point stroke color. Defaults to `color`. */
+  stroke?: string;
+  /** Core point stroke width in pixels. */
+  strokeWidth?: number;
+  /** Maximum spread radius in pixels. */
+  pulseRadius?: number;
+  /** Spread ring stroke width in pixels. */
+  pulseStrokeWidth?: number;
+  /** One blink/spread cycle duration in milliseconds. */
+  duration?: number;
+  /** Number of staggered spread rings. */
+  rings?: number;
+  /** Maximum opacity of spread rings. */
+  haloOpacity?: number;
+  /** Minimum opacity of the blinking core point. */
+  minOpacity?: number;
+  /** Maximum opacity of the blinking core point. */
+  maxOpacity?: number;
+  /** Animation redraw rate. Clamped to 1-60 fps, defaults to 30. */
+  frameRate?: number;
+}
+
 export interface PlotConfig {
   strokeColor?: string;
   strokeWidth?: number;
@@ -70,11 +99,16 @@ export interface ImagePointConfig extends PlotConfig {
   image?: ImageConfig;
 }
 
+export interface AlarmPointConfig extends PlotConfig {
+  alarm?: AlarmPointStyleConfig;
+}
+
 export interface InternalPlotConfig extends PlotConfig {
   measure?: MeasureConfig;
   areaMeasure?: AreaMeasureConfig;
   flowLine?: FlowLineConfig;
   image?: ImageConfig;
+  alarm?: AlarmPointStyleConfig;
 }
 
 export type ResolvedPlotConfig = Required<InternalPlotConfig>;

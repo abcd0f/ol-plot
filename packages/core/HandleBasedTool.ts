@@ -16,11 +16,8 @@ export abstract class HandleBasedTool extends BaseTool {
     super(map, drawType, config);
 
     this.modifyManager.setActive(false);
-    this.handleManager = new HandleManager(
-      map,
-      this.eventBus,
-      this.config,
-      (controlPoints: number[][]) => this.onHandleSync(controlPoints),
+    this.handleManager = new HandleManager(map, this.eventBus, this.config, (controlPoints: number[][]) =>
+      this.onHandleSync(controlPoints),
     );
     this.cursorManager.setEditableLayers(() => [this.handleManager.handleLayer]);
 

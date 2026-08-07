@@ -181,9 +181,10 @@ export abstract class BaseTool {
     if (!this.activeFeature || !config) return this;
 
     const includeFlowLine = this.drawType === DrawType.FlowLine;
+    const includeAlarmPoint = this.drawType === DrawType.AlarmPoint;
     const currentStyle = getFeatureStyleData(this.activeFeature);
     const baseConfig = currentStyle ? mergeRuntimeConfig(this.config, currentStyle) : this.config;
-    const styleData = resolveStyleData(baseConfig, config, includeFlowLine);
+    const styleData = resolveStyleData(baseConfig, config, includeFlowLine, includeAlarmPoint);
     if (this.drawType === DrawType.ImagePoint && (config as any).image) {
       styleData.image = { ...(config as any).image };
     }

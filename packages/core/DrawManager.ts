@@ -121,8 +121,8 @@ export class DrawManager {
       type = 'LineString';
     } else if (drawType === DrawType.AreaMeasure) {
       type = 'Polygon';
-    } else if (drawType === DrawType.ImagePoint) {
-      // 图片点：底层使用 Point 几何，样式由工具类自定义
+    } else if (drawType === DrawType.ImagePoint || drawType === DrawType.AlarmPoint) {
+      // Point based tools provide their own render style.
       type = 'Point';
     } else {
       type = drawType as OLType;

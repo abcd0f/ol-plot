@@ -5,7 +5,7 @@ import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
-import Style from 'ol/style/Style';
+import Style, { type StyleLike } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
@@ -14,6 +14,7 @@ import { mergeRuntimeConfig } from '../constants';
 import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData } from '../types/data';
 import { buildImagePointStyle } from '../style/imagePoint';
+import { buildAlarmPointStyle } from '../style/alarmPoint';
 
 const PLOT_STYLE_PROPERTY = '_plotStyleData';
 const DRAW_TYPE_PROPERTY = '_drawType';
@@ -35,10 +36,11 @@ export function serializeFeature(
   const controlPoints = cloneCoordinates(feature.get('controlPoints') as PlotCoordinates | undefined);
   const coordinates = controlPoints ?? extractPlotCoordinates(geometry);
   const includeFlowLine = drawType === DrawType.FlowLine;
+  const includeAlarmPoint = drawType === DrawType.AlarmPoint;
   const storedStyle = feature.get(PLOT_STYLE_PROPERTY) as PlotStyleData | undefined;
   const style = storedStyle
-    ? normalizeStyleData(storedStyle, includeFlowLine)
-    : serializeStyle(config, includeFlowLine);
+    ? normalizeStyleData(storedStyle, includeFlowLine, includeAlarmPoint)
+    : serializeStyle(config, includeFlowLine, includeAlarmPoint);
 
   const data = {
     id: normalizeId(feature.getId()),
@@ -63,7 +65,11 @@ export function projectPlotDataCoordinates(data: PlotFeatureData, projection: Pr
   );
 }
 
-export function serializeStyle(config: ResolvedPlotConfig, includeFlowLine = false): PlotStyleData {
+export function serializeStyle(
+  config: ResolvedPlotConfig,
+  includeFlowLine = false,
+  includeAlarmPoint = false,
+): PlotStyleData {
   const nodeStyle = config.nodeStyle;
 
   const style: PlotStyleData = {
@@ -80,15 +86,20 @@ export function serializeStyle(config: ResolvedPlotConfig, includeFlowLine = fal
   };
 
   if (includeFlowLine) style.flowLine = { ...config.flowLine };
+  if (includeAlarmPoint) style.alarm = { ...config.alarm };
 
   return style;
 }
 
-export function buildStyleFromData(style: PlotStyleData): Style {
+export function buildStyleFromData(style: PlotStyleData): StyleLike {
   const nodeStyle = style.nodeStyle;
 
   if (style.image) {
     return buildImagePointStyle(style.image, nodeStyle, style.strokeColor);
+  }
+
+  if (style.alarm) {
+    return buildAlarmPointStyle(style.alarm, nodeStyle, style.strokeColor);
   }
 
   return new Style({
@@ -115,8 +126,9 @@ export function resolveStyleData(
   baseConfig: ResolvedPlotConfig,
   override?: InternalPlotConfig,
   includeFlowLine = false,
+  includeAlarmPoint = false,
 ): PlotStyleData {
-  return serializeStyle(mergeRuntimeConfig(baseConfig, override), includeFlowLine);
+  return serializeStyle(mergeRuntimeConfig(baseConfig, override), includeFlowLine, includeAlarmPoint);
 }
 
 export function setFeatureStyleData(feature: Feature, style: PlotStyleData): void {
@@ -187,12 +199,16 @@ function cloneJson<T>(value: T): T {
   }
 }
 
-function normalizeStyleData(style: PlotStyleData, includeFlowLine: boolean): PlotStyleData {
+function normalizeStyleData(style: PlotStyleData, includeFlowLine: boolean, includeAlarmPoint: boolean): PlotStyleData {
   const cloned = cloneJson(style);
-  if (includeFlowLine) return cloned;
+  if (includeFlowLine && includeAlarmPoint) return cloned;
 
-  const { flowLine: _flowLine, ...styleWithoutFlowLine } = cloned;
-  return styleWithoutFlowLine;
+  const { flowLine: _flowLine, alarm: _alarm, ...styleWithoutAnimatedData } = cloned;
+  return {
+    ...styleWithoutAnimatedData,
+    ...(includeFlowLine ? { flowLine: cloned.flowLine } : {}),
+    ...(includeAlarmPoint ? { alarm: cloned.alarm } : {}),
+  };
 }
 
 function normalizeId(id: string | number | undefined): string | number | undefined {

@@ -123,11 +123,7 @@ export class SectorTool extends HandleBasedTool {
     if (centerMoved && this.draggingHandleIndex !== 1 && this.draggingHandleIndex !== 2) {
       const dx = controlPoints[0][0] - previous[0][0];
       const dy = controlPoints[0][1] - previous[0][1];
-      return [
-        controlPoints[0],
-        [previous[1][0] + dx, previous[1][1] + dy],
-        [previous[2][0] + dx, previous[2][1] + dy],
-      ];
+      return [controlPoints[0], [previous[1][0] + dx, previous[1][1] + dy], [previous[2][0] + dx, previous[2][1] + dy]];
     }
 
     return normalizeSectorControlPoints(controlPoints.slice(0, 3), this.draggingHandleIndex === 2 ? 2 : 1);

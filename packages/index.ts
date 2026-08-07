@@ -8,6 +8,7 @@ export { PlotManager } from './core/PlotManager';
 export type { PlotManagerConfig } from './core/PlotManager';
 
 export { PointTool } from './tools/PointTool';
+export { AlarmPointTool } from './tools/AlarmPointTool';
 export { ImagePointTool } from './tools/ImagePointTool';
 export { LineTool } from './tools/LineTool';
 export { FlowLineTool } from './tools/FlowLineTool';
@@ -35,6 +36,7 @@ export type {
   AreaMeasurePlotConfig,
   FlowLinePlotConfig,
   ImagePointConfig,
+  AlarmPointConfig,
   NodeStyle,
   MeasureConfig,
   MeasureMode,
@@ -42,6 +44,7 @@ export type {
   AreaMeasureConfig,
   AreaMeasureUnit,
   FlowLineConfig,
+  AlarmPointStyleConfig,
   ImageLabelConfig,
   ImageConfig,
   PlotCoordinate,

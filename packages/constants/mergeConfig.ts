@@ -30,6 +30,10 @@ export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
       ...DEFAULT_CONFIG.flowLine,
       ...config?.flowLine,
     },
+    alarm: {
+      ...DEFAULT_CONFIG.alarm,
+      ...config?.alarm,
+    },
   };
 }
 
@@ -63,6 +67,10 @@ export function mergeRuntimeConfig(current: ResolvedPlotConfig, config?: Interna
     flowLine: {
       ...current.flowLine,
       ...config.flowLine,
+    },
+    alarm: {
+      ...current.alarm,
+      ...config.alarm,
     },
   };
 }

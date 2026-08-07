@@ -82,9 +82,7 @@ export class HandleManager {
   refresh(controlPoints: number[][] | undefined): void {
     if (!controlPoints) return;
 
-    const handles = this.handleSource
-      .getFeatures()
-      .sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
+    const handles = this.handleSource.getFeatures().sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
 
     if (handles.length !== controlPoints.length) {
       this.show(controlPoints);
@@ -101,9 +99,7 @@ export class HandleManager {
   refreshExcept(controlPoints: number[][] | undefined, excludedIndex: number | null): void {
     if (!controlPoints) return;
 
-    const handles = this.handleSource
-      .getFeatures()
-      .sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
+    const handles = this.handleSource.getFeatures().sort((a, b) => a.get('_handleIndex') - b.get('_handleIndex'));
 
     if (handles.length !== controlPoints.length) return;
 

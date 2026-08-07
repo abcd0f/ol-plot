@@ -1,5 +1,5 @@
 import type { DrawType } from '../constants/drawType';
-import type { FlowLineConfig, ImagePointConfig, NodeStyle } from './config';
+import type { AlarmPointConfig, FlowLineConfig, ImagePointConfig, NodeStyle } from './config';
 
 export type PlotCoordinate = number[];
 export type PlotCoordinates = PlotCoordinate[];
@@ -13,6 +13,7 @@ export interface PlotStyleData {
   nodeStyle: NodeStyle;
   flowLine?: FlowLineConfig;
   image?: ImagePointConfig['image'];
+  alarm?: AlarmPointConfig['alarm'];
 }
 
 export interface PlotGeometryData {

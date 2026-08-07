@@ -1,6 +1,8 @@
 export enum DrawType {
   /** 点 */
   Point = 'Point',
+  /** 告警点 */
+  AlarmPoint = 'AlarmPoint',
   /** 图片点 */
   ImagePoint = 'ImagePoint',
   /** 线 */

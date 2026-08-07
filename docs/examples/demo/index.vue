@@ -158,6 +158,52 @@
           <input v-model="styleForm.imageLabelColor" type="color" :disabled="!hasSelection" />
         </label>
       </template>
+
+      <template v-if="selectedType === DrawType.AlarmPoint">
+        <div class="panel-title compact">告警点</div>
+
+        <label class="field">
+          <span>颜色</span>
+          <input v-model="styleForm.alarmColor" type="color" :disabled="!hasSelection" />
+        </label>
+
+        <label class="field">
+          <span>半径</span>
+          <input v-model.number="styleForm.alarmRadius" type="range" min="6" max="22" :disabled="!hasSelection" />
+          <em>{{ styleForm.alarmRadius }}</em>
+        </label>
+
+        <label class="field">
+          <span>扩散</span>
+          <input v-model.number="styleForm.alarmPulseRadius" type="range" min="18" max="72" :disabled="!hasSelection" />
+          <em>{{ styleForm.alarmPulseRadius }}</em>
+        </label>
+
+        <label class="field">
+          <span>周期</span>
+          <input
+            v-model.number="styleForm.alarmDuration"
+            type="range"
+            min="600"
+            max="2400"
+            step="100"
+            :disabled="!hasSelection"
+          />
+          <em>{{ styleForm.alarmDuration }}ms</em>
+        </label>
+
+        <label class="field">
+          <span>环数</span>
+          <input v-model.number="styleForm.alarmRings" type="range" min="1" max="4" :disabled="!hasSelection" />
+          <em>{{ styleForm.alarmRings }}</em>
+        </label>
+
+        <label class="field">
+          <span>帧率</span>
+          <input v-model.number="styleForm.alarmFrameRate" type="range" min="12" max="60" :disabled="!hasSelection" />
+          <em>{{ styleForm.alarmFrameRate }}</em>
+        </label>
+      </template>
     </div>
 
     <div ref="el" class="map-wrapper" />
@@ -183,6 +229,7 @@ type LineDashMode = 'solid' | 'dashed' | 'dotted';
 
 const tools: ToolItem[] = [
   { label: '点', type: DrawType.Point },
+  { label: '告警点', type: DrawType.AlarmPoint },
   { label: '图片点', type: DrawType.ImagePoint },
   { label: '折线', type: DrawType.Line },
   { label: '流向线', type: DrawType.FlowLine },
@@ -236,6 +283,12 @@ const styleForm = reactive({
   imageLabelText: '图片点',
   imageLabelFontSize: 14,
   imageLabelColor: '#1f2937',
+  alarmColor: '#ff3b30',
+  alarmRadius: 10,
+  alarmPulseRadius: 34,
+  alarmDuration: 1200,
+  alarmRings: 2,
+  alarmFrameRate: 30,
 });
 
 let map: OlMap | null = null;
@@ -329,6 +382,19 @@ function applySelectedStyle(): void {
     };
   }
 
+  if (selectedType.value === DrawType.AlarmPoint) {
+    config.alarm = {
+      color: styleForm.alarmColor,
+      fill: styleForm.alarmColor,
+      stroke: '#ffffff',
+      radius: styleForm.alarmRadius,
+      pulseRadius: styleForm.alarmPulseRadius,
+      duration: styleForm.alarmDuration,
+      rings: styleForm.alarmRings,
+      frameRate: styleForm.alarmFrameRate,
+    };
+  }
+
   plot?.setStyleConfig(config);
 }
 
@@ -353,6 +419,12 @@ async function syncStyleForm(style: PlotStyleData): Promise<void> {
   styleForm.imageLabelText = style.image?.label?.text ?? '';
   styleForm.imageLabelFontSize = parseFontSize(style.image?.label?.fontSize, 14);
   styleForm.imageLabelColor = parseCssColor(style.image?.label?.color ?? '#1f2937', '#1f2937', 1).color;
+  styleForm.alarmColor = parseCssColor(style.alarm?.color ?? '#ff3b30', '#ff3b30', 1).color;
+  styleForm.alarmRadius = style.alarm?.radius ?? 10;
+  styleForm.alarmPulseRadius = style.alarm?.pulseRadius ?? 34;
+  styleForm.alarmDuration = style.alarm?.duration ?? 1200;
+  styleForm.alarmRings = style.alarm?.rings ?? 2;
+  styleForm.alarmFrameRate = style.alarm?.frameRate ?? 30;
 
   await nextTick();
   syncingStyle.value = false;
@@ -452,6 +524,16 @@ onMounted(() => {
       arrowSpacing: 56,
       speed: 72,
     },
+    alarm: {
+      color: styleForm.alarmColor,
+      fill: styleForm.alarmColor,
+      stroke: '#ffffff',
+      radius: styleForm.alarmRadius,
+      pulseRadius: styleForm.alarmPulseRadius,
+      duration: styleForm.alarmDuration,
+      rings: styleForm.alarmRings,
+      frameRate: styleForm.alarmFrameRate,
+    },
     measure: {
       mode: 'both',
       unit: 'm',
@@ -484,40 +566,39 @@ onMounted(() => {
 
   plot.loadPlotData([
     {
-      type: 'ImagePoint',
-      plotType: 'imagePoint',
-      coordinates: [[115.73272714843746, 40.0729074806824]],
-      controlPoints: [[115.73272714843746, 40.0729074806824]],
+      type: 'AlarmPoint',
+      plotType: 'alarmPoint',
+      coordinates: [[116.39739999999999, 39.90929999999997]],
+      controlPoints: [[116.39739999999999, 39.90929999999997]],
       style: {
-        strokeColor: '#1677ff',
+        strokeColor: '#ff3b30',
         strokeWidth: 3,
-        fillColor: 'rgba(22, 119, 255, 0.16)',
+        fillColor: 'rgba(255, 59, 48, 0.16)',
         lineDash: [],
         nodeStyle: {
-          radius: 6,
-          fill: '#ffffff',
-          stroke: '#1677ff',
+          radius: 10,
+          fill: '#ff3b30',
+          stroke: '#ffffff',
           strokeWidth: 2,
         },
-        image: {
-          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
-          scale: 0.8,
-          anchor: [0.5, 1],
-          opacity: 1,
-          label: {
-            text: '图片点===',
-            fontSize: 14,
-            color: '#1f2937',
-          },
+        alarm: {
+          color: '#ff3b30',
+          fill: '#ff3b30',
+          stroke: '#ffffff',
+          radius: 10,
+          pulseRadius: 34,
+          duration: 1200,
+          rings: 2,
+          frameRate: 30,
         },
       },
       properties: {},
     },
     {
-      type: 'ImagePoint',
-      plotType: 'imagePoint',
-      coordinates: [[116.19415292968746, 40.08761818134971]],
-      controlPoints: [[116.19415292968746, 40.08761818134971]],
+      type: 'AlarmPoint',
+      plotType: 'alarmPoint',
+      coordinates: [[117.11837778320309, 40.0592446986069]],
+      controlPoints: [[117.11837778320309, 40.0592446986069]],
       style: {
         strokeColor: '#1677ff',
         strokeWidth: 3,
@@ -529,25 +610,29 @@ onMounted(() => {
           stroke: '#1677ff',
           strokeWidth: 2,
         },
-        image: {
-          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
-          scale: 0.8,
-          anchor: [0.5, 1],
-          opacity: 1,
-          label: {
-            text: '图片点1111',
-            fontSize: 14,
-            color: '#1f2937',
-          },
+        alarm: {
+          radius: 10,
+          color: '#ff3b30',
+          fill: '#ff3b30',
+          stroke: '#ffffff',
+          strokeWidth: 2,
+          pulseRadius: 34,
+          pulseStrokeWidth: 2,
+          duration: 1200,
+          rings: 2,
+          haloOpacity: 0.42,
+          minOpacity: 0.56,
+          maxOpacity: 1,
+          frameRate: 30,
         },
       },
       properties: {},
     },
     {
-      type: 'Point',
-      plotType: 'point',
-      coordinates: [[115.43334970703121, 39.959318129602366]],
-      controlPoints: [[115.43334970703121, 39.959318129602366]],
+      type: 'AlarmPoint',
+      plotType: 'alarmPoint',
+      coordinates: [[116.72973642578121, 40.062397891530026]],
+      controlPoints: [[116.72973642578121, 40.062397891530026]],
       style: {
         strokeColor: '#1677ff',
         strokeWidth: 3,
@@ -558,15 +643,30 @@ onMounted(() => {
           fill: '#ffffff',
           stroke: '#1677ff',
           strokeWidth: 2,
+        },
+        alarm: {
+          radius: 10,
+          color: '#ff3b30',
+          fill: '#ff3b30',
+          stroke: '#ffffff',
+          strokeWidth: 2,
+          pulseRadius: 34,
+          pulseStrokeWidth: 2,
+          duration: 1200,
+          rings: 2,
+          haloOpacity: 0.42,
+          minOpacity: 0.56,
+          maxOpacity: 1,
+          frameRate: 30,
         },
       },
       properties: {},
     },
     {
-      type: 'ImagePoint',
-      plotType: 'imagePoint',
-      coordinates: [[116.28753671874996, 39.791745453443525]],
-      controlPoints: [[116.28753671874996, 39.791745453443525]],
+      type: 'AlarmPoint',
+      plotType: 'alarmPoint',
+      coordinates: [[115.97305307617185, 39.645973290846996]],
+      controlPoints: [[115.97305307617185, 39.645973290846996]],
       style: {
         strokeColor: '#1677ff',
         strokeWidth: 3,
@@ -578,46 +678,20 @@ onMounted(() => {
           stroke: '#1677ff',
           strokeWidth: 2,
         },
-        image: {
-          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
-          scale: 0.8,
-          anchor: [0.5, 1],
-          opacity: 1,
-          label: {
-            text: '图片点789',
-            fontSize: 14,
-            color: '#1f2937',
-          },
-        },
-      },
-      properties: {},
-    },
-    {
-      type: 'ImagePoint',
-      plotType: 'imagePoint',
-      coordinates: [[115.91949472656248, 39.74318896907127]],
-      controlPoints: [[115.91949472656248, 39.74318896907127]],
-      style: {
-        strokeColor: '#1677ff',
-        strokeWidth: 3,
-        fillColor: 'rgba(22, 119, 255, 0.16)',
-        lineDash: [],
-        nodeStyle: {
-          radius: 6,
-          fill: '#ffffff',
-          stroke: '#1677ff',
+        alarm: {
+          radius: 10,
+          color: '#ff3b30',
+          fill: '#ff3b30',
+          stroke: '#ffffff',
           strokeWidth: 2,
-        },
-        image: {
-          src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
-          scale: 0.8,
-          anchor: [0.5, 1],
-          opacity: 1,
-          label: {
-            text: '图片点===',
-            fontSize: 14,
-            color: '#1f2937',
-          },
+          pulseRadius: 34,
+          pulseStrokeWidth: 2,
+          duration: 1200,
+          rings: 2,
+          haloOpacity: 0.42,
+          minOpacity: 0.56,
+          maxOpacity: 1,
+          frameRate: 30,
         },
       },
       properties: {},

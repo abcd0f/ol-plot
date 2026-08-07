@@ -4,6 +4,7 @@ export type {
   AreaMeasurePlotConfig,
   FlowLinePlotConfig,
   ImagePointConfig,
+  AlarmPointConfig,
   NodeStyle,
   MeasureConfig,
   MeasureMode,
@@ -11,6 +12,7 @@ export type {
   AreaMeasureConfig,
   AreaMeasureUnit,
   FlowLineConfig,
+  AlarmPointStyleConfig,
   ImageLabelConfig,
   ImageConfig,
 } from './config';

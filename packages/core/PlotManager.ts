@@ -10,7 +10,13 @@ import Style, { type StyleFunction, type StyleLike } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import type { InternalPlotConfig, ImageConfig, ImagePointConfig, ResolvedPlotConfig } from '../types/config';
+import type {
+  AlarmPointStyleConfig,
+  InternalPlotConfig,
+  ImageConfig,
+  ImagePointConfig,
+  ResolvedPlotConfig,
+} from '../types/config';
 import type { PlotFeatureData, PlotRestoreOptions, PlotDrawType } from '../types/data';
 import { DrawType } from '../constants/drawType';
 import { ToolState } from '../constants/toolState';
@@ -50,6 +56,7 @@ import {
 } from '../utils/data';
 import { isEditableTarget } from '../utils/keyboard';
 import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
+import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
 const HANDLE_PLOT_TYPES = new Set([
@@ -195,17 +202,25 @@ export class PlotManager {
 
     const currentStyle = getFeatureStyleData(this.activeFeature);
     const baseConfig = currentStyle ? mergeRuntimeConfig(this.config, currentStyle) : this.config;
-    const styleData = resolveStyleData(baseConfig, config, drawType === DrawType.FlowLine);
+    const styleData = resolveStyleData(
+      baseConfig,
+      config,
+      drawType === DrawType.FlowLine,
+      drawType === DrawType.AlarmPoint,
+    );
     if (drawType === DrawType.ImagePoint && config.image) {
       this.imageConfig = mergeImageConfig(this.imageConfig, config.image);
       styleData.image = { ...this.imageConfig };
+    }
+    if (drawType === DrawType.AlarmPoint && config.alarm) {
+      styleData.alarm = { ...mergeAlarmPointConfig(this.config.alarm, config.alarm) };
     }
 
     setFeatureStyleData(this.activeFeature, styleData);
     this.selectManager.setStyle(null);
     if (drawType === DrawType.FlowLine) {
       this.activeFeature.setStyle(undefined);
-      this.updateFlowAnimationState();
+      this.updateAnimationState();
     } else {
       this.activeFeature.setStyle(buildStyleFromData(styleData));
     }
@@ -217,6 +232,7 @@ export class PlotManager {
     this.modifyManager.setStyle(this.createModifyStyle());
     this.activeFeature.changed();
     this.layerManager.getLayer().changed();
+    this.updateAnimationState();
     return this;
   }
 
@@ -267,13 +283,20 @@ export class PlotManager {
       }
       if (item.style) {
         setFeatureStyleData(feature, item.style);
-        if (
+        if (options.applyStyle !== false && drawType === DrawType.AlarmPoint && item.style.alarm) {
+          feature.setStyle(buildStyleFromData(item.style));
+        } else if (
           options.applyStyle !== false &&
           drawType === DrawType.ImagePoint &&
           (item.style.image?.src || item.style.image?.label?.text)
         ) {
           feature.setStyle(this.createImageStyle(item.style.image));
-        } else if (options.applyStyle !== false && drawType !== DrawType.FlowLine && drawType !== DrawType.ImagePoint) {
+        } else if (
+          options.applyStyle !== false &&
+          drawType !== DrawType.FlowLine &&
+          drawType !== DrawType.ImagePoint &&
+          drawType !== DrawType.AlarmPoint
+        ) {
           feature.setStyle(buildStyleFromData(item.style));
         }
       }
@@ -298,7 +321,7 @@ export class PlotManager {
     this.modifyManager.setActive(false);
     this.cursorManager.setActive(false);
     this.layerManager.clear();
-    this.stopFlowAnimation();
+    this.stopAnimation();
     this.state = this.activeDrawType ? ToolState.Drawing : ToolState.Idle;
     return this;
   }
@@ -306,7 +329,7 @@ export class PlotManager {
   destroy(): void {
     this.revision += 1;
     document.removeEventListener('keydown', this.handleKeyDown);
-    this.stopFlowAnimation();
+    this.stopAnimation();
     this.drawManager?.destroy();
     this.cursorManager.destroy();
     this.handleManager.destroy();
@@ -383,12 +406,21 @@ export class PlotManager {
     this.layerManager.getLayer().changed();
   }
 
+  updateAlarmConfig(alarmConfig: AlarmPointStyleConfig): void {
+    if (!alarmConfig) return;
+
+    this.config = mergeRuntimeConfig(this.config, { alarm: alarmConfig });
+    this.invalidateStyleCache(DrawType.AlarmPoint);
+    this.updateAnimationState();
+    this.layerManager.getLayer().changed();
+  }
+
   private bindEvents(): void {
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature, drawType }: { feature: Feature; drawType: DrawType }) => {
       const revision = this.revision;
       const normalizedType = this.normalizeDrawType(drawType);
       this.prepareFeature(feature, normalizedType);
-      if (normalizedType === DrawType.FlowLine) this.ensureFlowAnimation();
+      if (normalizedType === DrawType.FlowLine || normalizedType === DrawType.AlarmPoint) this.ensureAnimation();
 
       setTimeout(() => {
         if (revision !== this.revision || !this.layerManager.hasFeature(feature)) return;
@@ -445,6 +477,7 @@ export class PlotManager {
   private createGeometry(drawType: DrawType, coordinates: number[][]): Geometry {
     switch (drawType) {
       case DrawType.Point:
+      case DrawType.AlarmPoint:
       case DrawType.ImagePoint:
         return new Point(coordinates[0]);
       case DrawType.Line:
@@ -498,6 +531,7 @@ export class PlotManager {
 
     switch (drawType) {
       case DrawType.Point:
+      case DrawType.AlarmPoint:
       case DrawType.ImagePoint:
         (geom as Point).setCoordinates(coordinates[0]);
         break;
@@ -592,7 +626,7 @@ export class PlotManager {
       }
     }
 
-    this.updateFlowAnimationState();
+    this.updateAnimationState();
   }
 
   private updateHandleGeometry(
@@ -657,13 +691,13 @@ export class PlotManager {
     this.cursorManager.setActive(false);
     this.layerManager.removeFeature(feature);
     this.eventBus.emit(DrawEvent.DELETE, { feature });
-    this.updateFlowAnimationState();
+    this.updateAnimationState();
   }
 
   private attachFeatureRuntime(feature: Feature, drawType: DrawType): void {
     if (drawType === DrawType.Measure) this.measureManager.attachFeature(feature);
     if (drawType === DrawType.AreaMeasure) this.areaMeasureManager.attachFeature(feature);
-    if (drawType === DrawType.FlowLine) this.ensureFlowAnimation();
+    if (drawType === DrawType.FlowLine || drawType === DrawType.AlarmPoint) this.ensureAnimation();
   }
 
   private extractCoordinates(feature: Feature): number[][] {
@@ -683,6 +717,7 @@ export class PlotManager {
 
     switch (drawType) {
       case DrawType.Point:
+      case DrawType.AlarmPoint:
       case DrawType.ImagePoint:
         return [(geom as Point).getCoordinates()];
       case DrawType.Line:
@@ -769,7 +804,7 @@ export class PlotManager {
         const selectList = Array.isArray(selectStyles) ? selectStyles : selectStyles ? [selectStyles] : [];
         return [...list, ...selectList];
       }
-      if (drawType === DrawType.ImagePoint) {
+      if (drawType === DrawType.ImagePoint || drawType === DrawType.AlarmPoint) {
         const styleData = getFeatureStyleData(feature as Feature);
         if (styleData) return buildStyleFromData(styleData);
         return this.renderStyle(this.getFeatureStyle(drawType), feature, resolution);
@@ -797,6 +832,8 @@ export class PlotManager {
       style = buildFlowLineStyle(config, (feature) => this.getFlowPhase(feature));
     } else if (drawType === DrawType.Point) {
       style = this.createPointStyle(config);
+    } else if (drawType === DrawType.AlarmPoint) {
+      style = this.createAlarmStyle(config.alarm);
     } else if (drawType === DrawType.ImagePoint) {
       style = this.createImageStyle(this.getImageConfig());
     } else {
@@ -843,6 +880,10 @@ export class PlotManager {
     return buildImagePointStyle(imageConfig, this.config.nodeStyle, this.config.strokeColor);
   }
 
+  private createAlarmStyle(alarmConfig: AlarmPointStyleConfig): Style {
+    return buildAlarmPointStyle(alarmConfig, this.config.nodeStyle, this.config.strokeColor);
+  }
+
   private renderStyle(style: StyleLike, feature: any, resolution: number): ReturnType<StyleFunction> {
     return typeof style === 'function' ? style(feature, resolution) : style;
   }
@@ -868,24 +909,17 @@ export class PlotManager {
     this.imageConfig = mergeImageConfig(this.imageConfig, imageConfig);
   }
 
-  private ensureFlowAnimation(): void {
-    if (!this.hasAnimatedFlowLines()) return;
-    this.startFlowAnimation();
+  private ensureAnimation(): void {
+    if (!this.hasAnimatedFlowLines() && !this.hasAlarmPoints()) return;
+    this.startAnimation();
   }
 
-  private updateFlowAnimationState(): void {
-    if (this.hasAnimatedFlowLines()) {
-      this.ensureFlowAnimation();
+  private updateAnimationState(): void {
+    if (this.hasAnimatedFlowLines() || this.hasAlarmPoints()) {
+      this.ensureAnimation();
     } else {
-      this.stopFlowAnimation();
+      this.stopAnimation();
     }
-  }
-
-  private hasFlowLines(): boolean {
-    return this.layerManager
-      .getSource()
-      .getFeatures()
-      .some((feature) => this.getFeatureDrawType(feature as Feature) === DrawType.FlowLine);
   }
 
   private hasAnimatedFlowLines(): boolean {
@@ -906,17 +940,57 @@ export class PlotManager {
     return (speed * this.flowElapsedTime) / 1000;
   }
 
-  private startFlowAnimation(): void {
+  private hasAlarmPoints(): boolean {
+    return this.layerManager
+      .getSource()
+      .getFeatures()
+      .some((feature) => this.getFeatureDrawType(feature as Feature) === DrawType.AlarmPoint);
+  }
+
+  private getAlarmFrameInterval(): number {
+    const defaultFrameRate = resolveAlarmPointConfig(
+      this.config.alarm,
+      this.config.nodeStyle,
+      this.config.strokeColor,
+    ).frameRate;
+    const frameRate = this.layerManager
+      .getSource()
+      .getFeatures()
+      .reduce((maxFrameRate, feature) => {
+        const plotFeature = feature as Feature;
+        if (this.getFeatureDrawType(plotFeature) !== DrawType.AlarmPoint) return maxFrameRate;
+        const alarmConfig = getFeatureStyleData(plotFeature)?.alarm ?? this.config.alarm;
+        const resolved = resolveAlarmPointConfig(alarmConfig, this.config.nodeStyle, this.config.strokeColor);
+        return Math.max(maxFrameRate, resolved.frameRate);
+      }, defaultFrameRate);
+
+    return 1000 / frameRate;
+  }
+
+  private startAnimation(): void {
     if (this.animationFrame !== null) return;
 
     const tick = (time: number) => {
       if (this.lastFrameTime === 0) this.lastFrameTime = time;
       const delta = Math.min(time - this.lastFrameTime, 100);
-      this.lastFrameTime = time;
-      this.flowElapsedTime += delta;
-      this.phase += ((this.config.flowLine.speed ?? 60) * delta) / 1000;
-      this.layerManager.getLayer().changed();
-      this.map.render();
+      const hasFlowLine = this.hasAnimatedFlowLines();
+      const hasAlarmPoint = this.hasAlarmPoints();
+
+      if (!hasFlowLine && !hasAlarmPoint) {
+        this.stopAnimation();
+        return;
+      }
+
+      if (hasFlowLine || delta >= this.getAlarmFrameInterval()) {
+        this.lastFrameTime = time;
+        if (hasFlowLine) {
+          this.flowElapsedTime += delta;
+          this.phase += ((this.config.flowLine.speed ?? 60) * delta) / 1000;
+        }
+        this.layerManager.getLayer().changed();
+        this.map.render();
+      }
+
       this.animationFrame = requestAnimationFrame(tick);
     };
 
@@ -924,7 +998,7 @@ export class PlotManager {
     this.animationFrame = requestAnimationFrame(tick);
   }
 
-  private stopFlowAnimation(): void {
+  private stopAnimation(): void {
     if (this.animationFrame === null) return;
     cancelAnimationFrame(this.animationFrame);
     this.animationFrame = null;
@@ -982,6 +1056,7 @@ export class PlotManager {
 
 const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = {
   [DrawType.Point]: 'point',
+  [DrawType.AlarmPoint]: 'alarmPoint',
   [DrawType.ImagePoint]: 'imagePoint',
   [DrawType.Line]: 'line',
   [DrawType.FlowLine]: 'flowLine',
@@ -1027,4 +1102,14 @@ function coordinatesEqual(a: number[], b: number[]): boolean {
 
 function moved(a: number[], b: number[]): boolean {
   return Math.abs(a[0] - b[0]) > 1e-9 || Math.abs(a[1] - b[1]) > 1e-9;
+}
+
+function mergeAlarmPointConfig(
+  base: AlarmPointStyleConfig | undefined,
+  update: AlarmPointStyleConfig | undefined,
+): AlarmPointStyleConfig {
+  return {
+    ...base,
+    ...update,
+  };
 }
