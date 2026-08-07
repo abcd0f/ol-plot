@@ -4,6 +4,9 @@ import GeometryCollection from 'ol/geom/GeometryCollection';
 
 /** 旗面高度占旗杆长度的比例 */
 const FLAG_HEIGHT_FACTOR = 0.4;
+/** 旗面宽高比，保持原来常见等宽拖拽时的视觉比例 */
+const FLAG_ASPECT_RATIO = 1 / (FLAG_HEIGHT_FACTOR * 1.5);
+const EPSILON = 1e-10;
 
 // ─── 旗帜几何计算 ──────────────────────────────────────────────────────────
 
@@ -11,56 +14,76 @@ const FLAG_HEIGHT_FACTOR = 0.4;
  * 根据两个控制点生成旗帜的子几何数组。
  *
  * 控制点定义：
- *  - P0: 旗杆顶部（旗帜附着点，同时也是旗面左上角顶点）
- *  - P1: 旗杆底部平移旗帜宽度后的点
+ *  - P0: 旗面贴杆侧的一个顶点
+ *  - P1: 旗杆尾部横向平移到旗面尾边后的点
  *
- * 即：P1.x 相对 P0.x 的偏移 = 旗面宽度，
+ * 即：P1.x 相对 P0.x 的方向 = 旗面展开方向，
  *     P1.y 相对 P0.y 的偏移 = 旗杆长度。
  *
  * 比例关系始终成立：
- *  - flagWidth  = |P1.x - P0.x|（用户直接控制）
  *  - poleLength = |P1.y - P0.y|（用户直接控制）
- *  - flagHeight = poleLength × FLAG_HEIGHT_FACTOR（自动缩放）
+ *  - flagHeight = poleLength × FLAG_HEIGHT_FACTOR
+ *  - flagWidth  = flagHeight × FLAG_ASPECT_RATIO
  *
  * 返回：
  *  - LineString: 旗杆（从 poleBottom 到 P0），仅描边无填充
- *  - Polygon: 旗面矩形（从 P0 向下延伸 flagHeight、向 P1 方向延伸 flagWidth）
+ *  - Polygon: 旗面矩形（从 P0 向 P1 的纵向和横向展开）
  *
  * @param controlPoints [P0, P1]
  */
 export function buildFlagGeometries(controlPoints: number[][]): [LineString, Polygon] {
-  const [p0, p1] = controlPoints;
+  if (controlPoints.length < 2) {
+    return [new LineString([]), new Polygon([])];
+  }
+
+  const [p0, p1] = normalizeFlagControlPoints(controlPoints);
 
   const dx = p1[0] - p0[0];
   const dy = p1[1] - p0[1];
 
   const poleLength = Math.abs(dy);
-  const flagWidth = Math.abs(dx);
   const flagHeight = poleLength * FLAG_HEIGHT_FACTOR;
 
   // ── 退化处理 ──
-  if (poleLength < 1e-10 || flagWidth < 1e-10) {
-    return [
-      new LineString([p0.slice(), p1.slice()]),
-      new Polygon([[p0.slice(), p0.slice(), p0.slice()]]),
-    ];
+  if (poleLength < EPSILON) {
+    return [new LineString([p0.slice(), p1.slice()]), new Polygon([[p0.slice(), p0.slice(), p0.slice()]])];
   }
 
   // ── 旗杆：从 poleBottom（与 P0 同 X、与 P1 同 Y）到 P0 ──
   const poleBottom: number[] = [p0[0], p0[1] + dy];
 
-  // ── 旗面矩形（附着于 P0，向下延伸 flagHeight，向 P1 方向延伸 flagWidth）──
-  // flagTL = P0（旗面左上角 = 旗杆顶部 = 附着点）
-  // flagTR：从 P0 向 P1 的 X 方向平移 flagWidth
-  // flagBR / flagBL：向下平移 flagHeight
-  const flagTL: number[] = [p0[0], p0[1]];
-  const flagTR: number[] = [p0[0] + dx, p0[1]];
-  const flagBR: number[] = [p0[0] + dx, p0[1] - flagHeight];
-  const flagBL: number[] = [p0[0], p0[1] - flagHeight];
+  // ── 旗面矩形：P0 始终是贴杆侧顶点，纵向跟随 P1 位于 P0 的上方或下方 ──
+  const flagVerticalOffset = Math.sign(dy) * flagHeight;
+  const flagPoleStart: number[] = [p0[0], p0[1]];
+  const flagTailStart: number[] = [p0[0] + dx, p0[1]];
+  const flagTailEnd: number[] = [p0[0] + dx, p0[1] + flagVerticalOffset];
+  const flagPoleEnd: number[] = [p0[0], p0[1] + flagVerticalOffset];
 
-  const flagRing = [flagTL, flagTR, flagBR, flagBL, flagTL];
+  const flagRing = [flagPoleStart, flagTailStart, flagTailEnd, flagPoleEnd, flagPoleStart];
 
   return [new LineString([poleBottom, p0]), new Polygon([flagRing])];
+}
+
+/**
+ * 归一化旗帜控制点。
+ *
+ * P0 保持为旗面贴杆侧顶点；P1 保持用户给出的纵向尾部位置，
+ * 横向位置按固定宽高比修正到真实旗面尾边。
+ */
+export function normalizeFlagControlPoints(controlPoints: number[][]): number[][] {
+  if (controlPoints.length < 2) return controlPoints.slice();
+
+  const [p0, p1] = controlPoints;
+  const dy = p1[1] - p0[1];
+  if (Math.abs(dy) < EPSILON) return [p0.slice(), p1.slice()];
+
+  const dx = p1[0] - p0[0];
+  const horizontalDirection = Math.abs(dx) < EPSILON ? 1 : Math.sign(dx);
+  const poleLength = Math.abs(dy);
+  const flagHeight = poleLength * FLAG_HEIGHT_FACTOR;
+  const flagWidth = flagHeight * FLAG_ASPECT_RATIO;
+
+  return [p0.slice(), [p0[0] + horizontalDirection * flagWidth, p1[1]]];
 }
 
 // ─── 控制点反推 ────────────────────────────────────────────────────────────
@@ -95,7 +118,7 @@ export function createFlagGeometryFunction() {
       return geom;
     }
 
-    const controlPoints = coordinates.slice(0, 2);
+    const controlPoints = normalizeFlagControlPoints(coordinates.slice(0, 2));
     const [pole, flag] = buildFlagGeometries(controlPoints);
 
     geom.setGeometries([pole, flag]);

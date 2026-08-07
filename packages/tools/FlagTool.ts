@@ -5,19 +5,19 @@ import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { HandleBasedTool } from '../core/HandleBasedTool';
-import { buildFlagGeometries, getFlagControlPoints } from '../geometry/flag';
+import { buildFlagGeometries, getFlagControlPoints, normalizeFlagControlPoints } from '../geometry/flag';
 
 /**
  * 旗帜（Flag）绘制工具类，继承自 HandleBasedTool。
  *
  * 由两个控制点确定：
- *  - P0: 旗杆顶部（旗帜附着点，同时也是旗面左上角）
- *  - P1: 旗杆底部平移旗帜宽度后的点
+ *  - P0: 旗面贴杆侧的一个顶点
+ *  - P1: 旗杆尾部横向平移到旗面尾边后的点
  *
  * 比例关系：
- *  - flagWidth  = |P1.x - P0.x|（用户直接控制）
  *  - poleLength = |P1.y - P0.y|（用户直接控制）
- *  - flagHeight = poleLength × 0.4（自动缩放）
+ *  - flagHeight = poleLength × 0.4
+ *  - flagWidth  = flagHeight × 2.5
  *
  * 图形由 GeometryCollection 组成：
  *  - LineString: 旗杆（从 poleBottom 到 P0），仅描边无填充
@@ -40,37 +40,50 @@ export class FlagTool extends HandleBasedTool {
 
   protected onHandleSync(controlPoints: number[][]): void {
     if (!this.activeFeature) return;
-    this.activeFeature.set('controlPoints', [...controlPoints]);
+    const points = normalizeFlagControlPoints(controlPoints.slice(0, 2));
+    this.activeFeature.set('controlPoints', points);
     const geom = this.activeFeature.getGeometry() as GeometryCollection;
-    const [pole, flag] = buildFlagGeometries(controlPoints);
+    const [pole, flag] = buildFlagGeometries(points);
     geom.setGeometries([pole, flag]);
+    geom.set('_controlPoints', points);
+    this.handleManager.refresh(points);
   }
 
   protected extractControlPoints(geom: Geometry): number[][] {
     return getFlagControlPoints(geom as GeometryCollection);
   }
 
+  protected normalizeControlPoints(controlPoints: number[][]): number[][] {
+    return normalizeFlagControlPoints(controlPoints.slice(0, 2));
+  }
+
   // ─── Abstract implementations ─────────────────────────────────────────────
 
   protected createGeometry(coordinates: number[][]): Geometry {
-    const [pole, flag] = buildFlagGeometries(coordinates);
-    return new GeometryCollection([pole, flag]);
+    const points = normalizeFlagControlPoints(coordinates.slice(0, 2));
+    const [pole, flag] = buildFlagGeometries(points);
+    const geom = new GeometryCollection([pole, flag]);
+    geom.set('_controlPoints', points);
+    return geom;
   }
 
   protected createFeature(coordinates: number[][]): Feature {
-    const feature = super.createFeature(coordinates);
+    const points = normalizeFlagControlPoints(coordinates.slice(0, 2));
+    const feature = super.createFeature(points);
     feature.set('plotType', 'flag');
-    feature.set('controlPoints', coordinates.slice(0, 2));
+    feature.set('controlPoints', points);
     return feature;
   }
 
   setCoordinates(coordinates: number[][]): void {
     if (!this.activeFeature || coordinates.length < 2) return;
-    this.activeFeature.set('controlPoints', coordinates.slice(0, 2));
+    const points = normalizeFlagControlPoints(coordinates.slice(0, 2));
+    this.activeFeature.set('controlPoints', points);
     const geom = this.activeFeature.getGeometry() as GeometryCollection;
-    const [pole, flag] = buildFlagGeometries(coordinates);
+    const [pole, flag] = buildFlagGeometries(points);
     geom.setGeometries([pole, flag]);
-    this.handleManager.refresh(coordinates.slice(0, 2));
+    geom.set('_controlPoints', points);
+    this.handleManager.refresh(points);
   }
 
   getCoordinates(): number[][] {

@@ -22,6 +22,7 @@ export { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc'
 export {
   buildFlagGeometries,
   getFlagControlPoints,
+  normalizeFlagControlPoints,
   createFlagGeometryFunction,
 } from './flag';
 

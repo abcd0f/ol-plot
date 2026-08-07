@@ -38,7 +38,7 @@ import { buildStraightArrow } from '../geometry/arrow/straight';
 import { buildTaperedArrow } from '../geometry/arrow/tapered';
 import { buildLineArrowGeometries } from '../geometry/arrow/line';
 import { buildDoubleArrow, normalizeDoubleArrowControlPoints } from '../geometry/arrow/double';
-import { buildFlagGeometries, getFlagControlPoints } from '../geometry/flag';
+import { buildFlagGeometries, getFlagControlPoints, normalizeFlagControlPoints } from '../geometry/flag';
 import { dist } from '../utils';
 import {
   buildStyleFromData,
@@ -481,8 +481,11 @@ export class PlotManager {
       case DrawType.Arc:
         return new LineString(buildArc(coordinates.slice(0, 3)));
       case DrawType.Flag: {
-        const [pole, flag] = buildFlagGeometries(coordinates.slice(0, 2));
-        return new GeometryCollection([pole, flag]);
+        const points = normalizeFlagControlPoints(coordinates.slice(0, 2));
+        const [pole, flag] = buildFlagGeometries(points);
+        const geom = new GeometryCollection([pole, flag]);
+        geom.set('_controlPoints', points);
+        return geom;
       }
       default:
         return new LineString(coordinates);
@@ -579,7 +582,7 @@ export class PlotManager {
         break;
       }
       case DrawType.Flag: {
-        const points = coordinates.slice(0, 2);
+        const points = normalizeFlagControlPoints(coordinates.slice(0, 2));
         const [pole, flag] = buildFlagGeometries(points);
         feature.set('controlPoints', points);
         geom.set('_controlPoints', points);
