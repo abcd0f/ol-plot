@@ -3,7 +3,9 @@ import Polygon from 'ol/geom/Polygon';
 import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
-import type { ResolvedPlotConfig } from '../types/config';
+import type Feature from 'ol/Feature';
+import type { FlowLineConfig, ResolvedPlotConfig } from '../types/config';
+import { getFeatureStyleData } from '../utils/data';
 
 const MAX_ARROW_COUNT = 200;
 const PHASE_CACHE_STEP_PX = 2;
@@ -13,6 +15,7 @@ interface ArrowStyleCache {
   geometryRevision: number;
   resolution: number;
   phaseBucket: number;
+  styleKey: string;
   styles: Style[];
 }
 
@@ -48,13 +51,14 @@ function createArrowGeometry(point: number[], angle: number, resolution: number,
 function sampleArrowStyles(
   coordinates: number[][],
   resolution: number,
-  config: ResolvedPlotConfig,
+  strokeWidth: number,
+  arrowSpacing: number,
   phasePx: number,
   arrowFill: Fill,
 ): Style[] {
   if (coordinates.length < 2 || resolution <= 0) return [];
 
-  const spacingPx = Math.max(config.flowLine.arrowSpacing ?? 48, 1);
+  const spacingPx = Math.max(arrowSpacing, 1);
   const spacing = spacingPx * resolution;
   const phase = normalizePhase(phasePx, spacingPx) * resolution;
   const arrows: Style[] = [];
@@ -75,7 +79,7 @@ function sampleArrowStyles(
 
       arrows.push(
         new Style({
-          geometry: createArrowGeometry(point, angle, resolution, config.strokeWidth),
+          geometry: createArrowGeometry(point, angle, resolution, strokeWidth),
           fill: arrowFill,
           zIndex: 1,
         }),
@@ -89,8 +93,10 @@ function sampleArrowStyles(
   return arrows;
 }
 
-export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: () => number = () => 0): StyleFunction {
-  const lineStyle = new Style({
+type FlowPhaseGetter = (feature: Feature, flowLine: FlowLineConfig) => number;
+
+export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: FlowPhaseGetter = () => 0): StyleFunction {
+  const defaultLineStyle = new Style({
     stroke: new Stroke({
       color: config.strokeColor,
       width: config.strokeWidth,
@@ -104,14 +110,36 @@ export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: () => n
   const styleCache = new WeakMap<object, ArrowStyleCache>();
 
   return (feature, resolution) => {
+    const styleData = getFeatureStyleData(feature as any);
+    const strokeColor = styleData?.strokeColor ?? config.strokeColor;
+    const strokeWidth = styleData?.strokeWidth ?? config.strokeWidth;
+    const lineDash = styleData?.lineDash ?? config.lineDash;
+    const flowLine = styleData?.flowLine ?? config.flowLine;
+    const spacingPx = Math.max(flowLine.arrowSpacing ?? 48, 1);
+    const arrowColor = flowLine.arrowColor || strokeColor;
+    const styleKey = styleData
+      ? `${strokeColor}|${strokeWidth}|${lineDash.join(',')}|${arrowColor}|${spacingPx}`
+      : '';
+
     const geom = feature.getGeometry();
-    if (!geom || geom.getType() !== 'LineString') return lineStyle;
+    if (!geom || geom.getType() !== 'LineString') {
+      if (!styleData) return defaultLineStyle;
+      return new Style({
+        stroke: new Stroke({
+          color: strokeColor,
+          width: strokeWidth,
+          lineDash,
+        }),
+        zIndex: 0,
+      });
+    }
 
     const featureRevision = (feature as any).getRevision?.() ?? 0;
     const geometryRevision = (geom as any).getRevision?.() ?? 0;
-    const spacingPx = Math.max(config.flowLine.arrowSpacing ?? 48, 1);
     const phaseBucketCount = Math.max(1, Math.ceil(spacingPx / PHASE_CACHE_STEP_PX));
-    const phaseBucket = Math.floor(normalizePhase(getPhase(), spacingPx) / PHASE_CACHE_STEP_PX) % phaseBucketCount;
+    const phaseBucket =
+      Math.floor(normalizePhase(getPhase(feature as Feature, flowLine), spacingPx) / PHASE_CACHE_STEP_PX) %
+      phaseBucketCount;
     const cached = styleCache.get(feature as object);
 
     if (
@@ -119,21 +147,41 @@ export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: () => n
       cached.featureRevision === featureRevision &&
       cached.geometryRevision === geometryRevision &&
       cached.resolution === resolution &&
-      cached.phaseBucket === phaseBucket
+      cached.phaseBucket === phaseBucket &&
+      cached.styleKey === styleKey
     ) {
       return cached.styles;
     }
 
+    const lineStyle = styleData
+      ? new Style({
+          stroke: new Stroke({
+            color: strokeColor,
+            width: strokeWidth,
+            lineDash,
+          }),
+          zIndex: 0,
+        })
+      : defaultLineStyle;
+    const featureArrowFill = styleData ? new Fill({ color: arrowColor }) : arrowFill;
     const coordinates = (geom as LineString).getCoordinates();
     const styles = [
       lineStyle,
-      ...sampleArrowStyles(coordinates, resolution, config, phaseBucket * PHASE_CACHE_STEP_PX, arrowFill),
+      ...sampleArrowStyles(
+        coordinates,
+        resolution,
+        strokeWidth,
+        spacingPx,
+        phaseBucket * PHASE_CACHE_STEP_PX,
+        featureArrowFill,
+      ),
     ];
     styleCache.set(feature as object, {
       featureRevision,
       geometryRevision,
       resolution,
       phaseBucket,
+      styleKey,
       styles,
     });
     return styles;

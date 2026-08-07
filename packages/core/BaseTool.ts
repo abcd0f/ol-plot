@@ -1,6 +1,7 @@
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
+import type { StyleFunction, StyleLike } from 'ol/style/Style';
 import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotFeatureData, PlotRestoreOptions } from '../types/data';
 import { DrawType } from '../constants/drawType';
@@ -12,10 +13,19 @@ import { DrawManager } from './DrawManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
 import { CursorManager } from './CursorManager';
-import { mergeConfig } from '../constants';
+import { mergeConfig, mergeRuntimeConfig } from '../constants';
 import { buildFeatureStyle } from '../style/feature';
 import { buildDrawStyle } from '../style/draw';
-import { buildStyleFromData, projectPlotDataCoordinates, serializeFeature, setFeatureStyleData } from '../utils/data';
+import { buildSelectStyle } from '../style/select';
+import { buildModifyStyle } from '../style/modify';
+import {
+  buildStyleFromData,
+  getFeatureStyleData,
+  projectPlotDataCoordinates,
+  resolveStyleData,
+  serializeFeature,
+  setFeatureStyleData,
+} from '../utils/data';
 
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。
@@ -53,6 +63,7 @@ export abstract class BaseTool {
 
   private handleKeyDown: (e: KeyboardEvent) => void;
   private revision = 0;
+  private drawStyle: StyleFunction;
   private eventWrappers = new globalThis.Map<
     string,
     globalThis.Map<(...args: any[]) => void, (...args: any[]) => void>
@@ -69,6 +80,7 @@ export abstract class BaseTool {
     this.map = map;
     this.drawType = drawType;
     this.config = mergeConfig(config);
+    this.drawStyle = buildDrawStyle(this.config);
 
     this.eventBus = new EventBus();
     this.layerManager = new LayerManager(map, buildFeatureStyle(this.config));
@@ -84,7 +96,7 @@ export abstract class BaseTool {
       this.layerManager.getLayer(),
       this.eventBus,
       drawType,
-      buildDrawStyle(this.config),
+      (feature, resolution) => this.drawStyle(feature, resolution),
       () => this.selectManager.isEmpty(),
     );
 
@@ -161,6 +173,27 @@ export abstract class BaseTool {
    */
   getState(): ToolState {
     return this.state;
+  }
+
+  setStyleConfig(config?: InternalPlotConfig): this {
+    if (!this.activeFeature || !config) return this;
+
+    const includeFlowLine = this.drawType === DrawType.FlowLine;
+    const currentStyle = getFeatureStyleData(this.activeFeature);
+    const baseConfig = currentStyle ? mergeRuntimeConfig(this.config, currentStyle) : this.config;
+    const styleData = resolveStyleData(baseConfig, config, includeFlowLine);
+    if (this.drawType === DrawType.ImagePoint && (config as any).image) {
+      styleData.image = { ...(config as any).image };
+    }
+    setFeatureStyleData(this.activeFeature, styleData);
+    this.selectManager.setStyle(null);
+    if (this.drawType === DrawType.FlowLine) {
+      this.activeFeature.setStyle(undefined);
+    } else {
+      this.activeFeature.setStyle(buildStyleFromData(styleData));
+    }
+    this.refreshActiveFeatureStyle();
+    return this;
   }
 
   /**
@@ -350,6 +383,25 @@ export abstract class BaseTool {
    * @param coordinate - 新的坐标
    */
   abstract updatePoint(index: number, coordinate: number[]): void;
+
+  protected refreshStyles(): void {
+    this.drawStyle = buildDrawStyle(this.config);
+    this.layerManager.getLayer().setStyle(this.createFeatureStyle());
+    this.selectManager.setStyle(buildSelectStyle(this.config));
+    this.modifyManager.setStyle(buildModifyStyle(this.config));
+    this.layerManager.getLayer().changed();
+  }
+
+  protected refreshActiveFeatureStyle(): void {
+    this.selectManager.setStyle(buildSelectStyle(this.config));
+    this.modifyManager.setStyle(buildModifyStyle(this.config));
+    this.activeFeature?.changed();
+    this.layerManager.getLayer().changed();
+  }
+
+  protected createFeatureStyle(): StyleLike {
+    return buildFeatureStyle(this.config);
+  }
 
   private withStructuredData(arg: any): any {
     if (!arg || typeof arg !== 'object') return arg;

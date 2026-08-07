@@ -27,6 +27,10 @@
         <strong>{{ activeLabel }}</strong>
       </div>
       <div class="status-row">
+        <span>选中标绘</span>
+        <strong>{{ selectedLabel }}</strong>
+      </div>
+      <div class="status-row">
         <span>要素数量</span>
         <strong>{{ featureCount }}</strong>
       </div>
@@ -36,24 +40,116 @@
       </div>
     </div>
 
+    <div class="style-panel" :class="{ disabled: !hasSelection }">
+      <div class="panel-title">样式</div>
+
+      <label class="field">
+        <span>描边</span>
+        <input v-model="styleForm.strokeColor" type="color" :disabled="!hasSelection" />
+      </label>
+
+      <label class="field">
+        <span>线宽</span>
+        <input v-model.number="styleForm.strokeWidth" type="range" min="1" max="16" :disabled="!hasSelection" />
+        <em>{{ styleForm.strokeWidth }}</em>
+      </label>
+
+      <label class="field">
+        <span>填充</span>
+        <input v-model="styleForm.fillColor" type="color" :disabled="!hasSelection" />
+      </label>
+
+      <label class="field">
+        <span>透明</span>
+        <input v-model.number="styleForm.fillOpacity" type="range" min="0" max="100" :disabled="!hasSelection" />
+        <em>{{ styleForm.fillOpacity }}%</em>
+      </label>
+
+      <label class="field">
+        <span>线型</span>
+        <select v-model="styleForm.lineDashMode" :disabled="!hasSelection">
+          <option value="solid">实线</option>
+          <option value="dashed">虚线</option>
+          <option value="dotted">点线</option>
+        </select>
+      </label>
+
+      <div class="panel-title compact">控制点</div>
+
+      <label class="field">
+        <span>半径</span>
+        <input v-model.number="styleForm.nodeRadius" type="range" min="3" max="14" :disabled="!hasSelection" />
+        <em>{{ styleForm.nodeRadius }}</em>
+      </label>
+
+      <label class="field">
+        <span>填充</span>
+        <input v-model="styleForm.nodeFill" type="color" :disabled="!hasSelection" />
+      </label>
+
+      <label class="field">
+        <span>描边</span>
+        <input v-model="styleForm.nodeStroke" type="color" :disabled="!hasSelection" />
+      </label>
+
+      <template v-if="selectedType === DrawType.FlowLine">
+        <div class="panel-title compact">流向线</div>
+
+        <label class="field">
+          <span>箭头</span>
+          <input v-model="styleForm.arrowColor" type="color" :disabled="!hasSelection" />
+        </label>
+
+        <label class="field">
+          <span>间距</span>
+          <input v-model.number="styleForm.arrowSpacing" type="range" min="16" max="120" :disabled="!hasSelection" />
+          <em>{{ styleForm.arrowSpacing }}</em>
+        </label>
+
+        <label class="field">
+          <span>速度</span>
+          <input v-model.number="styleForm.flowSpeed" type="range" min="0" max="160" :disabled="!hasSelection" />
+          <em>{{ styleForm.flowSpeed }}</em>
+        </label>
+      </template>
+
+      <template v-if="selectedType === DrawType.ImagePoint">
+        <div class="panel-title compact">图片点</div>
+
+        <label class="field">
+          <span>缩放</span>
+          <input v-model.number="styleForm.imageScale" type="range" min="0.3" max="2" step="0.1" :disabled="!hasSelection" />
+          <em>{{ styleForm.imageScale }}</em>
+        </label>
+
+        <label class="field">
+          <span>透明</span>
+          <input v-model.number="styleForm.imageOpacity" type="range" min="0" max="100" :disabled="!hasSelection" />
+          <em>{{ styleForm.imageOpacity }}%</em>
+        </label>
+      </template>
+    </div>
+
     <div ref="el" class="map-wrapper" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import OlMap from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 import { DrawEvent, DrawType, PlotManager } from '@seedlib/ol-plot';
-import type { PlotDrawType } from '@seedlib/ol-plot';
+import type { PlotDrawType, PlotManagerConfig, PlotStyleData } from '@seedlib/ol-plot';
 
 interface ToolItem {
   label: string;
   type: PlotDrawType;
 }
+
+type LineDashMode = 'solid' | 'dashed' | 'dotted';
 
 const tools: ToolItem[] = [
   { label: '点', type: DrawType.Point },
@@ -67,7 +163,7 @@ const tools: ToolItem[] = [
   { label: '椭圆', type: DrawType.Ellipse },
   { label: '扇形', type: DrawType.Sector },
   { label: '直箭头', type: DrawType.StraightArrow },
-  { label: '渐缩箭头', type: DrawType.TaperedArrow },
+  { label: '斜箭头', type: DrawType.TaperedArrow },
   { label: '线箭头', type: DrawType.LineArrow },
   { label: '双箭头', type: DrawType.DoubleArrow },
   { label: '弧线', type: DrawType.Arc },
@@ -83,18 +179,58 @@ const markerSvg = encodeURIComponent(`
 </svg>
 `);
 
+const markerSrc = `data:image/svg+xml,${markerSvg}`;
 const el = ref<HTMLDivElement>();
 const activeType = ref<PlotDrawType | null>(DrawType.Point);
+const selectedType = ref<PlotDrawType | null>(null);
 const featureCount = ref(0);
 const lastEvent = ref('未开始');
+const syncingStyle = ref(false);
+
+const styleForm = reactive({
+  strokeColor: '#1677ff',
+  strokeWidth: 3,
+  fillColor: '#1677ff',
+  fillOpacity: 16,
+  lineDashMode: 'solid' as LineDashMode,
+  nodeRadius: 6,
+  nodeFill: '#ffffff',
+  nodeStroke: '#1677ff',
+  nodeStrokeWidth: 2,
+  arrowColor: '#00b96b',
+  arrowSpacing: 56,
+  flowSpeed: 72,
+  imageScale: 0.8,
+  imageOpacity: 100,
+});
 
 let map: OlMap | null = null;
 let plot: PlotManager | null = null;
 
 const activeLabel = computed(() => {
   if (!activeType.value) return '无';
-  return tools.find((tool) => tool.type === activeType.value)?.label ?? String(activeType.value);
+  return findToolLabel(activeType.value);
 });
+
+const selectedLabel = computed(() => {
+  if (!selectedType.value) return '未选中';
+  return findToolLabel(selectedType.value);
+});
+
+const hasSelection = computed(() => selectedType.value !== null);
+
+watch(
+  styleForm,
+  () => {
+    if (syncingStyle.value || !hasSelection.value) return;
+    applySelectedStyle();
+  },
+  { deep: true },
+);
+
+function findToolLabel(type: PlotDrawType): string {
+  return tools.find((tool) => tool.type === type)?.label ?? String(type);
+}
 
 function refreshFeatureCount(): void {
   featureCount.value = plot?.getFeatures().length ?? 0;
@@ -112,6 +248,7 @@ function deactivateTool(): void {
 
 function clearPlot(): void {
   plot?.clearFeatures();
+  selectedType.value = null;
   lastEvent.value = '清空';
   refreshFeatureCount();
 }
@@ -120,6 +257,112 @@ function exportData(): void {
   const data = plot?.getPlotData() ?? [];
   lastEvent.value = `导出 ${data.length} 个`;
   console.log('ol-plot data:', data);
+}
+
+function applySelectedStyle(): void {
+  const config: PlotManagerConfig = {
+    strokeColor: styleForm.strokeColor,
+    strokeWidth: styleForm.strokeWidth,
+    fillColor: toRgba(styleForm.fillColor, styleForm.fillOpacity / 100),
+    lineDash: getLineDash(styleForm.lineDashMode),
+    nodeStyle: {
+      radius: styleForm.nodeRadius,
+      fill: styleForm.nodeFill,
+      stroke: styleForm.nodeStroke,
+      strokeWidth: styleForm.nodeStrokeWidth,
+    },
+  };
+
+  if (selectedType.value === DrawType.FlowLine) {
+    config.flowLine = {
+      arrowColor: styleForm.arrowColor,
+      arrowSpacing: styleForm.arrowSpacing,
+      speed: styleForm.flowSpeed,
+    };
+  }
+
+  if (selectedType.value === DrawType.ImagePoint) {
+    config.image = {
+      src: markerSrc,
+      scale: styleForm.imageScale,
+      anchor: [0.5, 1],
+      opacity: styleForm.imageOpacity / 100,
+    };
+  }
+
+  plot?.setStyleConfig(config);
+}
+
+async function syncStyleForm(style: PlotStyleData): Promise<void> {
+  syncingStyle.value = true;
+  const fill = parseCssColor(style.fillColor, '#1677ff', 0.16);
+
+  styleForm.strokeColor = parseCssColor(style.strokeColor, '#1677ff', 1).color;
+  styleForm.strokeWidth = style.strokeWidth;
+  styleForm.fillColor = fill.color;
+  styleForm.fillOpacity = Math.round(fill.alpha * 100);
+  styleForm.lineDashMode = getLineDashMode(style.lineDash);
+  styleForm.nodeRadius = style.nodeStyle.radius ?? 6;
+  styleForm.nodeFill = parseCssColor(style.nodeStyle.fill ?? '#ffffff', '#ffffff', 1).color;
+  styleForm.nodeStroke = parseCssColor(style.nodeStyle.stroke ?? style.strokeColor, '#1677ff', 1).color;
+  styleForm.nodeStrokeWidth = style.nodeStyle.strokeWidth ?? 2;
+  styleForm.arrowColor = parseCssColor(style.flowLine?.arrowColor || style.strokeColor, '#00b96b', 1).color;
+  styleForm.arrowSpacing = style.flowLine?.arrowSpacing ?? 56;
+  styleForm.flowSpeed = style.flowLine?.speed ?? 72;
+  styleForm.imageScale = style.image?.scale ?? 0.8;
+  styleForm.imageOpacity = Math.round((style.image?.opacity ?? 1) * 100);
+
+  await nextTick();
+  syncingStyle.value = false;
+}
+
+function getLineDash(mode: LineDashMode): number[] {
+  if (mode === 'dashed') return [10, 8];
+  if (mode === 'dotted') return [2, 8];
+  return [];
+}
+
+function getLineDashMode(lineDash?: number[]): LineDashMode {
+  if (!lineDash || lineDash.length === 0) return 'solid';
+  if (lineDash[0] <= 3) return 'dotted';
+  return 'dashed';
+}
+
+function toRgba(hex: string, alpha: number): string {
+  const normalized = normalizeHex(hex, '#1677ff');
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+}
+
+function parseCssColor(value: string, fallback: string, fallbackAlpha: number): { color: string; alpha: number } {
+  const hex = normalizeHex(value, '');
+  if (hex) return { color: hex, alpha: 1 };
+
+  const match = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([.\d]+))?\)/i);
+  if (!match) return { color: fallback, alpha: fallbackAlpha };
+
+  const r = Number(match[1]);
+  const g = Number(match[2]);
+  const b = Number(match[3]);
+  const alpha = match[4] === undefined ? 1 : Number(match[4]);
+  return {
+    color: `#${toHex(r)}${toHex(g)}${toHex(b)}`,
+    alpha: Number.isFinite(alpha) ? Math.max(0, Math.min(alpha, 1)) : fallbackAlpha,
+  };
+}
+
+function normalizeHex(value: string, fallback: string): string {
+  if (/^#[0-9a-f]{6}$/i.test(value)) return value;
+  if (/^#[0-9a-f]{3}$/i.test(value)) {
+    return `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`;
+  }
+  return fallback;
+}
+
+function toHex(value: number): string {
+  return Math.max(0, Math.min(255, value)).toString(16).padStart(2, '0');
 }
 
 onMounted(() => {
@@ -146,7 +389,7 @@ onMounted(() => {
       strokeWidth: 2,
     },
     image: {
-      src: `data:image/svg+xml,${markerSvg}`,
+      src: markerSrc,
       scale: 0.8,
       anchor: [0.5, 1],
     },
@@ -161,66 +404,6 @@ onMounted(() => {
     },
   });
 
-  //   plot.loadPlotData([
-  //     {
-  //       type: 'ImagePoint',
-  //       plotType: 'imagePoint',
-  //       coordinates: [[115.92361459960934, 39.959318129602366]],
-  //       controlPoints: [[115.92361459960934, 39.959318129602366]],
-  //       style: {
-  //         strokeColor: '#1677ff',
-  //         strokeWidth: 3,
-  //         fillColor: 'rgba(22, 119, 255, 0.16)',
-  //         lineDash: [],
-  //         nodeStyle: {
-  //           radius: 6,
-  //           fill: '#ffffff',
-  //           stroke: '#1677ff',
-  //           strokeWidth: 2,
-  //         },
-  //         image: {
-  //           src: 'data:image/svg+xml,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2244%22%20viewBox%3D%220%200%2036%2044%22%3E%0A%20%20%3Cpath%20fill%3D%22%23ff4d4f%22%20d%3D%22M18%200C8.06%200%200%208.06%200%2018c0%2013.5%2018%2026%2018%2026s18-12.5%2018-26C36%208.06%2027.94%200%2018%200z%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%227%22%20fill%3D%22%23fff%22%2F%3E%0A%3C%2Fsvg%3E%0A',
-  //           scale: 0.8,
-  //           anchor: [0.5, 1],
-  //           opacity: 1,
-  //         },
-  //       },
-  //       properties: {},
-  //     },
-  //     {
-  //       type: 'FlowLine',
-  //       plotType: 'flowLine',
-  //       coordinates: [
-  //         [116.24359140624998, 40.01718818364225],
-  //         [117.07168588867187, 40.003514231779576],
-  //         [116.30232600661053, 39.711929884273275],
-  //       ],
-  //       controlPoints: [
-  //         [116.24359140624998, 40.01718818364225],
-  //         [117.07168588867187, 40.003514231779576],
-  //         [116.30232600661053, 39.711929884273275],
-  //       ],
-  //       style: {
-  //         strokeColor: '#1677ff',
-  //         strokeWidth: 3,
-  //         fillColor: 'rgba(22, 119, 255, 0.16)',
-  //         lineDash: [],
-  //         nodeStyle: {
-  //           radius: 6,
-  //           fill: '#ffffff',
-  //           stroke: '#1677ff',
-  //           strokeWidth: 2,
-  //         },
-  //         flowLine: {
-  //           arrowColor: '#00b96b',
-  //           arrowSpacing: 56,
-  //           speed: 72,
-  //         },
-  //       },
-  //       properties: {},
-  //     },
-  //   ]);
-
   plot.setActiveTool(activeType.value);
 
   plot.on(DrawEvent.DRAW_END, ({ data }) => {
@@ -228,15 +411,19 @@ onMounted(() => {
     refreshFeatureCount();
   });
   plot.on(DrawEvent.SELECT, ({ data }) => {
+    selectedType.value = data.type;
     lastEvent.value = `选中 ${data.type}`;
+    syncStyleForm(data.style);
   });
   plot.on(DrawEvent.DESELECT, () => {
+    selectedType.value = null;
     lastEvent.value = '取消选中';
   });
   plot.on(DrawEvent.MODIFY_END, ({ dataList }) => {
     lastEvent.value = `编辑 ${dataList[0]?.type ?? ''}`;
   });
   plot.on(DrawEvent.DELETE, () => {
+    selectedType.value = null;
     lastEvent.value = '删除';
     refreshFeatureCount();
   });
@@ -266,20 +453,25 @@ onUnmounted(() => {
   height: calc(100vh - 180px);
 }
 
-.toolbar {
+.toolbar,
+.status-panel,
+.style-panel {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 220px;
   z-index: 10;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(31, 35, 40, 0.12);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(31, 35, 40, 0.12);
+}
+
+.toolbar {
+  top: 12px;
+  left: 12px;
+  right: 270px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
 }
 
 .tool-grid {
@@ -305,8 +497,8 @@ onUnmounted(() => {
 
 .tool-btn:hover,
 .action-btn:hover {
-  border-color: #1677ff;
   color: #1677ff;
+  border-color: #1677ff;
 }
 
 .tool-btn.active {
@@ -338,16 +530,10 @@ onUnmounted(() => {
 }
 
 .status-panel {
-  position: absolute;
   top: 12px;
   right: 12px;
-  z-index: 10;
-  width: 190px;
+  width: 230px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(31, 35, 40, 0.12);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(31, 35, 40, 0.12);
 }
 
 .status-row {
@@ -357,7 +543,8 @@ onUnmounted(() => {
   line-height: 24px;
 }
 
-.status-row span {
+.status-row span,
+.field span {
   color: #57606a;
 }
 
@@ -370,13 +557,72 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-@media (max-width: 860px) {
+.style-panel {
+  top: 128px;
+  right: 12px;
+  width: 230px;
+  padding: 12px;
+}
+
+.style-panel.disabled {
+  opacity: 0.62;
+}
+
+.panel-title {
+  margin-bottom: 10px;
+  color: #1f2328;
+  font-weight: 700;
+}
+
+.panel-title.compact {
+  margin-top: 14px;
+  margin-bottom: 8px;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 44px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  margin-top: 8px;
+}
+
+.field input[type='color'] {
+  width: 100%;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.field input[type='range'] {
+  width: 100%;
+}
+
+.field select {
+  grid-column: span 2;
+  height: 28px;
+  color: #24292f;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+}
+
+.field em {
+  color: #57606a;
+  font-style: normal;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
   .map-container {
-    min-height: 720px;
+    min-height: 820px;
   }
 
   .map-wrapper {
-    height: 720px;
+    height: 820px;
   }
 
   .toolbar {
@@ -398,6 +644,14 @@ onUnmounted(() => {
     left: 12px;
     right: 12px;
     bottom: 12px;
+    width: auto;
+  }
+
+  .style-panel {
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: 126px;
     width: auto;
   }
 }

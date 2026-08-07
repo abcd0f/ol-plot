@@ -1,21 +1,20 @@
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
-import MultiPoint from 'ol/geom/MultiPoint';
-import Style, { type StyleFunction } from 'ol/style/Style';
-import Stroke from 'ol/style/Stroke';
-import Fill from 'ol/style/Fill';
-import CircleStyle from 'ol/style/Circle';
+import type { StyleFunction } from 'ol/style/Style';
 import type Geometry from 'ol/geom/Geometry';
 import type { FlowLinePlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
 import { buildFlowLineStyle } from '../style/flowLine';
+import { buildSelectStyle } from '../style/select';
+import { getFeatureStyleData } from '../utils/data';
 
 export class FlowLineTool extends BaseTool {
   private animationFrame: number | null = null;
   private phase = 0;
+  private elapsedTime = 0;
   private lastFrameTime = 0;
 
   constructor(map: Map, config?: FlowLinePlotConfig) {
@@ -32,34 +31,32 @@ export class FlowLineTool extends BaseTool {
   }
 
   private applyFlowLineStyle(): void {
-    const flowStyle = buildFlowLineStyle(this.config, () => this.phase);
+    const flowStyle = buildFlowLineStyle(this.config, (feature) => this.getFlowPhase(feature as Feature));
     this.layerManager.getLayer().setStyle(flowStyle);
     this.selectManager.setStyle(this.createSelectStyle(flowStyle));
   }
 
+  protected refreshStyles(): void {
+    super.refreshStyles();
+    this.applyFlowLineStyle();
+    this.updateAnimationState();
+  }
+
+  protected refreshActiveFeatureStyle(): void {
+    super.refreshActiveFeatureStyle();
+    this.applyFlowLineStyle();
+    this.updateAnimationState();
+  }
+
   private createSelectStyle(flowStyle: StyleFunction): StyleFunction {
-    const ns = this.config.nodeStyle;
-    const vertexStyle = new Style({
-      geometry: (feature) => {
-        const geom = (feature as Feature).getGeometry();
-        if (!geom || geom.getType() !== 'LineString') return undefined;
-        const coords = (geom as LineString).getCoordinates();
-        return coords.length > 0 ? new MultiPoint(coords) : undefined;
-      },
-      image: new CircleStyle({
-        radius: ns.radius ?? 6,
-        fill: new Fill({ color: ns.fill ?? '#ffffff' }),
-        stroke: new Stroke({
-          color: ns.stroke ?? this.config.strokeColor,
-          width: ns.strokeWidth ?? 2,
-        }),
-      }),
-    });
+    const selectStyle = buildSelectStyle(this.config);
 
     return (feature, resolution) => {
       const styles = flowStyle(feature, resolution);
       const baseStyles = Array.isArray(styles) ? styles : styles ? [styles] : [];
-      return [...baseStyles, vertexStyle];
+      const selectedStyles = selectStyle(feature, resolution);
+      const selectedList = Array.isArray(selectedStyles) ? selectedStyles : selectedStyles ? [selectedStyles] : [];
+      return [...baseStyles, ...selectedList];
     };
   }
 
@@ -70,6 +67,7 @@ export class FlowLineTool extends BaseTool {
       if (this.lastFrameTime === 0) this.lastFrameTime = time;
       const delta = Math.min(time - this.lastFrameTime, 100);
       this.lastFrameTime = time;
+      this.elapsedTime += delta;
       this.phase += ((this.config.flowLine.speed ?? 60) * delta) / 1000;
       this.layerManager.getLayer().changed();
       this.map.render();
@@ -85,23 +83,35 @@ export class FlowLineTool extends BaseTool {
     cancelAnimationFrame(this.animationFrame);
     this.animationFrame = null;
     this.lastFrameTime = 0;
+    this.elapsedTime = 0;
+    this.phase = 0;
   }
 
-  private hasRenderableFlowLines(): boolean {
-    return this.layerManager.getSource().getFeatures().length > 0;
+  private hasAnimatedFlowLines(): boolean {
+    const defaultSpeed = this.config.flowLine.speed ?? 60;
+    return this.layerManager
+      .getSource()
+      .getFeatures()
+      .some((feature) => (getFeatureStyleData(feature as Feature)?.flowLine?.speed ?? defaultSpeed) > 0);
   }
 
   private ensureAnimation(): void {
-    if ((this.config.flowLine.speed ?? 60) <= 0 || !this.hasRenderableFlowLines()) return;
+    if (!this.hasAnimatedFlowLines()) return;
     this.startAnimation();
   }
 
   private updateAnimationState(): void {
-    if (this.hasRenderableFlowLines()) {
+    if (this.hasAnimatedFlowLines()) {
       this.ensureAnimation();
     } else {
       this.stopAnimation();
     }
+  }
+
+  private getFlowPhase(feature: Feature): number {
+    const speed = getFeatureStyleData(feature)?.flowLine?.speed;
+    if (speed === undefined) return this.phase;
+    return (speed * this.elapsedTime) / 1000;
   }
 
   protected createGeometry(coordinates: number[][]): Geometry {

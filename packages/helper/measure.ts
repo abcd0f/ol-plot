@@ -103,6 +103,20 @@ export class MeasureManager {
     this.renderNow(group, geom);
   }
 
+  setStyleConfig(config: ResolvedPlotConfig): void {
+    this.mode = config.measure.mode!;
+    this.unit = config.measure.unit!;
+    this.labelStyle = config.measure.labelStyle!;
+
+    this.groups.forEach((group, feature) => {
+      this.applyLabelStyle(group);
+      this.renderNow(group, feature.getGeometry() as LineString);
+    });
+    this.applyLabelStyle(this.sketchGroup);
+    const sketchGeom = this.dirtyRenders.get(this.sketchGroup);
+    if (sketchGeom) this.renderNow(this.sketchGroup, sketchGeom);
+  }
+
   /** 移除指定要素的标签组及其监听。 */
   removeFeature(feature: Feature): void {
     const group = this.groups.get(feature);
@@ -244,5 +258,12 @@ export class MeasureManager {
     const element = document.createElement('div');
     Object.assign(element.style, this.labelStyle);
     return new Overlay({ element, offset: [0, -12], positioning: 'bottom-center', stopEvent: false });
+  }
+
+  private applyLabelStyle(group: Overlay[]): void {
+    group.forEach((overlay) => {
+      const element = overlay.getElement();
+      if (element) Object.assign(element.style, this.labelStyle);
+    });
   }
 }

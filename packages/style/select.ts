@@ -1,4 +1,4 @@
-import Style from 'ol/style/Style';
+import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
@@ -9,6 +9,7 @@ import type Polygon from 'ol/geom/Polygon';
 import type CircleGeom from 'ol/geom/Circle';
 import type Point from 'ol/geom/Point';
 import type { ResolvedPlotConfig } from '../types/config';
+import { getFeatureStyleData } from '../utils/data';
 
 /** 从要素几何中提取所有顶点坐标。 */
 function extractVertices(feature: Feature): number[][] {
@@ -70,10 +71,10 @@ function extractVertices(feature: Feature): number[][] {
  * @param config - 合并后的完整配置
  * @returns OL Style 数组 `[geometryStyle, vertexStyle]`
  */
-export function buildSelectStyle(config: ResolvedPlotConfig): Style[] {
+export function buildSelectStyle(config: ResolvedPlotConfig): StyleFunction {
   const ns = config.nodeStyle;
 
-  const geometryStyle = new Style({
+  const defaultGeometryStyle = new Style({
     stroke: new Stroke({
       color: config.strokeColor,
       width: config.strokeWidth,
@@ -82,7 +83,7 @@ export function buildSelectStyle(config: ResolvedPlotConfig): Style[] {
     fill: new Fill({ color: config.fillColor }),
   });
 
-  const vertexStyle = new Style({
+  const defaultVertexStyle = new Style({
     geometry: (feature) => {
       const coords = extractVertices(feature as Feature);
       return coords.length > 0 ? new MultiPoint(coords) : undefined;
@@ -97,5 +98,34 @@ export function buildSelectStyle(config: ResolvedPlotConfig): Style[] {
     }),
   });
 
-  return [geometryStyle, vertexStyle];
+  return (feature) => {
+    const styleData = getFeatureStyleData(feature as Feature);
+    if (!styleData) return [defaultGeometryStyle, defaultVertexStyle];
+
+    const featureNodeStyle = styleData.nodeStyle;
+    return [
+      new Style({
+        stroke: new Stroke({
+          color: styleData.strokeColor,
+          width: styleData.strokeWidth,
+          lineDash: styleData.lineDash,
+        }),
+        fill: new Fill({ color: styleData.fillColor }),
+      }),
+      new Style({
+        geometry: (target) => {
+          const coords = extractVertices(target as Feature);
+          return coords.length > 0 ? new MultiPoint(coords) : undefined;
+        },
+        image: new CircleStyle({
+          radius: featureNodeStyle.radius ?? 6,
+          fill: new Fill({ color: featureNodeStyle.fill ?? '#ffffff' }),
+          stroke: new Stroke({
+            color: featureNodeStyle.stroke ?? styleData.strokeColor,
+            width: featureNodeStyle.strokeWidth ?? 2,
+          }),
+        }),
+      }),
+    ];
+  };
 }

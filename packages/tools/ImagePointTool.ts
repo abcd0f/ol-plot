@@ -6,6 +6,7 @@ import type Geometry from 'ol/geom/Geometry';
 import type { ImagePointConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
 import { BaseTool } from '../core/BaseTool';
+import { buildStyleFromData, getFeatureStyleData } from '../utils/data';
 
 export class ImagePointTool extends BaseTool {
   private imageConfig: Required<ImagePointConfig>['image'];
@@ -98,5 +99,26 @@ export class ImagePointTool extends BaseTool {
 
     this.applyImageStyle();
     this.layerManager.getLayer().changed();
+  }
+
+  setStyleConfig(config?: ImagePointConfig): this {
+    return super.setStyleConfig(config);
+  }
+
+  protected refreshStyles(): void {
+    super.refreshStyles();
+    this.applyImageStyle();
+  }
+
+  protected refreshActiveFeatureStyle(): void {
+    super.refreshActiveFeatureStyle();
+    if (!this.activeFeature) return;
+
+    const styleData = getFeatureStyleData(this.activeFeature);
+    if (!styleData) return;
+
+    const imageStyle = buildStyleFromData(styleData);
+    this.selectManager.setStyle(imageStyle);
+    this.modifyManager.setStyle(imageStyle);
   }
 }

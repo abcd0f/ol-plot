@@ -11,7 +11,8 @@ import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
 import Icon from 'ol/style/Icon';
 import { DrawType } from '../constants/drawType';
-import type { ResolvedPlotConfig } from '../types/config';
+import { mergeRuntimeConfig } from '../constants';
+import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData } from '../types/data';
 
 const PLOT_STYLE_PROPERTY = '_plotStyleData';
@@ -107,8 +108,21 @@ export function buildStyleFromData(style: PlotStyleData): Style {
   });
 }
 
+export function resolveStyleData(
+  baseConfig: ResolvedPlotConfig,
+  override?: InternalPlotConfig,
+  includeFlowLine = false,
+): PlotStyleData {
+  return serializeStyle(mergeRuntimeConfig(baseConfig, override), includeFlowLine);
+}
+
 export function setFeatureStyleData(feature: Feature, style: PlotStyleData): void {
   feature.set(PLOT_STYLE_PROPERTY, cloneJson(style));
+}
+
+export function getFeatureStyleData(feature: Feature): PlotStyleData | undefined {
+  const style = feature.get(PLOT_STYLE_PROPERTY) as PlotStyleData | undefined;
+  return style ? cloneJson(style) : undefined;
 }
 
 function extractPlotCoordinates(geometry: Geometry | undefined): PlotCoordinates {

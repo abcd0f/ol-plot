@@ -74,6 +74,19 @@ export class AreaMeasureManager {
     this.renderNow(group, geom);
   }
 
+  setStyleConfig(config: ResolvedPlotConfig): void {
+    this.unit = config.areaMeasure.unit!;
+    this.labelStyle = config.areaMeasure.labelStyle!;
+
+    this.groups.forEach((group, feature) => {
+      this.applyLabelStyle(group);
+      this.renderNow(group, feature.getGeometry() as Polygon);
+    });
+    this.applyLabelStyle(this.sketchGroup);
+    const sketchGeom = this.dirtyRenders.get(this.sketchGroup);
+    if (sketchGeom) this.renderNow(this.sketchGroup, sketchGeom);
+  }
+
   removeFeature(feature: Feature): void {
     const group = this.groups.get(feature);
     if (group) {
@@ -164,5 +177,12 @@ export class AreaMeasureManager {
     const element = document.createElement('div');
     Object.assign(element.style, this.labelStyle);
     return new Overlay({ element, offset: [0, -12], positioning: 'bottom-center', stopEvent: false });
+  }
+
+  private applyLabelStyle(group: Overlay[]): void {
+    group.forEach((overlay) => {
+      const element = overlay.getElement();
+      if (element) Object.assign(element.style, this.labelStyle);
+    });
   }
 }

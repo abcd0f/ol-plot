@@ -88,6 +88,10 @@ export class MeasureTool extends BaseTool {
     return super.clearFeatures();
   }
 
+  setStyleConfig(config?: MeasurePlotConfig): this {
+    return super.setStyleConfig(config);
+  }
+
   /**
    * 销毁工具实例，清理距离标签与基础资源
    */

@@ -12,20 +12,21 @@ import { BaseTool } from '../core/BaseTool';
 export class PointTool extends BaseTool {
   constructor(map: Map, config?: PlotConfig) {
     super(map, DrawType.Point, config);
-    // Point 几何需要 image 样式才能渲染，覆盖仅有 stroke/fill 的默认样式
+    this.refreshStyles();
+  }
+
+  protected createFeatureStyle(): Style {
     const ns = this.config.nodeStyle;
-    this.layerManager.getLayer().setStyle(
-      new Style({
-        image: new CircleStyle({
-          radius: ns.radius ?? 6,
-          fill: new Fill({ color: ns.fill ?? '#ffffff' }),
-          stroke: new Stroke({
-            color: ns.stroke ?? this.config.strokeColor,
-            width: ns.strokeWidth ?? 2,
-          }),
+    return new Style({
+      image: new CircleStyle({
+        radius: ns.radius ?? 6,
+        fill: new Fill({ color: ns.fill ?? '#ffffff' }),
+        stroke: new Stroke({
+          color: ns.stroke ?? this.config.strokeColor,
+          width: ns.strokeWidth ?? 2,
         }),
       }),
-    );
+    });
   }
 
   protected createGeometry(coordinates: number[][]): Geometry {

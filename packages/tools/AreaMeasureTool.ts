@@ -53,6 +53,10 @@ export class AreaMeasureTool extends BaseTool {
     return super.clearFeatures();
   }
 
+  setStyleConfig(config?: AreaMeasurePlotConfig): this {
+    return super.setStyleConfig(config);
+  }
+
   destroy(): void {
     this.areaMeasureManager.destroy();
     super.destroy();

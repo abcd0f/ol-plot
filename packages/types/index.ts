@@ -11,6 +11,7 @@ export type {
   AreaMeasureConfig,
   AreaMeasureUnit,
   FlowLineConfig,
+  ImageConfig,
 } from './config';
 export type {
   PlotCoordinate,

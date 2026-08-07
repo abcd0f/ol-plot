@@ -6,20 +6,26 @@ import Polygon from 'ol/geom/Polygon';
 import Circle from 'ol/geom/Circle';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import type Geometry from 'ol/geom/Geometry';
-import Style, { type StyleFunction } from 'ol/style/Style';
+import Style, { type StyleFunction, type StyleLike } from 'ol/style/Style';
 import Icon from 'ol/style/Icon';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import type { InternalPlotConfig, ImagePointConfig, ResolvedPlotConfig } from '../types/config';
+import type {
+  InternalPlotConfig,
+  ImageConfig,
+  ImagePointConfig,
+  ResolvedPlotConfig,
+} from '../types/config';
 import type { PlotFeatureData, PlotRestoreOptions, PlotDrawType } from '../types/data';
 import { DrawType } from '../constants/drawType';
 import { ToolState } from '../constants/toolState';
 import { DrawEvent } from '../constants/events';
-import { mergeConfig } from '../constants';
+import { mergeConfig, mergeRuntimeConfig } from '../constants';
 import { buildFeatureStyle } from '../style/feature';
 import { buildDrawStyle } from '../style/draw';
 import { buildSelectStyle } from '../style/select';
+import { buildModifyStyle } from '../style/modify';
 import { buildFlowLineStyle } from '../style/flowLine';
 import { EventBus } from './EventBus';
 import { LayerManager } from './LayerManager';
@@ -40,7 +46,14 @@ import { buildLineArrowGeometries } from '../geometry/arrow/line';
 import { buildDoubleArrow, normalizeDoubleArrowControlPoints } from '../geometry/arrow/double';
 import { buildFlagGeometries, getFlagControlPoints } from '../geometry/flag';
 import { dist } from '../utils';
-import { buildStyleFromData, projectPlotDataCoordinates, serializeFeature, setFeatureStyleData } from '../utils/data';
+import {
+  buildStyleFromData,
+  getFeatureStyleData,
+  projectPlotDataCoordinates,
+  resolveStyleData,
+  serializeFeature,
+  setFeatureStyleData,
+} from '../utils/data';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
 const HANDLE_PLOT_TYPES = new Set([
@@ -81,10 +94,13 @@ export class PlotManager {
   >();
   private animationFrame: number | null = null;
   private phase = 0;
+  private flowElapsedTime = 0;
   private lastFrameTime = 0;
-  private imageConfig: Required<ImagePointConfig>['image'];
-  private pointStyle: Style;
-  private imageStyle: Style;
+  private imageConfig: Required<ImageConfig>;
+  private activeDrawStyle: StyleFunction = () => undefined;
+  private featureStyleCache = new globalThis.Map<DrawType, StyleLike>();
+  private selectStyleCache = new globalThis.Map<DrawType, StyleFunction>();
+  private modifyStyleCache = new globalThis.Map<DrawType, Style[]>();
   private draggingHandleIndex: number | null = null;
 
   constructor(map: Map, config?: PlotManagerConfig) {
@@ -92,20 +108,18 @@ export class PlotManager {
     this.config = mergeConfig(config);
     this.eventBus = new EventBus();
 
-    const flowStyle = buildFlowLineStyle(this.config, () => this.phase);
     this.imageConfig = {
       src: config?.image?.src || '',
       scale: config?.image?.scale ?? 1,
       anchor: config?.image?.anchor ?? [0.5, 0.5],
       opacity: config?.image?.opacity ?? 1,
     };
-    this.pointStyle = this.createPointStyle();
-    this.imageStyle = this.createImageStyle();
 
-    this.layerManager = new LayerManager(map, this.createLayerStyle(flowStyle));
+    this.layerManager = new LayerManager(map, this.createLayerStyle());
     this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
-    this.selectManager.setStyle(this.createSelectStyle(flowStyle));
+    this.selectManager.setStyle(this.createSelectStyle());
     this.modifyManager = new ModifyManager(map, this.selectManager.getSelectedFeatures(), this.config, this.eventBus);
+    this.modifyManager.setStyle(this.createModifyStyle());
     this.modifyManager.setActive(false);
 
     this.handleManager = new HandleManager(map, this.eventBus, this.config, (controlPoints) =>
@@ -159,12 +173,13 @@ export class PlotManager {
     this.state = this.activeDrawType ? ToolState.Drawing : ToolState.Idle;
 
     if (this.activeDrawType) {
+      this.activeDrawStyle = buildDrawStyle(this.config);
       this.drawManager = new DrawManager(
         this.map,
         this.layerManager.getLayer(),
         this.eventBus,
         this.activeDrawType,
-        buildDrawStyle(this.config),
+        (feature, resolution) => this.activeDrawStyle(feature, resolution),
         () => this.selectManager.isEmpty(),
       );
     }
@@ -180,6 +195,38 @@ export class PlotManager {
     return this.state;
   }
 
+  setStyleConfig(config?: PlotManagerConfig): this {
+    if (!this.activeFeature || !config) return this;
+
+    const drawType = this.getFeatureDrawType(this.activeFeature);
+    if (!drawType) return this;
+
+    const currentStyle = getFeatureStyleData(this.activeFeature);
+    const baseConfig = currentStyle ? mergeRuntimeConfig(this.config, currentStyle) : this.config;
+    const styleData = resolveStyleData(baseConfig, config, drawType === DrawType.FlowLine);
+    if (drawType === DrawType.ImagePoint && config.image) {
+      styleData.image = { ...config.image };
+    }
+
+    setFeatureStyleData(this.activeFeature, styleData);
+    this.selectManager.setStyle(null);
+    if (drawType === DrawType.FlowLine) {
+      this.activeFeature.setStyle(undefined);
+      this.updateFlowAnimationState();
+    } else {
+      this.activeFeature.setStyle(buildStyleFromData(styleData));
+    }
+    if (HANDLE_PLOT_TYPES.has(this.getPlotType(drawType))) {
+      this.handleManager.setStyleConfig(mergeRuntimeConfig(this.config, styleData));
+    }
+
+    this.selectManager.setStyle(this.createSelectStyle());
+    this.modifyManager.setStyle(this.createModifyStyle());
+    this.activeFeature.changed();
+    this.layerManager.getLayer().changed();
+    return this;
+  }
+
   getFeatures(): Feature[] {
     return this.layerManager.getFeatures();
   }
@@ -187,10 +234,11 @@ export class PlotManager {
   getFeatureData(feature: Feature): PlotFeatureData {
     const drawType = this.getFeatureDrawType(feature) ?? this.activeDrawType ?? DrawType.Line;
     const data = serializeFeature(feature, drawType, this.config, this.map.getView().getProjection());
-    if (drawType === DrawType.ImagePoint && !data.style.image && this.imageConfig.src) {
+    const imageConfig = this.getImageConfig();
+    if (drawType === DrawType.ImagePoint && !data.style.image && imageConfig.src) {
       data.style = {
         ...data.style,
-        image: { ...this.imageConfig },
+        image: { ...imageConfig },
       };
     }
     return data;
@@ -322,14 +370,8 @@ export class PlotManager {
   updateImageConfig(imageConfig: ImagePointConfig['image']): void {
     if (!imageConfig) return;
 
-    this.imageConfig = {
-      src: imageConfig.src || this.imageConfig.src,
-      scale: imageConfig.scale ?? this.imageConfig.scale,
-      anchor: imageConfig.anchor ?? this.imageConfig.anchor,
-      opacity: imageConfig.opacity ?? this.imageConfig.opacity,
-    };
-    this.imageStyle = this.createImageStyle();
-
+    this.mergeImageConfig(imageConfig);
+    this.invalidateStyleCache(DrawType.ImagePoint);
     this.layerManager.getLayer().changed();
   }
 
@@ -555,6 +597,10 @@ export class PlotManager {
     if (isHandleBased) {
       const controlPoints = this.extractCoordinates(feature);
       this.modifyManager.setActive(false);
+      const drawType = this.getFeatureDrawType(feature);
+      const styleData = getFeatureStyleData(feature);
+      if (drawType && styleData) this.handleManager.setStyleConfig(mergeRuntimeConfig(this.config, styleData));
+      else this.handleManager.setStyleConfig(this.config);
       this.handleManager.show(controlPoints);
       this.handleManager.handleModify.setActive(true);
       this.cursorManager.setEditableLayers(() => [this.handleManager.handleLayer]);
@@ -672,49 +718,95 @@ export class PlotManager {
     return normalizeSectorControlPoints(controlPoints.slice(0, 3), this.draggingHandleIndex === 2 ? 2 : 1);
   }
 
-  private createLayerStyle(flowStyle: StyleFunction): StyleFunction {
-    const baseStyle = buildFeatureStyle(this.config);
-
+  private createLayerStyle(): StyleFunction {
     return (feature, resolution) => {
-      const drawType = this.getFeatureDrawType(feature as Feature);
-      if (drawType === DrawType.FlowLine) return flowStyle(feature, resolution);
-      if (drawType === DrawType.Point) return this.pointStyle;
-      if (drawType === DrawType.ImagePoint) return this.imageStyle;
-      return baseStyle;
+      const drawType = this.getFeatureDrawType(feature as Feature) ?? DrawType.Line;
+      return this.renderStyle(this.getFeatureStyle(drawType), feature, resolution);
     };
   }
 
-  private createSelectStyle(flowStyle: StyleFunction): StyleFunction {
-    const selectStyles = buildSelectStyle(this.config);
-
+  private createSelectStyle(): StyleFunction {
     return (feature, resolution) => {
-      const drawType = this.getFeatureDrawType(feature as Feature);
+      const drawType = this.getFeatureDrawType(feature as Feature) ?? DrawType.Line;
       if (drawType === DrawType.FlowLine) {
-        const flowStyles = flowStyle(feature, resolution);
+        const flowStyles = this.renderStyle(this.getFeatureStyle(drawType), feature, resolution);
         const list = Array.isArray(flowStyles) ? flowStyles : flowStyles ? [flowStyles] : [];
-        return [...list, ...selectStyles];
+        const selectStyles = this.getSelectStyle(drawType)(feature, resolution);
+        const selectList = Array.isArray(selectStyles) ? selectStyles : selectStyles ? [selectStyles] : [];
+        return [...list, ...selectList];
       }
-      if (drawType === DrawType.ImagePoint) return this.imageStyle;
-      return selectStyles;
+      if (drawType === DrawType.ImagePoint) {
+        const styleData = getFeatureStyleData(feature as Feature);
+        if (styleData) return buildStyleFromData(styleData);
+        return this.renderStyle(this.getFeatureStyle(drawType), feature, resolution);
+      }
+      return this.getSelectStyle(drawType)(feature, resolution);
     };
   }
 
-  private createPointStyle(): Style {
-    const ns = this.config.nodeStyle;
+  private createModifyStyle(): StyleFunction {
+    return (feature) => {
+      const drawType = this.activeFeature
+        ? this.getFeatureDrawType(this.activeFeature)
+        : this.getFeatureDrawType(feature as Feature);
+      return this.getModifyStyle(drawType ?? DrawType.Line);
+    };
+  }
+
+  private getFeatureStyle(drawType: DrawType): StyleLike {
+    const cached = this.featureStyleCache.get(drawType);
+    if (cached) return cached;
+
+    const config = this.config;
+    let style: StyleLike;
+    if (drawType === DrawType.FlowLine) {
+      style = buildFlowLineStyle(config, (feature) => this.getFlowPhase(feature));
+    } else if (drawType === DrawType.Point) {
+      style = this.createPointStyle(config);
+    } else if (drawType === DrawType.ImagePoint) {
+      style = this.createImageStyle(this.getImageConfig());
+    } else {
+      style = buildFeatureStyle(config);
+    }
+
+    this.featureStyleCache.set(drawType, style);
+    return style;
+  }
+
+  private getSelectStyle(drawType: DrawType): StyleFunction {
+    const cached = this.selectStyleCache.get(drawType);
+    if (cached) return cached;
+
+    const style = buildSelectStyle(this.config);
+    this.selectStyleCache.set(drawType, style);
+    return style;
+  }
+
+  private getModifyStyle(drawType: DrawType): Style[] {
+    const cached = this.modifyStyleCache.get(drawType);
+    if (cached) return cached;
+
+    const style = buildModifyStyle(this.config);
+    this.modifyStyleCache.set(drawType, style);
+    return style;
+  }
+
+  private createPointStyle(config: ResolvedPlotConfig): Style {
+    const ns = config.nodeStyle;
     return new Style({
       image: new CircleStyle({
         radius: ns.radius ?? 6,
         fill: new Fill({ color: ns.fill ?? '#ffffff' }),
         stroke: new Stroke({
-          color: ns.stroke ?? this.config.strokeColor,
+          color: ns.stroke ?? config.strokeColor,
           width: ns.strokeWidth ?? 2,
         }),
       }),
     });
   }
 
-  private createImageStyle(imageConfig: ImagePointConfig['image'] = this.imageConfig): Style {
-    if (!imageConfig.src) return this.pointStyle;
+  private createImageStyle(imageConfig: ImageConfig): Style {
+    if (!imageConfig.src) return this.createPointStyle(this.config);
 
     return new Style({
       image: new Icon({
@@ -728,13 +820,48 @@ export class PlotManager {
     });
   }
 
+  private renderStyle(style: StyleLike, feature: any, resolution: number): ReturnType<StyleFunction> {
+    return typeof style === 'function' ? style(feature, resolution) : style;
+  }
+
+  private getImageConfig(): Required<ImageConfig> {
+    return {
+      src: this.imageConfig.src,
+      scale: this.imageConfig.scale,
+      anchor: this.imageConfig.anchor,
+      opacity: this.imageConfig.opacity,
+    };
+  }
+
+  private invalidateStyleCache(drawType?: DrawType): void {
+    if (!drawType) {
+      this.featureStyleCache.clear();
+      this.selectStyleCache.clear();
+      this.modifyStyleCache.clear();
+      return;
+    }
+
+    this.featureStyleCache.delete(drawType);
+    this.selectStyleCache.delete(drawType);
+    this.modifyStyleCache.delete(drawType);
+  }
+
+  private mergeImageConfig(imageConfig: ImageConfig): void {
+    this.imageConfig = {
+      src: imageConfig.src || this.imageConfig.src,
+      scale: imageConfig.scale ?? this.imageConfig.scale,
+      anchor: imageConfig.anchor ?? this.imageConfig.anchor,
+      opacity: imageConfig.opacity ?? this.imageConfig.opacity,
+    };
+  }
+
   private ensureFlowAnimation(): void {
-    if ((this.config.flowLine.speed ?? 60) <= 0 || !this.hasFlowLines()) return;
+    if (!this.hasAnimatedFlowLines()) return;
     this.startFlowAnimation();
   }
 
   private updateFlowAnimationState(): void {
-    if (this.hasFlowLines()) {
+    if (this.hasAnimatedFlowLines()) {
       this.ensureFlowAnimation();
     } else {
       this.stopFlowAnimation();
@@ -748,6 +875,24 @@ export class PlotManager {
       .some((feature) => this.getFeatureDrawType(feature as Feature) === DrawType.FlowLine);
   }
 
+  private hasAnimatedFlowLines(): boolean {
+    const defaultSpeed = this.config.flowLine.speed ?? 60;
+    return this.layerManager
+      .getSource()
+      .getFeatures()
+      .some((feature) => {
+        const plotFeature = feature as Feature;
+        if (this.getFeatureDrawType(plotFeature) !== DrawType.FlowLine) return false;
+        return (getFeatureStyleData(plotFeature)?.flowLine?.speed ?? defaultSpeed) > 0;
+      });
+  }
+
+  private getFlowPhase(feature: Feature): number {
+    const speed = getFeatureStyleData(feature)?.flowLine?.speed;
+    if (speed === undefined) return this.phase;
+    return (speed * this.flowElapsedTime) / 1000;
+  }
+
   private startFlowAnimation(): void {
     if (this.animationFrame !== null) return;
 
@@ -755,6 +900,7 @@ export class PlotManager {
       if (this.lastFrameTime === 0) this.lastFrameTime = time;
       const delta = Math.min(time - this.lastFrameTime, 100);
       this.lastFrameTime = time;
+      this.flowElapsedTime += delta;
       this.phase += ((this.config.flowLine.speed ?? 60) * delta) / 1000;
       this.layerManager.getLayer().changed();
       this.map.render();
@@ -770,6 +916,8 @@ export class PlotManager {
     cancelAnimationFrame(this.animationFrame);
     this.animationFrame = null;
     this.lastFrameTime = 0;
+    this.flowElapsedTime = 0;
+    this.phase = 0;
   }
 
   private isActiveFeatureHandleBased(): boolean {

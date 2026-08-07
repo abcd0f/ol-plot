@@ -1,18 +1,11 @@
 import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import { DEFAULT_CONFIG } from './defaultConfig';
 
-/**
- * 将用户提供的部分配置与默认配置合并。
- *
- * 深度合并 `nodeStyle` 子对象，其余字段使用展开覆盖。
- *
- * @param config - 可选的用户配置
- * @returns 完整的必填配置对象
- */
 export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
   return {
     ...DEFAULT_CONFIG,
     ...config,
+    lineDash: config?.lineDash ? [...config.lineDash] : [...DEFAULT_CONFIG.lineDash],
     nodeStyle: {
       ...DEFAULT_CONFIG.nodeStyle,
       ...config?.nodeStyle,
@@ -36,6 +29,40 @@ export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
     flowLine: {
       ...DEFAULT_CONFIG.flowLine,
       ...config?.flowLine,
+    },
+  };
+}
+
+export function mergeRuntimeConfig(current: ResolvedPlotConfig, config?: InternalPlotConfig): ResolvedPlotConfig {
+  if (!config) return current;
+
+  return {
+    ...current,
+    ...config,
+    lineDash: config.lineDash ? [...config.lineDash] : [...current.lineDash],
+    nodeStyle: {
+      ...current.nodeStyle,
+      ...config.nodeStyle,
+    },
+    measure: {
+      ...current.measure,
+      ...config.measure,
+      labelStyle: {
+        ...current.measure.labelStyle,
+        ...config.measure?.labelStyle,
+      },
+    },
+    areaMeasure: {
+      ...current.areaMeasure,
+      ...config.areaMeasure,
+      labelStyle: {
+        ...current.areaMeasure.labelStyle,
+        ...config.areaMeasure?.labelStyle,
+      },
+    },
+    flowLine: {
+      ...current.flowLine,
+      ...config.flowLine,
     },
   };
 }
