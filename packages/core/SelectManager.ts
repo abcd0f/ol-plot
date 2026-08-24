@@ -40,7 +40,7 @@ export class SelectManager {
     // 监听选择事件，根据选中或取消选中的要素触发相应的事件
     this.select.on('select', (e) => {
       if (e.selected.length > 0) {
-        this.eventBus.emit(DrawEvent.SELECT, { feature: e.selected[0] });
+        this.eventBus.emit(DrawEvent.SELECT, { feature: e.selected[0], source: 'user' });
       } else if (e.deselected.length > 0) {
         this.eventBus.emit(DrawEvent.DESELECT, { features: e.deselected });
       }
@@ -74,7 +74,7 @@ export class SelectManager {
     const col = this.select.getFeatures();
     col.clear();
     col.push(feature as any);
-    this.eventBus.emit(DrawEvent.SELECT, { feature });
+    this.eventBus.emit(DrawEvent.SELECT, { feature, source: 'draw' });
   }
 
   /**

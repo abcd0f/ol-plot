@@ -179,7 +179,7 @@ export class PlotManager {
         this.eventBus,
         this.activeDrawType,
         (feature, resolution) => this.activeDrawStyle(feature, resolution),
-        () => this.config.continuousDraw || this.selectManager.isEmpty(),
+        () => this.config.continuousDraw || this.config.editOnSelect === false || this.selectManager.isEmpty(),
       );
     }
 
@@ -435,7 +435,11 @@ export class PlotManager {
       }, 0);
     });
 
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
+    this.eventBus.on(DrawEvent.SELECT, ({ feature, source }: { feature: Feature; source?: 'user' | 'draw' }) => {
+      if (source !== 'draw' && this.config.editOnSelect === false) {
+        this.selectManager.clearSelection();
+        return;
+      }
       this.activeFeature = feature;
       this.state = ToolState.Editing;
       this.syncEditMode(feature);
@@ -450,6 +454,10 @@ export class PlotManager {
       this.handleManager.handleModify.setActive(false);
       this.modifyManager.setActive(false);
       this.cursorManager.setActive(false);
+    });
+
+    this.eventBus.on(DrawEvent.DRAW_START, () => {
+      if (this.config.editOnSelect === false && !this.selectManager.isEmpty()) this.selectManager.clearSelection();
     });
 
     this.eventBus.on(DrawEvent.MODIFY_START, () => {

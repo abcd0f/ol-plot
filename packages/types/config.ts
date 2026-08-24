@@ -80,6 +80,8 @@ export interface PlotConfig {
   autoEdit?: boolean;
   /** Whether to continue using the active drawing tool after drawing completes. Defaults to false. */
   continuousDraw?: boolean;
+  /** Whether clicking an existing feature enters editing mode. Defaults to true. */
+  editOnSelect?: boolean;
   strokeColor?: string;
   strokeWidth?: number;
   fillColor?: string;

@@ -205,6 +205,7 @@ tool
 interface PlotConfig {
   autoEdit?: boolean
   continuousDraw?: boolean
+  editOnSelect?: boolean
   strokeColor?: string
   strokeWidth?: number
   fillColor?: string
@@ -281,6 +282,7 @@ import { DEFAULT_CONFIG } from '@seedlib/ol-plot'
 | --- | --- |
 | `autoEdit` | `true` |
 | `continuousDraw` | `false` |
+| `editOnSelect` | `true` |
 | `strokeColor` | `#2196f3` |
 | `strokeWidth` | `2` |
 | `fillColor` | `rgba(33, 150, 243, 0.15)` |
@@ -293,6 +295,8 @@ import { DEFAULT_CONFIG } from '@seedlib/ol-plot'
 | `flowLine.speed` | `60` |
 
 `continuousDraw: true` 会在每次绘制完成后继续使用当前绘画工具；`false` 时完成一次绘制后停用绘画交互。是否自动选中并进入编辑状态仍由 `autoEdit` 控制。
+
+`editOnSelect: false` 时，点击已有图形不会进入编辑模式；绘制完成后是否自动编辑仍由 `autoEdit` 控制。
 
 ## 图片点示例
 

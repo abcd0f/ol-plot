@@ -5,6 +5,8 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
   autoEdit: true,
   /** 绘制完成后是否继续使用当前绘画工具 */
   continuousDraw: false,
+  /** 点击已有图形后是否进入编辑态 */
+  editOnSelect: false,
   /** 线颜色 */
   strokeColor: '#2196f3',
   /** 线宽度 */
@@ -58,6 +60,12 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
     arrowColor: '',
     arrowSpacing: 48,
     speed: 60,
+  },
+  image: {
+    src: '',
+    scale: 1,
+    anchor: [0.5, 0.5],
+    opacity: 1,
   },
   alarm: {
     radius: 9,

@@ -70,7 +70,8 @@ export abstract class HandleBasedTool extends BaseTool {
       feature.set('controlPoints', controlPoints);
     });
 
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
+    this.eventBus.on(DrawEvent.SELECT, ({ feature, source }: { feature: Feature; source?: 'user' | 'draw' }) => {
+      if (source !== 'draw' && this.config.editOnSelect === false) return;
       const controlPoints = feature.get('controlPoints') as number[][] | undefined;
       this.handleManager.show(controlPoints);
     });

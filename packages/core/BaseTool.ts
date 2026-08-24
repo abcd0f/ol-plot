@@ -98,7 +98,7 @@ export abstract class BaseTool {
       this.eventBus,
       drawType,
       (feature, resolution) => this.drawStyle(feature, resolution),
-      () => this.config.continuousDraw || this.selectManager.isEmpty(),
+      () => this.config.continuousDraw || this.config.editOnSelect === false || this.selectManager.isEmpty(),
     );
 
     this.bindEvents();
@@ -139,7 +139,11 @@ export abstract class BaseTool {
       }, 0);
     });
 
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
+    this.eventBus.on(DrawEvent.SELECT, ({ feature, source }: { feature: Feature; source?: 'user' | 'draw' }) => {
+      if (source !== 'draw' && this.config.editOnSelect === false) {
+        this.selectManager.clearSelection();
+        return;
+      }
       this.activeFeature = feature;
       this.state = ToolState.Editing;
       this.cursorManager.setActive(true);
@@ -150,6 +154,10 @@ export abstract class BaseTool {
       this.state = ToolState.Drawing;
       this.drawManager.setActive(true);
       this.cursorManager.setActive(false);
+    });
+
+    this.eventBus.on(DrawEvent.DRAW_START, () => {
+      if (this.config.editOnSelect === false && !this.selectManager.isEmpty()) this.selectManager.clearSelection();
     });
 
     this.eventBus.on(DrawEvent.MODIFY_START, () => {
