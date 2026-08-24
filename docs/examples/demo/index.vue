@@ -248,6 +248,7 @@ const tools: ToolItem[] = [
   { label: '旗标', type: DrawType.Flag },
   { label: '测距', type: DrawType.Measure },
   { label: '测面', type: DrawType.AreaMeasure },
+  { label: '方位角', type: DrawType.AzimuthMeasure },
 ];
 
 const markerSvg = encodeURIComponent(`
@@ -500,8 +501,6 @@ onMounted(() => {
   });
 
   plot = new PlotManager(map, {
-    autoEdit: false,
-    continuousDraw: true,
     strokeColor: '#1677ff',
     strokeWidth: 3,
     fillColor: 'rgba(22, 119, 255, 0.16)',
@@ -538,6 +537,9 @@ onMounted(() => {
     },
     measure: {
       mode: 'both',
+      unit: 'm',
+    },
+    azimuthMeasure: {
       unit: 'm',
     },
   });

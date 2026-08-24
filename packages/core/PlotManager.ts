@@ -36,6 +36,7 @@ import { CursorManager } from './CursorManager';
 import { HandleManager } from '../helper/handle';
 import { MeasureManager } from '../helper/measure';
 import { AreaMeasureManager } from '../helper/areaMeasure';
+import { AzimuthMeasureManager } from '../helper/azimuthMeasure';
 import { buildRectangle, getRectangleControlPoints } from '../geometry/rectangle';
 import { buildEllipse, getEllipseControlPoints } from '../geometry/ellipse';
 import { buildSector, getSectorControlPoints, normalizeSectorControlPoints } from '../geometry/sector';
@@ -84,6 +85,7 @@ export class PlotManager {
   protected handleManager: HandleManager;
   protected measureManager: MeasureManager;
   protected areaMeasureManager: AreaMeasureManager;
+  protected azimuthMeasureManager: AzimuthMeasureManager;
   protected activeFeature: Feature | null = null;
   protected activeDrawType: DrawType | null = null;
   protected state: ToolState = ToolState.Idle;
@@ -150,6 +152,12 @@ export class PlotManager {
       this.config,
       (feature, drawType) => this.getFeatureDrawType(feature, drawType) === DrawType.AreaMeasure,
     );
+    this.azimuthMeasureManager = new AzimuthMeasureManager(
+      map,
+      this.eventBus,
+      this.config,
+      (feature, drawType) => this.getFeatureDrawType(feature, drawType) === DrawType.AzimuthMeasure,
+    );
 
     this.bindEvents();
 
@@ -208,6 +216,9 @@ export class PlotManager {
       drawType === DrawType.FlowLine,
       drawType === DrawType.AlarmPoint,
     );
+    if (config.azimuthMeasure) {
+      this.config = mergeRuntimeConfig(this.config, { azimuthMeasure: config.azimuthMeasure });
+    }
     if (drawType === DrawType.ImagePoint && config.image) {
       this.imageConfig = mergeImageConfig(this.imageConfig, config.image);
       styleData.image = { ...this.imageConfig };
@@ -230,6 +241,7 @@ export class PlotManager {
 
     this.selectManager.setStyle(this.createSelectStyle());
     this.modifyManager.setStyle(this.createModifyStyle());
+    this.azimuthMeasureManager.setStyleConfig(mergeRuntimeConfig(this.config, config));
     this.activeFeature.changed();
     this.layerManager.getLayer().changed();
     this.updateAnimationState();
@@ -315,6 +327,7 @@ export class PlotManager {
     this.selectManager.clearSelection();
     this.measureManager.clear();
     this.areaMeasureManager.clear();
+    this.azimuthMeasureManager.clear();
     this.activeFeature = null;
     this.handleManager.hide();
     this.handleManager.handleModify.setActive(false);
@@ -337,6 +350,7 @@ export class PlotManager {
     this.modifyManager.destroy();
     this.measureManager.destroy();
     this.areaMeasureManager.destroy();
+    this.azimuthMeasureManager.destroy();
     this.layerManager.destroy();
     this.eventBus.clear();
     this.eventWrappers.clear();
@@ -499,7 +513,8 @@ export class PlotManager {
       case DrawType.FlowLine:
       case DrawType.FreehandLine:
       case DrawType.Measure:
-        return new LineString(coordinates);
+      case DrawType.AzimuthMeasure:
+        return new LineString(drawType === DrawType.AzimuthMeasure ? coordinates.slice(0, 2) : coordinates);
       case DrawType.Polygon:
       case DrawType.FreehandPolygon:
       case DrawType.AreaMeasure:
@@ -554,7 +569,10 @@ export class PlotManager {
       case DrawType.FlowLine:
       case DrawType.FreehandLine:
       case DrawType.Measure:
-        (geom as LineString).setCoordinates(coordinates);
+      case DrawType.AzimuthMeasure:
+        (geom as LineString).setCoordinates(
+          drawType === DrawType.AzimuthMeasure ? coordinates.slice(0, 2) : coordinates,
+        );
         break;
       case DrawType.Polygon:
       case DrawType.FreehandPolygon:
@@ -711,6 +729,7 @@ export class PlotManager {
 
   private attachFeatureRuntime(feature: Feature, drawType: DrawType): void {
     if (drawType === DrawType.Measure) this.measureManager.attachFeature(feature);
+    if (drawType === DrawType.AzimuthMeasure) this.azimuthMeasureManager.attachFeature(feature);
     if (drawType === DrawType.AreaMeasure) this.areaMeasureManager.attachFeature(feature);
     if (drawType === DrawType.FlowLine || drawType === DrawType.AlarmPoint) this.ensureAnimation();
   }
@@ -739,6 +758,7 @@ export class PlotManager {
       case DrawType.FlowLine:
       case DrawType.FreehandLine:
       case DrawType.Measure:
+      case DrawType.AzimuthMeasure:
         return (geom as LineString).getCoordinates();
       case DrawType.Polygon:
       case DrawType.FreehandPolygon:
@@ -1089,6 +1109,7 @@ const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = {
   [DrawType.Arc]: 'arc',
   [DrawType.Flag]: 'flag',
   [DrawType.Measure]: 'measure',
+  [DrawType.AzimuthMeasure]: 'azimuthMeasure',
   [DrawType.AreaMeasure]: 'areaMeasure',
 };
 

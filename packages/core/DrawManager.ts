@@ -119,6 +119,9 @@ export class DrawManager {
     } else if (drawType === DrawType.Measure) {
       // 测距：绘制普通折线，距离标签由 MeasureTool 通过 Overlay 单独渲染
       type = 'LineString';
+    } else if (drawType === DrawType.AzimuthMeasure) {
+      type = 'LineString';
+      maxPoints = 2;
     } else if (drawType === DrawType.AreaMeasure) {
       type = 'Polygon';
     } else if (drawType === DrawType.ImagePoint || drawType === DrawType.AlarmPoint) {

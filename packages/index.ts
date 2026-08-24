@@ -26,6 +26,7 @@ export { DoubleArrowTool } from './tools/DoubleArrowTool';
 export { ArcTool } from './tools/ArcTool';
 export { FlagTool } from './tools/FlagTool';
 export { MeasureTool } from './tools/MeasureTool';
+export { AzimuthMeasureTool } from './tools/AzimuthMeasureTool';
 export { AreaMeasureTool } from './tools/AreaMeasureTool';
 
 export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
@@ -39,6 +40,8 @@ export type {
   AlarmPointConfig,
   NodeStyle,
   MeasureConfig,
+  AzimuthMeasureConfig,
+  AzimuthMeasurePlotConfig,
   MeasureMode,
   MeasureUnit,
   AreaMeasureConfig,

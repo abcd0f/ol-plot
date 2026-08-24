@@ -18,6 +18,14 @@ export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
         ...config?.measure?.labelStyle,
       },
     },
+    azimuthMeasure: {
+      ...DEFAULT_CONFIG.azimuthMeasure,
+      ...config?.azimuthMeasure,
+      labelStyle: {
+        ...DEFAULT_CONFIG.azimuthMeasure.labelStyle,
+        ...config?.azimuthMeasure?.labelStyle,
+      },
+    },
     areaMeasure: {
       ...DEFAULT_CONFIG.areaMeasure,
       ...config?.areaMeasure,
@@ -54,6 +62,14 @@ export function mergeRuntimeConfig(current: ResolvedPlotConfig, config?: Interna
       labelStyle: {
         ...current.measure.labelStyle,
         ...config.measure?.labelStyle,
+      },
+    },
+    azimuthMeasure: {
+      ...current.azimuthMeasure,
+      ...config.azimuthMeasure,
+      labelStyle: {
+        ...current.azimuthMeasure.labelStyle,
+        ...config.azimuthMeasure?.labelStyle,
       },
     },
     areaMeasure: {

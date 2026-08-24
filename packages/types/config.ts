@@ -17,6 +17,11 @@ export interface MeasureConfig {
   labelStyle?: Partial<CSSStyleDeclaration>;
 }
 
+export interface AzimuthMeasureConfig {
+  unit?: MeasureUnit;
+  labelStyle?: Partial<CSSStyleDeclaration>;
+}
+
 export interface AreaMeasureConfig {
   unit?: AreaMeasureUnit;
   labelStyle?: Partial<CSSStyleDeclaration>;
@@ -93,6 +98,10 @@ export interface MeasurePlotConfig extends PlotConfig {
   measure?: MeasureConfig;
 }
 
+export interface AzimuthMeasurePlotConfig extends PlotConfig {
+  azimuthMeasure?: AzimuthMeasureConfig;
+}
+
 export interface AreaMeasurePlotConfig extends PlotConfig {
   areaMeasure?: AreaMeasureConfig;
 }
@@ -111,6 +120,7 @@ export interface AlarmPointConfig extends PlotConfig {
 
 export interface InternalPlotConfig extends PlotConfig {
   measure?: MeasureConfig;
+  azimuthMeasure?: AzimuthMeasureConfig;
   areaMeasure?: AreaMeasureConfig;
   flowLine?: FlowLineConfig;
   image?: ImageConfig;

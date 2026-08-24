@@ -124,6 +124,7 @@ plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
 | `LineArrowTool` | `GeometryCollection` | 拖拽绘制线型箭头 |
 | `DoubleArrowTool` | `Polygon` | 多点绘制双箭头 |
 | `MeasureTool` | `LineString` | 绘制折线并显示距离标签 |
+| `AzimuthMeasureTool` | `LineString` | 点击两点显示距离和方位角 |
 | `AreaMeasureTool` | `Polygon` | 绘制区域并显示面积标签 |
 
 ## 常用 API
@@ -226,6 +227,15 @@ interface MeasureConfig {
   labelStyle?: Partial<CSSStyleDeclaration>
 }
 
+interface AzimuthMeasureConfig {
+  unit?: 'm' | 'km' | 'nm'
+  labelStyle?: Partial<CSSStyleDeclaration>
+}
+
+interface AzimuthMeasurePlotConfig extends PlotConfig {
+  azimuthMeasure?: AzimuthMeasureConfig
+}
+
 interface MeasurePlotConfig extends PlotConfig {
   measure?: MeasureConfig
 }
@@ -290,6 +300,7 @@ import { DEFAULT_CONFIG } from '@seedlib/ol-plot'
 | `nodeStyle.radius` | `6` |
 | `measure.mode` | `total` |
 | `measure.unit` | `m` |
+| `azimuthMeasure.unit` | `m` |
 | `areaMeasure.unit` | `m` |
 | `flowLine.arrowSpacing` | `48` |
 | `flowLine.speed` | `60` |

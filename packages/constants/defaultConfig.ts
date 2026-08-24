@@ -4,9 +4,9 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
   /** 绘制完成后是否自动进入编辑态 */
   autoEdit: true,
   /** 绘制完成后是否继续使用当前绘画工具 */
-  continuousDraw: false,
+  continuousDraw: true,
   /** 点击已有图形后是否进入编辑态 */
-  editOnSelect: false,
+  editOnSelect: true,
   /** 线颜色 */
   strokeColor: '#2196f3',
   /** 线宽度 */
@@ -60,6 +60,19 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
     arrowColor: '',
     arrowSpacing: 48,
     speed: 60,
+  },
+  azimuthMeasure: {
+    unit: 'm',
+    labelStyle: {
+      padding: '2px 6px',
+      background: 'rgba(0,0,0,0.65)',
+      color: '#fff',
+      fontSize: '12px',
+      lineHeight: '1.4',
+      borderRadius: '3px',
+      whiteSpace: 'nowrap',
+      pointerEvents: 'none',
+    },
   },
   image: {
     src: '',
