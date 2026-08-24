@@ -98,7 +98,7 @@ export abstract class BaseTool {
       this.eventBus,
       drawType,
       (feature, resolution) => this.drawStyle(feature, resolution),
-      () => this.selectManager.isEmpty(),
+      () => this.config.continuousDraw || this.selectManager.isEmpty(),
     );
 
     this.bindEvents();
@@ -127,6 +127,12 @@ export abstract class BaseTool {
       const revision = this.revision;
       setTimeout(() => {
         if (revision !== this.revision || !this.layerManager.hasFeature(feature)) return;
+        if (this.config.continuousDraw) {
+          this.selectManager.clearSelection();
+          return;
+        }
+        this.drawManager.setActive(false);
+        if (!this.config.autoEdit) return;
         this.activeFeature = feature;
         // 绘制完成后自动选中刚画的要素：显示其顶点节点、Modify 跟随、进入编辑态
         this.selectManager.selectFeature(feature);
@@ -142,6 +148,7 @@ export abstract class BaseTool {
     this.eventBus.on(DrawEvent.DESELECT, () => {
       this.activeFeature = null;
       this.state = ToolState.Drawing;
+      this.drawManager.setActive(true);
       this.cursorManager.setActive(false);
     });
 

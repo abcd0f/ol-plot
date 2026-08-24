@@ -1,6 +1,10 @@
 import type { ResolvedPlotConfig } from '../types/config';
 
 export const DEFAULT_CONFIG: ResolvedPlotConfig = {
+  /** 绘制完成后是否自动进入编辑态 */
+  autoEdit: true,
+  /** 绘制完成后是否继续使用当前绘画工具 */
+  continuousDraw: false,
   /** 线颜色 */
   strokeColor: '#2196f3',
   /** 线宽度 */

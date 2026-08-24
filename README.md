@@ -1,6 +1,6 @@
 # ol-plot
 
-基于 OpenLayers 的矢量图形标绘工具库，提供绘制、选择、编辑、删除和测量的一体化交互。工具实例化后会自动进入绘制状态，并在绘制完成后自动选中图形进入编辑状态，适合直接集成到 GIS、地图标注、态势标绘和业务绘图场景中。
+基于 OpenLayers 的矢量图形标绘工具库，提供绘制、选择、编辑、删除和测量的一体化交互。工具实例化后会自动进入绘制状态，并默认在绘制完成后自动选中图形进入编辑状态，适合直接集成到 GIS、地图标注、态势标绘和业务绘图场景中。
 
 ## 特性
 
@@ -96,7 +96,7 @@ plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
 | 操作 | 行为 |
 | --- | --- |
 | 点击空白区域 | 开始绘制新图形 |
-| 完成图形绘制 | 自动选中新图形并进入编辑状态，显示控制点 |
+| 完成图形绘制 | 默认自动选中新图形并进入编辑状态，显示控制点 |
 | 点击已有图形 | 切换选中目标并进入编辑状态 |
 | 拖拽控制点 | 修改图形形状 |
 | 有选中图形时点击空白区域 | 取消选中，保留已绘制图形，并回到绘制状态 |
@@ -194,7 +194,7 @@ tool
 
 ```text
 点击空白开始绘制 -> DRAW_START
-完成绘制         -> DRAW_END -> SELECT
+完成绘制         -> DRAW_END -> SELECT（autoEdit 为 true 时）
 拖拽控制点       -> MODIFY_START -> MODIFY_END
 点击空白取消选中 -> DESELECT
 ```
@@ -203,6 +203,8 @@ tool
 
 ```ts
 interface PlotConfig {
+  autoEdit?: boolean
+  continuousDraw?: boolean
   strokeColor?: string
   strokeWidth?: number
   fillColor?: string
@@ -277,6 +279,8 @@ import { DEFAULT_CONFIG } from '@seedlib/ol-plot'
 
 | 配置项 | 默认值 |
 | --- | --- |
+| `autoEdit` | `true` |
+| `continuousDraw` | `false` |
 | `strokeColor` | `#2196f3` |
 | `strokeWidth` | `2` |
 | `fillColor` | `rgba(33, 150, 243, 0.15)` |
@@ -287,6 +291,8 @@ import { DEFAULT_CONFIG } from '@seedlib/ol-plot'
 | `areaMeasure.unit` | `m` |
 | `flowLine.arrowSpacing` | `48` |
 | `flowLine.speed` | `60` |
+
+`continuousDraw: true` 会在每次绘制完成后继续使用当前绘画工具；`false` 时完成一次绘制后停用绘画交互。是否自动选中并进入编辑状态仍由 `autoEdit` 控制。
 
 ## 图片点示例
 

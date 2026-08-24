@@ -500,6 +500,8 @@ onMounted(() => {
   });
 
   plot = new PlotManager(map, {
+    autoEdit: false,
+    continuousDraw: true,
     strokeColor: '#1677ff',
     strokeWidth: 3,
     fillColor: 'rgba(22, 119, 255, 0.16)',

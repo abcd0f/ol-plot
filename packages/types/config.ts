@@ -76,6 +76,10 @@ export interface AlarmPointStyleConfig {
 }
 
 export interface PlotConfig {
+  /** Whether to enter editing mode after drawing completes. Defaults to true. */
+  autoEdit?: boolean;
+  /** Whether to continue using the active drawing tool after drawing completes. Defaults to false. */
+  continuousDraw?: boolean;
   strokeColor?: string;
   strokeWidth?: number;
   fillColor?: string;

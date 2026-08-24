@@ -36,6 +36,8 @@ onMounted(() => {
   });
 
   tool = new DoubleArrowTool(map, {
+    continuousDraw: false,
+    autoEdit: false,
     strokeColor: '#722ed1',
     strokeWidth: 2,
     fillColor: 'rgba(114,46,209,0.1)',

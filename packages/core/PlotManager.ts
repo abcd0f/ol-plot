@@ -179,7 +179,7 @@ export class PlotManager {
         this.eventBus,
         this.activeDrawType,
         (feature, resolution) => this.activeDrawStyle(feature, resolution),
-        () => this.selectManager.isEmpty(),
+        () => this.config.continuousDraw || this.selectManager.isEmpty(),
       );
     }
 
@@ -424,6 +424,12 @@ export class PlotManager {
 
       setTimeout(() => {
         if (revision !== this.revision || !this.layerManager.hasFeature(feature)) return;
+        if (this.config.continuousDraw) {
+          this.selectManager.clearSelection();
+          return;
+        }
+        this.drawManager?.setActive(false);
+        if (!this.config.autoEdit) return;
         this.activeFeature = feature;
         this.selectManager.selectFeature(feature);
       }, 0);
@@ -439,6 +445,7 @@ export class PlotManager {
     this.eventBus.on(DrawEvent.DESELECT, () => {
       this.activeFeature = null;
       this.state = this.activeDrawType ? ToolState.Drawing : ToolState.Idle;
+      this.drawManager?.setActive(true);
       this.handleManager.hide();
       this.handleManager.handleModify.setActive(false);
       this.modifyManager.setActive(false);
