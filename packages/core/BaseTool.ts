@@ -6,13 +6,13 @@ import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotFeatureData, PlotRestoreOptions } from '../types/data';
 import { DrawType } from '../constants/drawType';
 import { ToolState } from '../constants/toolState';
-import { DrawEvent } from '../constants/events';
 import { EventBus } from './EventBus';
 import { LayerManager } from './LayerManager';
 import { DrawManager } from './DrawManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
 import { CursorManager } from './CursorManager';
+import { PlotRuntime } from './PlotRuntime';
 import { mergeConfig, mergeRuntimeConfig } from '../constants';
 import { buildFeatureStyle } from '../style/feature';
 import { buildDrawStyle } from '../style/draw';
@@ -26,7 +26,6 @@ import {
   serializeFeature,
   setFeatureStyleData,
 } from '../utils/data';
-import { isEditableTarget } from '../utils/keyboard';
 
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。
@@ -42,8 +41,7 @@ import { isEditableTarget } from '../utils/keyboard';
  * 选中并进入编辑 → 点击其它要素切换选中 → 点空白取消选中并保留内容 → 无选中时点
  * 空白直接重新绘制。
  *
- * 三个 interaction 始终处于激活状态，通过 Draw 的 `condition` 与添加顺序（Draw 最后
- * 添加 → 优先级最高）保证同一次点击只被一个 interaction 真正处理，避免相互冲突。
+ * Draw / Select / Modify 的启停和编辑模式由共享运行时统一协调。
  */
 export abstract class BaseTool {
   /**  */
@@ -62,8 +60,7 @@ export abstract class BaseTool {
   /** 当前内部状态，由生命周期自动维护 */
   protected state: ToolState = ToolState.Idle;
 
-  private handleKeyDown: (e: KeyboardEvent) => void;
-  private revision = 0;
+  protected runtime: PlotRuntime;
   private drawStyle: StyleFunction;
   private eventWrappers = new globalThis.Map<
     string,
@@ -83,96 +80,28 @@ export abstract class BaseTool {
     this.config = mergeConfig(config);
     this.drawStyle = buildDrawStyle(this.config);
 
-    this.eventBus = new EventBus();
-    this.layerManager = new LayerManager(map, buildFeatureStyle(this.config));
-
-    // 创建顺序即添加顺序：Select → Modify → Draw。
-    // Draw 最后添加，因此事件处理优先级最高，能在 Select 之前评估 condition，
-    // 读取到本次点击「尚未被清空」的选中状态，从而正确协调起笔与取消选中。
-    this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
-    this.modifyManager = new ModifyManager(map, this.selectManager.getSelectedFeatures(), this.config, this.eventBus);
-    this.cursorManager = new CursorManager(
+    this.runtime = new PlotRuntime({
       map,
-      () => [this.modifyManager.getOverlayLayer()],
-      8,
-      () => [this.layerManager.getLayer()],
-    );
-    this.drawManager = new DrawManager(
-      map,
-      this.layerManager.getLayer(),
-      this.eventBus,
       drawType,
-      (feature, resolution) => this.drawStyle(feature, resolution),
-      () => this.selectManager.isEmpty(),
-      this.config,
-    );
-
-    this.bindEvents();
-
-    this.handleKeyDown = (e: KeyboardEvent) => {
-      if (isEditableTarget(e.target)) return;
-      if ((e.key === 'Delete' || e.key === 'Backspace') && this.activeFeature) {
-        this.deleteActiveFeature();
-      }
-    };
-    document.addEventListener('keydown', this.handleKeyDown);
-
-    // 自动激活：进入绘制态，业务层无需调用任何方法
-    this.state = ToolState.Drawing;
-  }
-
-  /**
-   * 绑定生命周期事件，驱动状态机自动流转。
-   *
-   * - 绘制完成（DRAW_END）：自动选中刚创建的要素并进入编辑态。
-   * - 选中要素（SELECT）：进入编辑态（Select 已保证单选，自动取消旧选中）。
-   * - 取消选中（DESELECT）：回到绘制态，保留已绘制内容。
-   */
-  private bindEvents(): void {
-    this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      const revision = this.revision;
-      setTimeout(() => {
-        if (revision !== this.revision || !this.layerManager.hasFeature(feature)) return;
+      config: this.config,
+      featureStyle: buildFeatureStyle(this.config),
+      drawStyle: (feature, resolution) => this.drawStyle(feature, resolution),
+      onActiveFeatureChange: (feature) => {
         this.activeFeature = feature;
-        // 绘制完成后自动选中刚画的要素：显示其顶点节点、Modify 跟随、进入编辑态
-        this.selectManager.selectFeature(feature);
-      }, 0);
+      },
+      onStateChange: (state) => {
+        this.state = state;
+      },
     });
-
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      this.activeFeature = feature;
-      this.state = ToolState.Editing;
-      this.cursorManager.setActive(true);
-    });
-
-    this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.activeFeature = null;
-      this.state = ToolState.Drawing;
-      this.cursorManager.setActive(false);
-    });
-
-    this.eventBus.on(DrawEvent.MODIFY_START, () => {
-      this.cursorManager.setDragging(true);
-    });
-
-    this.eventBus.on(DrawEvent.MODIFY_END, () => {
-      this.cursorManager.setDragging(false);
-    });
+    this.eventBus = this.runtime.eventBus;
+    this.layerManager = this.runtime.layerManager;
+    this.drawManager = this.runtime.drawManager!;
+    this.selectManager = this.runtime.selectManager;
+    this.modifyManager = this.runtime.modifyManager;
+    this.cursorManager = this.runtime.cursorManager;
   }
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  /**
-   * 删除当前选中的要素
-   */
-  private deleteActiveFeature(): void {
-    const feature = this.activeFeature!;
-    this.revision += 1;
-    this.selectManager.clearSelection();
-    this.cursorManager.setActive(false);
-    this.layerManager.removeFeature(feature);
-    this.eventBus.emit(DrawEvent.DELETE, { feature });
-  }
 
   /**
    * 获取当前内部状态（只读）。生命周期由工具自动维护，业务层一般无需关心。
@@ -210,17 +139,8 @@ export abstract class BaseTool {
    * 清理所有管理器和事件监听器
    */
   destroy(): void {
-    this.revision += 1;
-    document.removeEventListener('keydown', this.handleKeyDown);
-    this.cursorManager.destroy();
-    this.drawManager.destroy();
-    this.selectManager.destroy();
-    this.modifyManager.destroy();
-    this.layerManager.destroy();
-    this.eventBus.clear();
+    this.runtime.destroy();
     this.eventWrappers.clear();
-    this.activeFeature = null;
-    this.state = ToolState.Idle;
   }
 
   // ─── Load from data ───────────────────────────────────────────────────────
@@ -231,7 +151,7 @@ export abstract class BaseTool {
    * @returns 返回创建的要素对象
    */
   protected createFeature(coordinates: number[][]): Feature {
-    this.revision += 1;
+    this.runtime.bumpRevision();
     const feature = new Feature({ geometry: this.createGeometry(coordinates) });
     this.layerManager.appendFeature(feature);
     return feature;
@@ -318,13 +238,7 @@ export abstract class BaseTool {
    * @returns 返回当前实例以支持链式调用
    */
   clearFeatures(): this {
-    this.revision += 1;
-    this.drawManager.abortDrawing();
-    this.selectManager.clearSelection();
-    this.activeFeature = null;
-    this.cursorManager.setActive(false);
-    this.layerManager.clear();
-    this.state = ToolState.Drawing;
+    this.runtime.clearFeatures();
     return this;
   }
 

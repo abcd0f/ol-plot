@@ -1,6 +1,10 @@
 export { BaseTool } from './core/BaseTool';
 export { EventBus } from './core/EventBus';
 export { LayerManager } from './core/LayerManager';
+export { FeatureStore } from './core/FeatureStore';
+export { InteractionCoordinator } from './core/InteractionCoordinator';
+export { EditorController } from './core/EditorController';
+export { PlotRuntime } from './core/PlotRuntime';
 export { DrawManager } from './core/DrawManager';
 export { SelectManager } from './core/SelectManager';
 export { ModifyManager } from './core/ModifyManager';
@@ -32,6 +36,7 @@ export { AreaMeasureTool } from './tools/AreaMeasureTool';
 
 export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';
 export type { DrawEventType } from './constants';
+export type { RuntimeState, EditMode, EditorAdapter } from './types/runtime';
 export type {
   PlotConfig,
   MeasurePlotConfig,

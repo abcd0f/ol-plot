@@ -31,8 +31,8 @@ import { EventBus } from './EventBus';
 import { LayerManager } from './LayerManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
-import { DrawManager } from './DrawManager';
 import { CursorManager } from './CursorManager';
+import { PlotRuntime } from './PlotRuntime';
 import { HandleManager } from '../helper/handle';
 import { MeasureManager } from '../helper/measure';
 import { AreaMeasureManager } from '../helper/areaMeasure';
@@ -55,7 +55,6 @@ import {
   serializeFeature,
   setFeatureStyleData,
 } from '../utils/data';
-import { isEditableTarget } from '../utils/keyboard';
 import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
 import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
 import { buildAzimuthGeometries } from '../geometry/azimuth';
@@ -87,6 +86,7 @@ export class PlotManager {
   protected selectManager: SelectManager;
   protected modifyManager: ModifyManager;
   protected cursorManager: CursorManager;
+  protected runtime: PlotRuntime;
   protected handleManager: HandleManager;
   protected measureManager: MeasureManager;
   protected areaMeasureManager: AreaMeasureManager;
@@ -95,9 +95,6 @@ export class PlotManager {
   protected activeDrawType: DrawType | null = null;
   protected state: ToolState = ToolState.Idle;
 
-  private drawManager: DrawManager | null = null;
-  private handleKeyDown: (e: KeyboardEvent) => void;
-  private revision = 0;
   private eventWrappers = new globalThis.Map<
     string,
     globalThis.Map<(...args: any[]) => void, (...args: any[]) => void>
@@ -116,40 +113,57 @@ export class PlotManager {
   constructor(map: Map, config?: PlotManagerConfig) {
     this.map = map;
     this.config = mergeConfig(config);
-    this.eventBus = new EventBus();
-
     this.imageConfig = resolveImageConfig(config?.image);
-
-    this.layerManager = new LayerManager(map, this.createLayerStyle());
-    this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
+    this.activeDrawStyle = buildDrawStyle(this.config);
+    this.runtime = new PlotRuntime({
+      map,
+      config: this.config,
+      featureStyle: this.createLayerStyle(),
+      drawStyle: (feature, resolution) => this.activeDrawStyle(feature, resolution),
+      prepareDrawnFeature: (feature, drawType) => {
+        this.prepareFeature(feature, drawType);
+        if (drawType === DrawType.FlowLine || drawType === DrawType.AlarmPoint) this.ensureAnimation();
+      },
+      onActiveFeatureChange: (feature) => {
+        this.activeFeature = feature;
+      },
+      onStateChange: (state) => {
+        this.state = state;
+      },
+    });
+    this.eventBus = this.runtime.eventBus;
+    this.layerManager = this.runtime.layerManager;
+    this.selectManager = this.runtime.selectManager;
+    this.modifyManager = this.runtime.modifyManager;
+    this.cursorManager = this.runtime.cursorManager;
     this.selectManager.setStyle(this.createSelectStyle());
-    this.modifyManager = new ModifyManager(map, this.selectManager.getSelectedFeatures(), this.config, this.eventBus);
     this.modifyManager.setStyle(this.createModifyStyle());
-    this.modifyManager.setActive(false);
 
     this.handleManager = new HandleManager(map, this.eventBus, this.config, (controlPoints) =>
-      this.syncHandleGeometry(controlPoints),
+      this.runtime.editorController.updateControlPoints(controlPoints),
     );
-    this.handleManager.handleModify.setActive(false);
     this.handleManager.handleModify.on('modifystart', (event) => {
       const feature = event.features.item(0);
       this.draggingHandleIndex = feature?.get('_handleIndex') ?? null;
     });
     this.handleManager.handleModify.on('modifyend', () => {
-      if (this.isActiveFeatureHandleBased()) {
-        this.eventBus.emit(DrawEvent.MODIFY_END, {
-          features: this.activeFeature ? [this.activeFeature] : [],
-        });
-      }
       this.draggingHandleIndex = null;
     });
-
-    this.cursorManager = new CursorManager(
-      map,
-      () => [this.modifyManager.getOverlayLayer()],
-      8,
-      () => [this.layerManager.getLayer()],
-    );
+    this.runtime.configureHandleEditor({
+      interaction: this.handleManager.handleModify,
+      layer: this.handleManager.handleLayer,
+      getEditMode: (feature) => (this.isFeatureHandleBased(feature) ? 'handles' : 'feature'),
+      getControlPoints: (feature) => this.extractCoordinates(feature),
+      updateControlPoints: (_feature, controlPoints) => this.syncHandleGeometry(controlPoints),
+      show: (controlPoints, feature) => {
+        const styleData = getFeatureStyleData(feature);
+        if (styleData) this.handleManager.setStyleConfig(mergeRuntimeConfig(this.config, styleData));
+        else this.handleManager.setStyleConfig(this.config);
+        this.handleManager.show(controlPoints);
+      },
+      hide: () => this.handleManager.hide(),
+      destroy: () => this.handleManager.destroy(),
+    });
     this.measureManager = new MeasureManager(
       map,
       this.eventBus,
@@ -169,38 +183,16 @@ export class PlotManager {
       (feature, drawType) => this.getFeatureDrawType(feature, drawType) === DrawType.Azimuth,
     );
 
-    this.bindEvents();
-
-    this.handleKeyDown = (e: KeyboardEvent) => {
-      if (isEditableTarget(e.target)) return;
-      if ((e.key === 'Delete' || e.key === 'Backspace') && this.activeFeature) {
-        this.deleteActiveFeature();
-      }
-    };
-    document.addEventListener('keydown', this.handleKeyDown);
+    this.bindManagerEvents();
   }
 
   setActiveTool(drawType: PlotDrawType | null): this {
-    this.revision += 1;
-    this.drawManager?.abortDrawing();
-    this.drawManager?.destroy();
-    this.drawManager = null;
-    this.selectManager.clearSelection();
     this.activeDrawType = drawType ? this.normalizeDrawType(drawType) : null;
-    this.state = this.activeDrawType ? ToolState.Drawing : ToolState.Idle;
-
-    if (this.activeDrawType) {
-      this.activeDrawStyle = buildDrawStyle(this.config);
-      this.drawManager = new DrawManager(
-        this.map,
-        this.layerManager.getLayer(),
-        this.eventBus,
-        this.activeDrawType,
-        (feature, resolution) => this.activeDrawStyle(feature, resolution),
-        () => this.selectManager.isEmpty(),
-        this.config,
-      );
-    }
+    this.activeDrawStyle = buildDrawStyle(this.config);
+    this.runtime.setDrawTool(
+      this.activeDrawType,
+      this.activeDrawType ? (feature, resolution) => this.activeDrawStyle(feature, resolution) : undefined,
+    );
 
     return this;
   }
@@ -354,41 +346,22 @@ export class PlotManager {
   }
 
   clearFeatures(): this {
-    this.revision += 1;
-    this.drawManager?.abortDrawing();
-    this.selectManager.clearSelection();
     this.measureManager.clear();
     this.areaMeasureManager.clear();
     this.azimuthManager.clear();
-    this.activeFeature = null;
-    this.handleManager.hide();
-    this.handleManager.handleModify.setActive(false);
-    this.modifyManager.setActive(false);
-    this.cursorManager.setActive(false);
-    this.layerManager.clear();
+    this.runtime.clearFeatures();
     this.stopAnimation();
-    this.state = this.activeDrawType ? ToolState.Drawing : ToolState.Idle;
     return this;
   }
 
   destroy(): void {
-    this.revision += 1;
-    document.removeEventListener('keydown', this.handleKeyDown);
     this.stopAnimation();
-    this.drawManager?.destroy();
-    this.cursorManager.destroy();
-    this.handleManager.destroy();
-    this.selectManager.destroy();
-    this.modifyManager.destroy();
     this.measureManager.destroy();
     this.areaMeasureManager.destroy();
     this.azimuthManager.destroy();
-    this.layerManager.destroy();
-    this.eventBus.clear();
+    this.runtime.destroy();
     this.eventWrappers.clear();
-    this.activeFeature = null;
     this.activeDrawType = null;
-    this.state = ToolState.Idle;
   }
 
   on(event: string, handler: (...args: any[]) => void): this {
@@ -461,43 +434,8 @@ export class PlotManager {
     this.layerManager.getLayer().changed();
   }
 
-  private bindEvents(): void {
-    this.eventBus.on(DrawEvent.DRAW_END, ({ feature, drawType }: { feature: Feature; drawType: DrawType }) => {
-      const revision = this.revision;
-      const normalizedType = this.normalizeDrawType(drawType);
-      this.prepareFeature(feature, normalizedType);
-      if (normalizedType === DrawType.FlowLine || normalizedType === DrawType.AlarmPoint) this.ensureAnimation();
-
-      setTimeout(() => {
-        if (revision !== this.revision || !this.layerManager.hasFeature(feature)) return;
-        this.activeFeature = feature;
-        this.selectManager.selectFeature(feature);
-      }, 0);
-    });
-
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      this.activeFeature = feature;
-      this.state = ToolState.Editing;
-      this.syncEditMode(feature);
-      this.cursorManager.setActive(true);
-    });
-
-    this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.activeFeature = null;
-      this.state = this.activeDrawType ? ToolState.Drawing : ToolState.Idle;
-      this.handleManager.hide();
-      this.handleManager.handleModify.setActive(false);
-      this.modifyManager.setActive(false);
-      this.cursorManager.setActive(false);
-    });
-
-    this.eventBus.on(DrawEvent.MODIFY_START, () => {
-      this.cursorManager.setDragging(true);
-    });
-
-    this.eventBus.on(DrawEvent.MODIFY_END, () => {
-      this.cursorManager.setDragging(false);
-    });
+  private bindManagerEvents(): void {
+    this.eventBus.on(DrawEvent.DELETE, () => this.updateAnimationState());
   }
 
   private createFeature(drawType: DrawType, coordinates: number[][]): Feature {
@@ -747,39 +685,6 @@ export class PlotManager {
     }
 
     this.updateFeatureGeometry(this.activeFeature, drawType, controlPoints);
-  }
-
-  private syncEditMode(feature: Feature): void {
-    const plotType = feature.get('plotType') as string | undefined;
-    const isHandleBased = !!plotType && HANDLE_PLOT_TYPES.has(plotType);
-
-    if (isHandleBased) {
-      const controlPoints = this.extractCoordinates(feature);
-      this.modifyManager.setActive(false);
-      const drawType = this.getFeatureDrawType(feature);
-      const styleData = getFeatureStyleData(feature);
-      if (drawType && styleData) this.handleManager.setStyleConfig(mergeRuntimeConfig(this.config, styleData));
-      else this.handleManager.setStyleConfig(this.config);
-      this.handleManager.show(controlPoints);
-      this.handleManager.handleModify.setActive(true);
-      this.cursorManager.setEditableLayers(() => [this.handleManager.handleLayer]);
-      return;
-    }
-
-    this.handleManager.hide();
-    this.handleManager.handleModify.setActive(false);
-    this.modifyManager.setActive(true);
-    this.cursorManager.setEditableLayers(() => [this.modifyManager.getOverlayLayer()]);
-  }
-
-  private deleteActiveFeature(): void {
-    const feature = this.activeFeature!;
-    this.revision += 1;
-    this.selectManager.clearSelection();
-    this.cursorManager.setActive(false);
-    this.layerManager.removeFeature(feature);
-    this.eventBus.emit(DrawEvent.DELETE, { feature });
-    this.updateAnimationState();
   }
 
   private attachFeatureRuntime(feature: Feature, drawType: DrawType): void {
@@ -1103,8 +1008,8 @@ export class PlotManager {
     this.phase = 0;
   }
 
-  private isActiveFeatureHandleBased(): boolean {
-    const plotType = this.activeFeature?.get('plotType') as string | undefined;
+  private isFeatureHandleBased(feature: Feature): boolean {
+    const plotType = feature.get('plotType') as string | undefined;
     return !!plotType && HANDLE_PLOT_TYPES.has(plotType);
   }
 

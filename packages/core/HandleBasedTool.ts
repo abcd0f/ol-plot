@@ -1,9 +1,7 @@
 import Map from 'ol/Map';
-import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { InternalPlotConfig } from '../types/config';
 import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
 import { mergeRuntimeConfig } from '../constants';
 import { getFeatureStyleData } from '../utils/data';
 import { BaseTool } from './BaseTool';
@@ -15,19 +13,24 @@ export abstract class HandleBasedTool extends BaseTool {
   constructor(map: Map, drawType: DrawType, config?: InternalPlotConfig) {
     super(map, drawType, config);
 
-    this.modifyManager.setActive(false);
     this.handleManager = new HandleManager(map, this.eventBus, this.config, (controlPoints: number[][]) =>
-      this.onHandleSync(controlPoints),
+      this.runtime.editorController.updateControlPoints(controlPoints),
     );
-    this.cursorManager.setEditableLayers(() => [this.handleManager.handleLayer]);
-
-    this.handleManager.handleModify.on('modifyend', () => {
-      this.eventBus.emit(DrawEvent.MODIFY_END, {
-        features: this.activeFeature ? [this.activeFeature] : [],
-      });
+    this.runtime.configureHandleEditor({
+      interaction: this.handleManager.handleModify,
+      layer: this.handleManager.handleLayer,
+      getControlPoints: (feature) => (feature.get('controlPoints') as number[][] | undefined) ?? [],
+      updateControlPoints: (_feature, controlPoints) => this.onHandleSync(controlPoints),
+      prepareFeature: (feature) => {
+        const geom = feature.getGeometry()!;
+        const controlPoints = this.normalizeControlPoints(this.extractControlPoints(geom));
+        feature.set('plotType', this.getPlotType());
+        feature.set('controlPoints', controlPoints);
+      },
+      show: (controlPoints) => this.handleManager.show(controlPoints),
+      hide: () => this.handleManager.hide(),
+      destroy: () => this.handleManager.destroy(),
     });
-
-    this.bindHandleEvents();
   }
 
   protected abstract getPlotType(): string;
@@ -55,28 +58,4 @@ export abstract class HandleBasedTool extends BaseTool {
     if (styleData) this.handleManager?.setStyleConfig(mergeRuntimeConfig(this.config, styleData));
   }
 
-  destroy(): void {
-    this.handleManager.destroy();
-    super.destroy();
-  }
-
-  private bindHandleEvents(): void {
-    this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      const geom = feature.getGeometry()!;
-      const rawPoints = this.extractControlPoints(geom);
-      const controlPoints = this.normalizeControlPoints(rawPoints);
-
-      feature.set('plotType', this.getPlotType());
-      feature.set('controlPoints', controlPoints);
-    });
-
-    this.eventBus.on(DrawEvent.SELECT, ({ feature }: { feature: Feature }) => {
-      const controlPoints = feature.get('controlPoints') as number[][] | undefined;
-      this.handleManager.show(controlPoints);
-    });
-
-    this.eventBus.on(DrawEvent.DESELECT, () => {
-      this.handleManager.hide();
-    });
-  }
 }

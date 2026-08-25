@@ -28,7 +28,13 @@ export class SelectManager {
    * @param config 绘制配置对象
    * @param eventBus 事件总线实例
    */
-  constructor(map: Map, layer: VectorLayer, config: ResolvedPlotConfig, eventBus: EventBus) {
+  constructor(
+    map: Map,
+    layer: VectorLayer,
+    config: ResolvedPlotConfig,
+    eventBus: EventBus,
+    selectedFeatures?: Collection<Feature>,
+  ) {
     this.map = map;
     this.eventBus = eventBus;
 
@@ -39,6 +45,7 @@ export class SelectManager {
       hitTolerance: FEATURE_HIT_TOLERANCE,
       style: buildSelectStyle(config),
       multi: false,
+      features: selectedFeatures,
     });
 
     // 监听选择事件，根据选中或取消选中的要素触发相应的事件

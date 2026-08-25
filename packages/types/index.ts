@@ -26,3 +26,4 @@ export type {
   PlotFeatureData,
   PlotRestoreOptions,
 } from './data';
+export type { RuntimeState, EditMode, EditorAdapter } from './runtime';
