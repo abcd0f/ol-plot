@@ -11,3 +11,4 @@ catalog:
   prettier: ^3.8.3
   tsdown: ^0.22.2
   typescript: ^6.0.3
+  vitest: ^4.1.11

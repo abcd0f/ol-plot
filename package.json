@@ -21,6 +21,8 @@
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "format:write": "prettier --write \"src/**/*.{ts,js}\"",
     "clean": "node ./scripts/clean.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "pub": "npm publish --access public"
   },
   "keywords": [
@@ -50,6 +52,7 @@
     "eslint": "catalog:",
     "prettier": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
