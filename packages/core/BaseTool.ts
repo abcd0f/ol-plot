@@ -91,7 +91,12 @@ export abstract class BaseTool {
     // 读取到本次点击「尚未被清空」的选中状态，从而正确协调起笔与取消选中。
     this.selectManager = new SelectManager(map, this.layerManager.getLayer(), this.config, this.eventBus);
     this.modifyManager = new ModifyManager(map, this.selectManager.getSelectedFeatures(), this.config, this.eventBus);
-    this.cursorManager = new CursorManager(map, () => [this.modifyManager.getOverlayLayer()]);
+    this.cursorManager = new CursorManager(
+      map,
+      () => [this.modifyManager.getOverlayLayer()],
+      8,
+      () => [this.layerManager.getLayer()],
+    );
     this.drawManager = new DrawManager(
       map,
       this.layerManager.getLayer(),

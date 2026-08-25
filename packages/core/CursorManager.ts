@@ -7,12 +7,11 @@ import { unByKey } from 'ol/Observable';
 
 type EditableLayerProvider = () => BaseLayer[];
 
-/**
- * Updates the map cursor when editable handles are hovered.
- */
+/** Updates the map cursor and hint for selectable features and editable handles. */
 export class CursorManager {
   private map: Map;
   private getEditableLayers: EditableLayerProvider;
+  private getSelectableLayers: EditableLayerProvider;
   private pointerMoveKey: EventsKey;
   private active = false;
   private dragging = false;
@@ -21,22 +20,46 @@ export class CursorManager {
   private hitTolerance: number;
   private pendingPixel: Pixel | null = null;
   private hitTestFrame: number | null = null;
+  private hint: HTMLDivElement;
 
-  constructor(map: Map, getEditableLayers: EditableLayerProvider, hitTolerance = 8) {
+  constructor(
+    map: Map,
+    getEditableLayers: EditableLayerProvider,
+    hitTolerance = 8,
+    getSelectableLayers: EditableLayerProvider = () => [],
+  ) {
     this.map = map;
     this.getEditableLayers = getEditableLayers;
+    this.getSelectableLayers = getSelectableLayers;
     this.hitTolerance = hitTolerance;
+
+    this.hint = document.createElement('div');
+    this.hint.textContent = '点击进入编辑';
+    Object.assign(this.hint.style, {
+      position: 'absolute',
+      zIndex: '1',
+      display: 'none',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      background: 'rgba(0, 0, 0, 0.72)',
+      color: '#fff',
+      fontSize: '12px',
+      lineHeight: '1.4',
+      whiteSpace: 'nowrap',
+      pointerEvents: 'none',
+      transform: 'translate(10px, 10px)',
+    });
+    this.map.getViewport().appendChild(this.hint);
 
     this.pointerMoveKey = this.map.on('pointermove', (e) => this.handlePointerMove(e as any));
   }
 
   setActive(active: boolean): void {
     this.active = active;
-    if (!active) {
-      this.dragging = false;
-      this.cancelPendingHitTest();
-      this.restoreCursor();
-    }
+    if (!active) this.dragging = false;
+    this.cancelPendingHitTest();
+    this.restoreCursor();
+    this.hideHint();
   }
 
   setDragging(dragging: boolean): void {
@@ -59,11 +82,16 @@ export class CursorManager {
     unByKey(this.pointerMoveKey);
     this.cancelPendingHitTest();
     this.restoreCursor();
+    this.hint.remove();
   }
 
   private handlePointerMove(e: MapBrowserEvent<PointerEvent>): void {
-    if (!this.active || this.dragging) {
+    if (e.dragging || this.dragging) {
       this.cancelPendingHitTest();
+      if (!this.dragging) {
+        this.restoreCursor();
+        this.hideHint();
+      }
       return;
     }
 
@@ -74,16 +102,28 @@ export class CursorManager {
       this.hitTestFrame = null;
       const pixel = this.pendingPixel;
       this.pendingPixel = null;
-      if (!this.active || this.dragging || !pixel) return;
+      if (this.dragging || !pixel) return;
       this.updateCursorForPixel(pixel);
     });
   }
 
   private updateCursorForPixel(pixel: Pixel): void {
-    if (this.isOverEditablePoint(pixel)) {
-      this.applyCursor('grab');
+    if (this.active) {
+      if (this.isOverEditablePoint(pixel)) {
+        this.applyCursor('grab');
+      } else {
+        this.restoreCursor();
+      }
+      this.hideHint();
+      return;
+    }
+
+    if (this.isOverSelectableFeature(pixel)) {
+      this.applyCursor('pointer');
+      this.showHint(pixel);
     } else {
       this.restoreCursor();
+      this.hideHint();
     }
   }
 
@@ -104,6 +144,28 @@ export class CursorManager {
         layerFilter: (layer) => editableLayers.includes(layer),
       }) === true
     );
+  }
+
+  private isOverSelectableFeature(pixel: Pixel): boolean {
+    const selectableLayers = this.getSelectableLayers();
+    if (selectableLayers.length === 0) return false;
+
+    return (
+      this.map.forEachFeatureAtPixel(pixel, () => true, {
+        hitTolerance: this.hitTolerance,
+        layerFilter: (layer) => selectableLayers.includes(layer),
+      }) === true
+    );
+  }
+
+  private showHint(pixel: Pixel): void {
+    this.hint.style.left = `${pixel[0]}px`;
+    this.hint.style.top = `${pixel[1]}px`;
+    this.hint.style.display = 'block';
+  }
+
+  private hideHint(): void {
+    this.hint.style.display = 'none';
   }
 
   private applyCursor(cursor: string): void {

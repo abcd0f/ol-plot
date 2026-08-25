@@ -19,6 +19,7 @@ import { createAzimuthGeometryFunction } from '../geometry/azimuth';
 import { createRangeRingsGeometryFunction } from '../geometry/rangeRings';
 import type { ResolvedPlotConfig } from '../types/config';
 import { ClickFreehandDraw } from './ClickFreehandDraw';
+import { FEATURE_HIT_TOLERANCE } from './SelectManager';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
@@ -194,6 +195,7 @@ export class DrawManager {
     if (!this.canStartDraw()) return false;
     const overFeature =
       this.map.forEachFeatureAtPixel(e.pixel, () => true, {
+        hitTolerance: FEATURE_HIT_TOLERANCE,
         layerFilter: (l) => l === this.layer,
       }) === true;
     return !overFeature;

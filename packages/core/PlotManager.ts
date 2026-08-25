@@ -144,7 +144,12 @@ export class PlotManager {
       this.draggingHandleIndex = null;
     });
 
-    this.cursorManager = new CursorManager(map, () => [this.modifyManager.getOverlayLayer()]);
+    this.cursorManager = new CursorManager(
+      map,
+      () => [this.modifyManager.getOverlayLayer()],
+      8,
+      () => [this.layerManager.getLayer()],
+    );
     this.measureManager = new MeasureManager(
       map,
       this.eventBus,

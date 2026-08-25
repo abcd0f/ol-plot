@@ -10,6 +10,9 @@ import type { ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import { buildSelectStyle } from '../style/select';
 
+/** Allow narrow line features to be selected without hitting the exact stroke. */
+export const FEATURE_HIT_TOLERANCE = 8;
+
 /**
  * 选择管理器类，用于处理地图要素的选择交互
  */
@@ -33,6 +36,7 @@ export class SelectManager {
     this.select = new Select({
       layers: [layer],
       condition: click,
+      hitTolerance: FEATURE_HIT_TOLERANCE,
       style: buildSelectStyle(config),
       multi: false,
     });
