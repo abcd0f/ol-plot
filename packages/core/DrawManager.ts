@@ -15,6 +15,7 @@ import { createArcGeometryFunction } from '../geometry/arc';
 import { createFlagGeometryFunction } from '../geometry/flag';
 import { createRectangleGeometryFunction } from '../geometry/rectangle';
 import { createSectorGeometryFunction } from '../geometry/sector';
+import { createAzimuthGeometryFunction } from '../geometry/azimuth';
 import { ClickFreehandDraw } from './ClickFreehandDraw';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
@@ -108,6 +109,10 @@ export class DrawManager {
       type = 'LineString';
       geometryFunction = createSectorGeometryFunction() as unknown as GeometryFunction;
       maxPoints = 3;
+    } else if (drawType === DrawType.Azimuth) {
+      type = 'LineString';
+      geometryFunction = createAzimuthGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 2;
     } else if (drawType === DrawType.FlowLine) {
       type = 'LineString';
     } else if (drawType === DrawType.FreehandLine) {

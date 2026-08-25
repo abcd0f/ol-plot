@@ -238,6 +238,7 @@ const tools: ToolItem[] = [
   { label: '多边形', type: DrawType.Polygon },
   { label: '矩形', type: DrawType.Rectangle },
   { label: '圆', type: DrawType.Circle },
+  { label: '方位角', type: DrawType.Azimuth },
   { label: '椭圆', type: DrawType.Ellipse },
   { label: '扇形', type: DrawType.Sector },
   { label: '直箭头', type: DrawType.StraightArrow },

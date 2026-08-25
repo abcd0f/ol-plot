@@ -44,7 +44,7 @@ function extractVertices(feature: Feature): number[][] {
     }
     case 'GeometryCollection': {
       const plotType = (feature as Feature).get('plotType');
-      if (plotType === 'lineArrow') {
+      if (plotType === 'lineArrow' || plotType === 'azimuth') {
         return (feature as Feature).get('controlPoints') || [];
       }
       return [];

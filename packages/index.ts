@@ -26,6 +26,7 @@ export { DoubleArrowTool } from './tools/DoubleArrowTool';
 export { ArcTool } from './tools/ArcTool';
 export { FlagTool } from './tools/FlagTool';
 export { MeasureTool } from './tools/MeasureTool';
+export { AzimuthTool } from './tools/AzimuthTool';
 export { AreaMeasureTool } from './tools/AreaMeasureTool';
 
 export { DrawType, ToolState, DEFAULT_CONFIG, DrawEvent } from './constants';

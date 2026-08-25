@@ -36,6 +36,7 @@ import { CursorManager } from './CursorManager';
 import { HandleManager } from '../helper/handle';
 import { MeasureManager } from '../helper/measure';
 import { AreaMeasureManager } from '../helper/areaMeasure';
+import { AzimuthManager } from '../helper/azimuth';
 import { buildRectangle, getRectangleControlPoints } from '../geometry/rectangle';
 import { buildEllipse, getEllipseControlPoints } from '../geometry/ellipse';
 import { buildSector, getSectorControlPoints, normalizeSectorControlPoints } from '../geometry/sector';
@@ -57,6 +58,7 @@ import {
 import { isEditableTarget } from '../utils/keyboard';
 import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
 import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
+import { buildAzimuthGeometries } from '../geometry/azimuth';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
 const HANDLE_PLOT_TYPES = new Set([
@@ -69,6 +71,7 @@ const HANDLE_PLOT_TYPES = new Set([
   'doubleArrow',
   'arc',
   'flag',
+  'azimuth',
 ]);
 
 export type PlotManagerConfig = InternalPlotConfig & Pick<ImagePointConfig, 'image'>;
@@ -84,6 +87,7 @@ export class PlotManager {
   protected handleManager: HandleManager;
   protected measureManager: MeasureManager;
   protected areaMeasureManager: AreaMeasureManager;
+  protected azimuthManager: AzimuthManager;
   protected activeFeature: Feature | null = null;
   protected activeDrawType: DrawType | null = null;
   protected state: ToolState = ToolState.Idle;
@@ -149,6 +153,12 @@ export class PlotManager {
       this.eventBus,
       this.config,
       (feature, drawType) => this.getFeatureDrawType(feature, drawType) === DrawType.AreaMeasure,
+    );
+    this.azimuthManager = new AzimuthManager(
+      map,
+      this.eventBus,
+      this.config,
+      (feature, drawType) => this.getFeatureDrawType(feature, drawType) === DrawType.Azimuth,
     );
 
     this.bindEvents();
@@ -227,6 +237,7 @@ export class PlotManager {
     if (HANDLE_PLOT_TYPES.has(this.getPlotType(drawType))) {
       this.handleManager.setStyleConfig(mergeRuntimeConfig(this.config, styleData));
     }
+    if (drawType === DrawType.Azimuth) this.azimuthManager.setStyleConfig(mergeRuntimeConfig(this.config, styleData));
 
     this.selectManager.setStyle(this.createSelectStyle());
     this.modifyManager.setStyle(this.createModifyStyle());
@@ -315,6 +326,7 @@ export class PlotManager {
     this.selectManager.clearSelection();
     this.measureManager.clear();
     this.areaMeasureManager.clear();
+    this.azimuthManager.clear();
     this.activeFeature = null;
     this.handleManager.hide();
     this.handleManager.handleModify.setActive(false);
@@ -337,6 +349,7 @@ export class PlotManager {
     this.modifyManager.destroy();
     this.measureManager.destroy();
     this.areaMeasureManager.destroy();
+    this.azimuthManager.destroy();
     this.layerManager.destroy();
     this.eventBus.clear();
     this.eventWrappers.clear();
@@ -489,6 +502,12 @@ export class PlotManager {
       case DrawType.FreehandPolygon:
       case DrawType.AreaMeasure:
         return new Polygon([closeRing(coordinates)]);
+      case DrawType.Azimuth: {
+        const points = coordinates.slice(0, 2);
+        const geom = new GeometryCollection(buildAzimuthGeometries(points));
+        geom.set('_controlPoints', points);
+        return geom;
+      }
       case DrawType.Circle:
         return new Circle(coordinates[0], coordinates[1] ? dist(coordinates[0], coordinates[1]) : 0);
       case DrawType.Rectangle:
@@ -546,6 +565,15 @@ export class PlotManager {
       case DrawType.AreaMeasure:
         (geom as Polygon).setCoordinates([closeRing(coordinates)]);
         break;
+      case DrawType.Azimuth: {
+        const points = coordinates.slice(0, 2);
+        const [line, circle] = buildAzimuthGeometries(points);
+        feature.set('controlPoints', points);
+        geom.set('_controlPoints', points);
+        (geom as GeometryCollection).setGeometries([line, circle]);
+        this.handleManager.refresh(points);
+        break;
+      }
       case DrawType.Circle:
         if (coordinates.length >= 2) {
           (geom as Circle).setCenter(coordinates[0]);
@@ -697,6 +725,7 @@ export class PlotManager {
   private attachFeatureRuntime(feature: Feature, drawType: DrawType): void {
     if (drawType === DrawType.Measure) this.measureManager.attachFeature(feature);
     if (drawType === DrawType.AreaMeasure) this.areaMeasureManager.attachFeature(feature);
+    if (drawType === DrawType.Azimuth) this.azimuthManager.attachFeature(feature);
     if (drawType === DrawType.FlowLine || drawType === DrawType.AlarmPoint) this.ensureAnimation();
   }
 
@@ -748,6 +777,8 @@ export class PlotManager {
       }
       case DrawType.Flag:
         return getFlagControlPoints(geom as GeometryCollection);
+      case DrawType.Azimuth:
+        return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
       default:
         return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
     }
@@ -767,6 +798,7 @@ export class PlotManager {
       return controlPoints.slice(0, 2);
     }
     if (drawType === DrawType.Arc) return controlPoints.slice(0, 3);
+    if (drawType === DrawType.Azimuth) return controlPoints.slice(0, 2);
     return controlPoints;
   }
 
@@ -1074,6 +1106,7 @@ const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = {
   [DrawType.Arc]: 'arc',
   [DrawType.Flag]: 'flag',
   [DrawType.Measure]: 'measure',
+  [DrawType.Azimuth]: 'azimuth',
   [DrawType.AreaMeasure]: 'areaMeasure',
 };
 

@@ -19,6 +19,8 @@ export { buildSector, getSectorControlPoints, createSectorGeometryFunction } fro
 
 export { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc';
 
+export { buildAzimuthGeometries, createAzimuthGeometryFunction } from './azimuth';
+
 export {
   buildFlagGeometries,
   getFlagControlPoints,

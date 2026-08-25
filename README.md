@@ -4,7 +4,7 @@
 
 ## 特性
 
-- **工具丰富**：内置点、图片点、折线、流向线、自由线、自由面、多边形、矩形、圆、椭圆、扇形、弧线、旗标、箭头、测距和测面等 19 类工具。
+- **工具丰富**：内置点、图片点、折线、流向线、自由线、自由面、多边形、矩形、圆、椭圆、扇形、弧线、旗标、箭头、方位角、测距和测面等工具。
 - **开箱即用的交互**：自动协调 Draw、Select、Modify 三类 OpenLayers interaction，支持绘制后选中、点击切换选中、拖拽控制点编辑和键盘删除。
 - **统一生命周期**：支持单工具 `BaseTool` 用法，也支持一个 `PlotManager` 管理多类型标绘、事件订阅、要素管理和销毁 API。
 - **灵活样式配置**：支持线色、线宽、虚线、填充色、控制点样式、测量标签样式和流向线动画参数。
@@ -115,6 +115,7 @@ plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
 | `PolygonTool` | `Polygon` | 单击添加顶点，双击或闭合结束 |
 | `RectangleTool` | `Polygon` | 拖拽确定对角点 |
 | `CircleTool` | `Circle` | 拖拽确定圆心和半径 |
+| `AzimuthTool` | `GeometryCollection` | 两点确定方向，显示距离和方位角，并以距离为半径绘制圆 |
 | `EllipseTool` | `Polygon` | 拖拽确定外接矩形 |
 | `SectorTool` | `Polygon` | 依次点击圆心、起始点、结束点 |
 | `ArcTool` | `LineString` | 依次点击起点、终点、弧上点 |
@@ -155,6 +156,7 @@ new XxxTool(map: Map, config?: PlotConfig)
 | `PointTool` / `ImagePointTool` | `getPosition()` |
 | `ImagePointTool` | `updateImageConfig(imageConfig)` |
 | `CircleTool` | `getCenter()`、`getRadius()`、`setCenter(center)`、`setRadius(radius)` |
+| `AzimuthTool` | `getDistance()`、`getAzimuth()` |
 | `RectangleTool` | `getCenter()`、`getWidth()`、`getHeight()` |
 | `EllipseTool` | `getCenter()`、`getRadii()` |
 | `SectorTool` | `getCenter()`、`getRadius()`、`getAngles()` |
@@ -265,7 +267,7 @@ interface ImageConfig {
 }
 ```
 
-普通标绘工具只接收 `PlotConfig`，不会提示 `measure`、`areaMeasure`、`flowLine`；只有 `MeasureTool`、`AreaMeasureTool`、`FlowLineTool` 会分别提示自己的专属配置。
+普通标绘工具只接收 `PlotConfig`，不会提示 `measure`、`areaMeasure`、`flowLine`；`MeasureTool` 与 `AzimuthTool` 使用 `measure` 配置，`AreaMeasureTool`、`FlowLineTool` 使用各自的专属配置。
 
 默认配置从 `DEFAULT_CONFIG` 导出：
 

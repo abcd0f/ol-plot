@@ -208,6 +208,24 @@ const tool = new CircleTool(map)
 
 ---
 
+## 方位角 AzimuthTool
+
+通过两个控制点绘制方向线与等半径圆，并显示距离和真北方位角。
+
+```ts
+import { AzimuthTool } from 'ol-plot'
+const tool = new AzimuthTool(map, { measure: { unit: 'km' } })
+```
+
+`measure.unit` 支持 `m`（米）、`km`（千米）和 `nm`（海里）。
+
+| 方法 | 说明 | 返回值 |
+|------|------|--------|
+| `getDistance()` | 两点地表距离 | `number`（米） |
+| `getAzimuth()` | 真北方位角，顺时针 0°–360° | `number` |
+
+绘制和编辑始终只有两个控制点；点击方向线或圆都可选中并进入编辑模式。
+
 ## 椭圆 EllipseTool
 
 绘制椭圆区域。
@@ -364,6 +382,7 @@ import { DrawType } from 'ol-plot'
 | `DrawType.Polygon` | `'Polygon'` | 多边形 |
 | `DrawType.Rectangle` | `'Rectangle'` | 矩形 |
 | `DrawType.Circle` | `'Circle'` | 圆形 |
+| `DrawType.Azimuth` | `'Azimuth'` | 方位角 |
 | `DrawType.Ellipse` | `'Ellipse'` | 椭圆 |
 | `DrawType.Sector` | `'Sector'` | 扇形 |
 | `DrawType.Arc` | `'Arc'` | 弓形 |
