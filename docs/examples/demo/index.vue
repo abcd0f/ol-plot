@@ -19,6 +19,25 @@
         <button class="action-btn" type="button" @click="exportData">导出</button>
         <button class="action-btn danger" type="button" @click="clearPlot">清空</button>
       </div>
+
+      <div class="behavior-options">
+        <label>
+          <input v-model="behaviorForm.editable" type="checkbox" />
+          <span>允许编辑</span>
+        </label>
+        <label>
+          <input
+            v-model="behaviorForm.autoEditAfterDraw"
+            type="checkbox"
+            :disabled="!behaviorForm.editable || behaviorForm.continuousDraw"
+          />
+          <span>绘制后自动编辑</span>
+        </label>
+        <label>
+          <input v-model="behaviorForm.continuousDraw" type="checkbox" />
+          <span>连续绘制</span>
+        </label>
+      </div>
     </div>
 
     <div class="status-panel">
@@ -285,6 +304,12 @@ const featureCount = ref(0);
 const lastEvent = ref('未开始');
 const syncingStyle = ref(false);
 
+const behaviorForm = reactive({
+  editable: true,
+  autoEditAfterDraw: true,
+  continuousDraw: false,
+});
+
 const styleForm = reactive({
   strokeColor: '#1677ff',
   strokeWidth: 3,
@@ -337,6 +362,12 @@ watch(
   { deep: true },
 );
 
+watch(
+  behaviorForm,
+  () => rebuildPlot(),
+  { deep: true },
+);
+
 function findToolLabel(type: PlotDrawType): string {
   return tools.find((tool) => tool.type === type)?.label ?? String(type);
 }
@@ -366,6 +397,105 @@ function exportData(): void {
   const data = plot?.getPlotData() ?? [];
   lastEvent.value = `导出 ${data.length} 个`;
   console.log('ol-plot data:', data);
+}
+
+function createPlotConfig(): PlotManagerConfig {
+  return {
+    editable: behaviorForm.editable,
+    autoEditAfterDraw: behaviorForm.autoEditAfterDraw,
+    continuousDraw: behaviorForm.continuousDraw,
+    strokeColor: '#1677ff',
+    strokeWidth: 3,
+    fillColor: 'rgba(22, 119, 255, 0.16)',
+    nodeStyle: {
+      radius: 6,
+      fill: '#ffffff',
+      stroke: '#1677ff',
+      strokeWidth: 2,
+    },
+    image: {
+      src: markerSrc,
+      scale: 0.8,
+      anchor: [0.5, 1],
+      label: {
+        text: styleForm.imageLabelText,
+        fontSize: styleForm.imageLabelFontSize,
+        color: styleForm.imageLabelColor,
+      },
+    },
+    flowLine: {
+      arrowColor: '#00b96b',
+      arrowSpacing: 56,
+      speed: 72,
+    },
+    alarm: {
+      color: styleForm.alarmColor,
+      fill: styleForm.alarmColor,
+      stroke: '#ffffff',
+      radius: styleForm.alarmRadius,
+      pulseRadius: styleForm.alarmPulseRadius,
+      duration: styleForm.alarmDuration,
+      rings: styleForm.alarmRings,
+      frameRate: styleForm.alarmFrameRate,
+    },
+    measure: {
+      mode: 'both',
+      unit: 'm',
+    },
+    rangeRings: {
+      spacing: styleForm.rangeSpacing,
+      unit: styleForm.rangeUnit,
+    },
+  };
+}
+
+function bindPlotEvents(manager: PlotManager): void {
+  manager.on(DrawEvent.DRAW_END, ({ data }) => {
+    lastEvent.value = `绘制 ${data.type}`;
+    refreshFeatureCount();
+    setTimeout(() => {
+      if (plot === manager) activeType.value = manager.getActiveTool();
+    }, 0);
+  });
+  manager.on(DrawEvent.SELECT, ({ data }) => {
+    selectedType.value = data.type;
+    lastEvent.value = `选中 ${data.type}`;
+    syncStyleForm(data.style);
+    if (data.rangeRingsSpacing) styleForm.rangeSpacing = data.rangeRingsSpacing;
+    if (data.rangeRingsUnit) styleForm.rangeUnit = data.rangeRingsUnit;
+  });
+  manager.on(DrawEvent.DESELECT, () => {
+    selectedType.value = null;
+    lastEvent.value = '取消选中';
+  });
+  manager.on(DrawEvent.MODIFY_END, ({ dataList }) => {
+    lastEvent.value = `编辑 ${dataList[0]?.type ?? ''}`;
+  });
+  manager.on(DrawEvent.DELETE, () => {
+    selectedType.value = null;
+    lastEvent.value = '删除';
+    refreshFeatureCount();
+  });
+}
+
+function createPlotManager(): PlotManager {
+  const manager = new PlotManager(map!, createPlotConfig());
+  bindPlotEvents(manager);
+  return manager;
+}
+
+function rebuildPlot(): void {
+  if (!map || !plot) return;
+
+  const data = plot.getPlotData();
+  const drawType = activeType.value;
+  plot.destroy();
+  selectedType.value = null;
+  plot = createPlotManager();
+  if (data.length > 0) plot.loadPlotData(data);
+  plot.setActiveTool(drawType);
+  refreshFeatureCount();
+  lastEvent.value = '绘制行为已更新';
 }
 
 function applySelectedStyle(): void {
@@ -528,76 +658,9 @@ onMounted(() => {
     view: new View({ center: fromLonLat([116.3974, 39.9093]), zoom: 10 }),
   });
 
-  plot = new PlotManager(map, {
-    strokeColor: '#1677ff',
-    strokeWidth: 3,
-    fillColor: 'rgba(22, 119, 255, 0.16)',
-    nodeStyle: {
-      radius: 6,
-      fill: '#ffffff',
-      stroke: '#1677ff',
-      strokeWidth: 2,
-    },
-    image: {
-      src: markerSrc,
-      scale: 0.8,
-      anchor: [0.5, 1],
-      label: {
-        text: styleForm.imageLabelText,
-        fontSize: styleForm.imageLabelFontSize,
-        color: styleForm.imageLabelColor,
-      },
-    },
-    flowLine: {
-      arrowColor: '#00b96b',
-      arrowSpacing: 56,
-      speed: 72,
-    },
-    alarm: {
-      color: styleForm.alarmColor,
-      fill: styleForm.alarmColor,
-      stroke: '#ffffff',
-      radius: styleForm.alarmRadius,
-      pulseRadius: styleForm.alarmPulseRadius,
-      duration: styleForm.alarmDuration,
-      rings: styleForm.alarmRings,
-      frameRate: styleForm.alarmFrameRate,
-    },
-    measure: {
-      mode: 'both',
-      unit: 'm',
-    },
-    rangeRings: {
-      spacing: styleForm.rangeSpacing,
-      unit: styleForm.rangeUnit,
-    },
-  });
+  plot = createPlotManager();
 
   plot.setActiveTool(activeType.value);
-
-  plot.on(DrawEvent.DRAW_END, ({ data }) => {
-    lastEvent.value = `绘制 ${data.type}`;
-    refreshFeatureCount();
-  });
-  plot.on(DrawEvent.SELECT, ({ data }) => {
-    selectedType.value = data.type;
-    lastEvent.value = `选中 ${data.type}`;
-    syncStyleForm(data.style);
-    if (data.rangeRingsSpacing) styleForm.rangeSpacing = data.rangeRingsSpacing;
-    if (data.rangeRingsUnit) styleForm.rangeUnit = data.rangeRingsUnit;
-  });
-  plot.on(DrawEvent.DESELECT, () => {
-    selectedType.value = null;
-    lastEvent.value = '取消选中';
-  });
-  plot.on(DrawEvent.MODIFY_END, ({ dataList }) => {
-    lastEvent.value = `编辑 ${dataList[0]?.type ?? ''}`;
-  });
-  plot.on(DrawEvent.DELETE, () => {
-    selectedType.value = null;
-    lastEvent.value = '删除';
-    refreshFeatureCount();
-  });
 
   plot.loadPlotData([
     {
@@ -823,6 +886,31 @@ onUnmounted(() => {
   flex-wrap: wrap;
   border-top: 1px solid #d0d7de;
   padding-top: 10px;
+}
+
+.behavior-options {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #d0d7de;
+}
+
+.behavior-options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #24292f;
+  cursor: pointer;
+}
+
+.behavior-options label:has(input:disabled) {
+  color: #8c959f;
+  cursor: not-allowed;
+}
+
+.behavior-options input {
+  margin: 0;
 }
 
 .action-btn {

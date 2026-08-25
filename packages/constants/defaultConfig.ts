@@ -2,6 +2,12 @@ import type { ResolvedPlotConfig } from '../types/config';
 
 /** 标绘工具默认配置。 */
 export const DEFAULT_CONFIG: ResolvedPlotConfig = {
+  /** 允许编辑 */
+  editable: true,
+  /** 绘制结束后自动编辑 */
+  autoEditAfterDraw: true,
+  /** 不连续绘制 */
+  continuousDraw: false,
   /** 线颜色 */
   strokeColor: '#2196f3',
   /** 线宽度 */

@@ -39,9 +39,8 @@ import {
  * const tool = new LineTool(map);
  * ```
  *
- * 无需任何按钮或 start/stop 接口即可获得：绘制（无跟随鼠标的节点）→ 绘制完成自动
- * 选中并进入编辑 → 点击其它要素切换选中 → 点空白取消选中并保留内容 → 无选中时点
- * 空白直接重新绘制。
+ * 默认无需按钮即可完成绘制并自动进入编辑；具体行为由 editable、autoEditAfterDraw、
+ * continuousDraw 三个配置控制。
  *
  * Draw / Select / Modify 的启停和编辑模式由共享运行时统一协调。
  */

@@ -105,6 +105,12 @@ export interface AlarmPointStyleConfig {
 }
 
 export interface PlotConfig {
+  /** 是否允许选择和编辑要素。 */
+  editable?: boolean;
+  /** 绘制结束后是否自动进入编辑。 */
+  autoEditAfterDraw?: boolean;
+  /** 是否连续绘制同类要素。 */
+  continuousDraw?: boolean;
   /** 线条颜色。 */
   strokeColor?: string;
   /** 线条宽度。 */

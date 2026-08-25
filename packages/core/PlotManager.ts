@@ -103,6 +103,9 @@ export class PlotManager {
       onStateChange: (state) => {
         this.state = state;
       },
+      onDrawTypeChange: (drawType) => {
+        this.activeDrawType = drawType;
+      },
     });
     this.eventBus = this.runtime.eventBus;
     this.layerManager = this.runtime.layerManager;

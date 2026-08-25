@@ -17,6 +17,7 @@ import { isEditableTarget } from '../utils/keyboard';
 import type { EditorAdapter } from '../types/runtime';
 import type BaseLayer from 'ol/layer/Base';
 import type { InteractionToggle } from './InteractionCoordinator';
+import { resolveDrawEndAction } from './drawBehavior';
 
 interface HandleModifyInteraction extends InteractionToggle {
   on(type: 'modifyend', listener: () => void): unknown;
@@ -43,6 +44,7 @@ export interface PlotRuntimeOptions {
   prepareDrawnFeature?: (feature: Feature, drawType: DrawType) => void;
   onActiveFeatureChange?: (feature: Feature | null) => void;
   onStateChange?: (state: ToolState) => void;
+  onDrawTypeChange?: (drawType: DrawType | null) => void;
 }
 
 /**
@@ -67,6 +69,7 @@ export class PlotRuntime {
   private readonly handleKeyDown: (event: KeyboardEvent) => void;
   private readonly onActiveFeatureChange?: PlotRuntimeOptions['onActiveFeatureChange'];
   private readonly onStateChange?: PlotRuntimeOptions['onStateChange'];
+  private readonly onDrawTypeChange?: PlotRuntimeOptions['onDrawTypeChange'];
   private readonly prepareDrawnFeature?: PlotRuntimeOptions['prepareDrawnFeature'];
   private handleEditor: HandleEditorRuntimeOptions | null = null;
   private activeDrawType: DrawType | null = null;
@@ -76,6 +79,7 @@ export class PlotRuntime {
     this.config = options.config;
     this.onActiveFeatureChange = options.onActiveFeatureChange;
     this.onStateChange = options.onStateChange;
+    this.onDrawTypeChange = options.onDrawTypeChange;
     this.prepareDrawnFeature = options.prepareDrawnFeature;
     this.eventBus = new EventBus();
     this.layerManager = new FeatureStore(this.map, options.featureStyle);
@@ -96,7 +100,7 @@ export class PlotRuntime {
       this.map,
       () => [this.modifyManager.getOverlayLayer()],
       8,
-      () => [this.layerManager.getLayer()],
+      () => (this.config.editable ? [this.layerManager.getLayer()] : []),
       this.config.hint,
     );
     this.interactionCoordinator = new InteractionCoordinator({
@@ -105,6 +109,7 @@ export class PlotRuntime {
       cursor: this.cursorManager,
       modifyOverlayLayer: this.modifyManager.getOverlayLayer(),
     });
+    this.selectManager.setActive(this.config.editable);
     this.editorController = new EditorController(
       { getEditMode: () => 'feature' },
       { onModeChange: (mode) => this.interactionCoordinator.setEditMode(mode) },
@@ -153,6 +158,7 @@ export class PlotRuntime {
     this.interactionCoordinator.setDrawing(false);
     this.selectManager.clearSelection();
     this.activeDrawType = drawType;
+    this.onDrawTypeChange?.(drawType);
 
     if (drawType) {
       if (!drawStyle) throw new Error('Draw style is required when activating a draw tool');
@@ -162,7 +168,7 @@ export class PlotRuntime {
         this.eventBus,
         drawType,
         drawStyle,
-        () => this.selectManager.isEmpty(),
+        () => !this.config.editable || this.selectManager.isEmpty(),
         this.config,
       );
       this.interactionCoordinator.setDraw(this.drawManager);
@@ -265,8 +271,19 @@ export class PlotRuntime {
       this.prepareDrawnFeature?.(feature, drawType);
       setTimeout(() => {
         if (revision !== this.revision || !this.layerManager.hasFeature(feature)) return;
-        this.setActiveFeature(feature);
-        this.selectManager.selectFeature(feature);
+        const action = resolveDrawEndAction(this.config);
+        if (action === 'continue') {
+          this.setActiveFeature(null);
+          this.setState(ToolState.Drawing);
+          return;
+        }
+        if (action === 'edit') {
+          this.setActiveFeature(feature);
+          this.selectManager.selectFeature(feature);
+          return;
+        }
+        this.setActiveFeature(null);
+        this.setDrawTool(null);
       }, 0);
     });
 

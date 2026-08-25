@@ -28,6 +28,8 @@ export class DrawManager {
   private eventBus: EventBus;
   private draw: Draw;
   private clickFreehandDraw: ClickFreehandDraw | null = null;
+  /** 是否拦截已有要素上的起笔。 */
+  private editable: boolean;
 
   /** 是否正在绘制（drawstart 与 drawend/drawabort 之间） */
   private sketching = false;
@@ -56,6 +58,7 @@ export class DrawManager {
     this.layer = layer;
     this.eventBus = eventBus;
     this.canStartDraw = canStartDraw;
+    this.editable = config?.editable ?? true;
 
     const definition = PLOT_DEFS[drawType];
     const context = {
@@ -118,6 +121,7 @@ export class DrawManager {
   private condition(e: MapBrowserEvent<PointerEvent | KeyboardEvent | WheelEvent>): boolean {
     if (this.sketching) return true;
     if (!this.canStartDraw()) return false;
+    if (!this.editable) return true;
     const overFeature =
       this.map.forEachFeatureAtPixel(e.pixel, () => true, {
         hitTolerance: FEATURE_HIT_TOLERANCE,
