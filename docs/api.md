@@ -479,6 +479,12 @@ interface AreaMeasurePlotConfig extends PlotConfig {
 }
 ```
 
+距离和面积相关配置统一使用以下单位类型：
+
+```ts
+type DistanceUnit = 'm' | 'km' | 'nm'
+```
+
 ### NodeStyle
 
 ```ts

@@ -232,9 +232,11 @@ interface NodeStyle {
   strokeWidth?: number;
 }
 
+type DistanceUnit = 'm' | 'km' | 'nm';
+
 interface MeasureConfig {
   mode?: 'total' | 'segment' | 'both';
-  unit?: 'm' | 'km' | 'nm';
+  unit?: DistanceUnit;
   labelStyle?: Partial<CSSStyleDeclaration>;
 }
 
@@ -243,7 +245,7 @@ interface MeasurePlotConfig extends PlotConfig {
 }
 
 interface AreaMeasureConfig {
-  unit?: 'm' | 'km' | 'nm';
+  unit?: DistanceUnit;
   labelStyle?: Partial<CSSStyleDeclaration>;
 }
 

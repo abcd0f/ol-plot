@@ -7,7 +7,7 @@ import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
 import type { EventBus } from '../core/EventBus';
-import type { ResolvedPlotConfig, MeasureMode, MeasureUnit } from '../types/config';
+import type { ResolvedPlotConfig, MeasureMode, DistanceUnit } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import type { DrawType } from '../constants/drawType';
 import { mid } from '../utils/math';
@@ -35,7 +35,7 @@ interface Label {
 export class MeasureManager {
   private map: OLMap;
   private mode: MeasureMode;
-  private unit: MeasureUnit;
+  private unit: DistanceUnit;
   private labelStyle: Partial<CSSStyleDeclaration>;
 
   /** 每个已完成要素对应的标签组 */

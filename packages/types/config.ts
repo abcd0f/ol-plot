@@ -7,28 +7,24 @@ export interface NodeStyle {
 
 export type MeasureMode = 'total' | 'segment' | 'both';
 
-export type MeasureUnit = 'm' | 'km' | 'nm';
-
-export type AreaMeasureUnit = 'm' | 'km' | 'nm';
+export type DistanceUnit = 'm' | 'km' | 'nm';
 
 export interface MeasureConfig {
   mode?: MeasureMode;
-  unit?: MeasureUnit;
+  unit?: DistanceUnit;
   labelStyle?: Partial<CSSStyleDeclaration>;
 }
 
 export interface AreaMeasureConfig {
-  unit?: AreaMeasureUnit;
+  unit?: DistanceUnit;
   labelStyle?: Partial<CSSStyleDeclaration>;
 }
-
-export type RangeRingsUnit = 'm' | 'km' | 'nm';
 
 export interface RangeRingsConfig {
   /** Numeric distance between adjacent rings. */
   spacing?: number;
   /** Unit used by spacing and ring labels. */
-  unit?: RangeRingsUnit;
+  unit?: DistanceUnit;
 }
 
 export interface FlowLineConfig {

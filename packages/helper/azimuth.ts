@@ -9,13 +9,13 @@ import type { EventsKey } from 'ol/events';
 import type { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
 import type { EventBus } from '../core/EventBus';
-import type { MeasureUnit, ResolvedPlotConfig } from '../types/config';
+import type { DistanceUnit, ResolvedPlotConfig } from '../types/config';
 
 const METERS_PER_NAUTICAL_MILE = 1852;
 
 export class AzimuthManager {
   private map: OLMap;
-  private unit: MeasureUnit;
+  private unit: DistanceUnit;
   private labelStyle: Partial<CSSStyleDeclaration>;
   private groups = new Map<Feature, Overlay>();
   private changeKeys = new Map<Feature, EventsKey>();

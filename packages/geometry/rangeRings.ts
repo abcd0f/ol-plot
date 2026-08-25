@@ -2,18 +2,18 @@ import GeometryCollection from 'ol/geom/GeometryCollection';
 import LineString from 'ol/geom/LineString';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
 import { getDistance, offset } from 'ol/sphere';
-import type { RangeRingsUnit } from '../types/config';
+import type { DistanceUnit } from '../types/config';
 
 const SEGMENTS = 96;
-const UNIT_METERS: Record<RangeRingsUnit, number> = { m: 1, km: 1000, nm: 1852 };
+const UNIT_METERS: Record<DistanceUnit, number> = { m: 1, km: 1000, nm: 1852 };
 
 export interface ParsedRangeSpacing {
   value: number;
-  unit: RangeRingsUnit;
+  unit: DistanceUnit;
   meters: number;
 }
 
-export function parseRangeSpacing(value: number | undefined, unit: RangeRingsUnit | undefined): ParsedRangeSpacing {
+export function parseRangeSpacing(value: number | undefined, unit: DistanceUnit | undefined): ParsedRangeSpacing {
   const numeric = value ?? 10;
   const normalizedUnit = unit ?? 'm';
   if (!Number.isFinite(numeric) || numeric <= 0) throw new Error(`Invalid range rings spacing: ${numeric}`);
@@ -23,7 +23,7 @@ export function parseRangeSpacing(value: number | undefined, unit: RangeRingsUni
 export function buildRangeRingsGeometries(
   controlPoints: number[][],
   spacing: number | undefined,
-  unit: RangeRingsUnit | undefined,
+  unit: DistanceUnit | undefined,
   projection: ProjectionLike,
 ): GeometryCollection {
   const geom = new GeometryCollection([]);
@@ -56,7 +56,7 @@ export function buildRangeRingsGeometries(
 
 export function createRangeRingsGeometryFunction(
   spacing: number | undefined,
-  unit: RangeRingsUnit | undefined,
+  unit: DistanceUnit | undefined,
   projection: ProjectionLike,
 ) {
   parseRangeSpacing(spacing, unit);

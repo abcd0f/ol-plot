@@ -236,7 +236,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import { fromLonLat } from 'ol/proj';
 import { DrawEvent, DrawType, PlotManager } from '@seedlib/ol-plot';
-import type { PlotDrawType, PlotManagerConfig, PlotStyleData } from '@seedlib/ol-plot';
+import type { DistanceUnit, PlotDrawType, PlotManagerConfig, PlotStyleData } from '@seedlib/ol-plot';
 
 interface ToolItem {
   label: string;
@@ -310,7 +310,7 @@ const styleForm = reactive({
   alarmRings: 2,
   alarmFrameRate: 30,
   rangeSpacing: 10,
-  rangeUnit: 'km' as 'm' | 'km' | 'nm',
+  rangeUnit: 'km' as DistanceUnit,
 });
 
 let map: OlMap | null = null;

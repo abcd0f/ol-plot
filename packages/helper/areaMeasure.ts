@@ -6,7 +6,7 @@ import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
 import type { EventBus } from '../core/EventBus';
-import type { AreaMeasureUnit, ResolvedPlotConfig } from '../types/config';
+import type { DistanceUnit, ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import type { DrawType } from '../constants/drawType';
 
@@ -19,7 +19,7 @@ interface Label {
 
 export class AreaMeasureManager {
   private map: OLMap;
-  private unit: AreaMeasureUnit;
+  private unit: DistanceUnit;
   private labelStyle: Partial<CSSStyleDeclaration>;
 
   private groups = new Map<Feature, Overlay[]>();

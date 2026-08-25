@@ -1,5 +1,5 @@
 import type { DrawType } from '../constants/drawType';
-import type { AlarmPointConfig, FlowLineConfig, ImagePointConfig, NodeStyle, RangeRingsUnit } from './config';
+import type { AlarmPointConfig, FlowLineConfig, ImagePointConfig, NodeStyle, DistanceUnit } from './config';
 
 export type PlotCoordinate = number[];
 export type PlotCoordinates = PlotCoordinate[];
@@ -29,7 +29,7 @@ export interface PlotFeatureData {
   type: PlotDrawType;
   plotType?: string;
   rangeRingsSpacing?: number;
-  rangeRingsUnit?: RangeRingsUnit;
+  rangeRingsUnit?: DistanceUnit;
   coordinates: PlotCoordinates;
   controlPoints?: PlotCoordinates;
   geometry?: PlotGeometryData;
