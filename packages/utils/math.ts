@@ -97,7 +97,7 @@ export function getAngleOfThreePoints(p1: number[], p2: number[], p3: number[]):
  * @param basePnt - 基准点（计算方向的基点）
  * @param angle - 相对于basePnt→startPnt方向的旋转角度（弧度）
  * @param distance - 从basePnt到目标点的距离
- * @param clockwise - true为顺时针旋转，false为逆时针旋转
+ * @param clockwise - true 表示顺时针，false 表示逆时针
  * @returns 计算得到的第三个点坐标
  */
 export function getThirdPoint(

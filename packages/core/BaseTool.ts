@@ -32,8 +32,8 @@ import {
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。
  *
- * 它内部以「协调式交互」的方式统一管理 Draw / Select / Modify 三个 interaction，
- * 并自动维护完整生命周期（Idle → Drawing → Editing → Drawing），业务层只需：
+ * 它内部以「协调式交互」的方式统一管理 Draw / Select / Modify 三个交互，
+ * 并自动维护完整生命周期（空闲 → 绘制 → 编辑 → 绘制），业务层只需：
  *
  * ```ts
  * const tool = new LineTool(map);
@@ -105,12 +105,12 @@ export abstract class BaseTool {
     this.cursorManager = this.runtime.cursorManager;
   }
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
+  // ─── 生命周期 ────────────────────────────────────────────────────────────
 
   /**
    * 获取当前内部状态（只读）。生命周期由工具自动维护，业务层一般无需关心。
    *
-   * @returns 当前状态：Idle / Drawing / Editing
+   * @returns 当前状态：空闲 / 绘制 / 编辑
    */
   getState(): ToolState {
     return this.state;
@@ -147,7 +147,7 @@ export abstract class BaseTool {
     this.eventWrappers.clear();
   }
 
-  // ─── Load from data ───────────────────────────────────────────────────────
+  // ─── 从数据加载 ───────────────────────────────────────────────────────────
 
   /**
    * 添加一个要素到图层中
@@ -162,9 +162,8 @@ export abstract class BaseTool {
   }
 
   /**
-   * Restore one or more features from serialized plot data.
-   *
-   * Data should usually be restored by the same tool type that created it.
+   * 从序列化标绘数据恢复一个或多个要素。
+   * 通常应使用创建数据时对应的工具恢复。
    */
   restorePlotData(data: PlotFeatureData | PlotFeatureData[], options: PlotRestoreOptions = {}): Feature[] {
     if (options.clear) this.clearFeatures();
@@ -198,13 +197,13 @@ export abstract class BaseTool {
   }
 
   /**
-   * Alias for restorePlotData.
+   * restorePlotData 的别名。
    */
   loadPlotData(data: PlotFeatureData | PlotFeatureData[], options: PlotRestoreOptions = {}): Feature[] {
     return this.restorePlotData(data, options);
   }
 
-  // ─── Features ─────────────────────────────────────────────────────────────
+  // ─── 要素 ─────────────────────────────────────────────────────────────────
 
   /**
    * 获取所有要素
@@ -216,21 +215,21 @@ export abstract class BaseTool {
   }
 
   /**
-   * Serialize one feature into JSON-friendly structured data.
+   * 将单个要素序列化为适合 JSON 的结构化数据。
    */
   getFeatureData(feature: Feature): PlotFeatureData {
     return serializeFeature(feature, this.drawType, this.config, this.map.getView().getProjection());
   }
 
   /**
-   * Serialize all features managed by this tool.
+   * 序列化当前工具管理的全部要素。
    */
   getPlotData(): PlotFeatureData[] {
     return this.getFeatures().map((feature) => this.getFeatureData(feature));
   }
 
   /**
-   * Alias for getPlotData, named for server persistence workflows.
+   * getPlotData 的别名，便于服务端持久化流程调用。
    */
   getStructuredData(): PlotFeatureData[] {
     return this.getPlotData();
@@ -246,7 +245,7 @@ export abstract class BaseTool {
     return this;
   }
 
-  // ─── Events ───────────────────────────────────────────────────────────────
+  // ─── 事件 ────────────────────────────────────────────────────────────────
 
   /**
    * 添加事件监听器
@@ -277,7 +276,7 @@ export abstract class BaseTool {
     return this;
   }
 
-  // ─── Abstract API ─────────────────────────────────────────────────────────
+  // ─── 抽象 API ─────────────────────────────────────────────────────────────
 
   /**
    * 从平面坐标数组构建此工具类型的几何图形

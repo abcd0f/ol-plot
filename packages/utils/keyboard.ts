@@ -1,7 +1,4 @@
-/**
- * Whether a keyboard event originated from a form control or editable area.
- * Delete shortcuts should not affect map features while the user is typing.
- */
+/** 判断事件目标是否为表单控件或可编辑区域。 */
 export function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
 

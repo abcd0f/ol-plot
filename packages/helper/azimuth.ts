@@ -53,6 +53,7 @@ export class AzimuthManager {
     });
   }
 
+  /** 为要素创建方位角标签。 */
   attachFeature(feature: Feature): void {
     this.removeFeature(feature);
     const geom = feature.getGeometry() as GeometryCollection;
@@ -63,6 +64,7 @@ export class AzimuthManager {
     this.render(overlay, geom);
   }
 
+  /** 更新标签样式配置。 */
   setStyleConfig(config: ResolvedPlotConfig): void {
     this.unit = config.measure.unit!;
     this.labelStyle = config.measure.labelStyle!;
@@ -73,6 +75,7 @@ export class AzimuthManager {
     if (this.sketchOverlay) Object.assign(this.sketchOverlay.getElement()?.style ?? {}, this.labelStyle);
   }
 
+  /** 移除要素对应的标签。 */
   removeFeature(feature: Feature): void {
     const overlay = this.groups.get(feature);
     if (overlay) this.map.removeOverlay(overlay);
@@ -82,11 +85,13 @@ export class AzimuthManager {
     this.changeKeys.delete(feature);
   }
 
+  /** 清除全部标签。 */
   clear(): void {
     this.stopSketch();
     [...this.groups.keys()].forEach((feature) => this.removeFeature(feature));
   }
 
+  /** 销毁管理器。 */
   destroy(): void {
     this.clear();
   }
@@ -126,6 +131,7 @@ export class AzimuthManager {
   }
 }
 
+/** 计算起点到终点的地理方位角。 */
 export function calculateBearing(start: number[], end: number[]): number {
   const phi1 = (start[1] * Math.PI) / 180;
   const phi2 = (end[1] * Math.PI) / 180;

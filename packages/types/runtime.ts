@@ -1,9 +1,9 @@
 import type Feature from 'ol/Feature';
 
-/** Runtime state shared by single-tool and multi-tool adapters. */
+/** 单工具与多工具适配器共享的运行时状态。 */
 export type RuntimeState = 'idle' | 'drawing' | 'editing';
 
-/** Editing strategy used by the shared editor controller. */
+/** 共享编辑控制器使用的编辑模式。 */
 export type EditMode = 'none' | 'feature' | 'handles';
 
 export interface EditorAdapter {

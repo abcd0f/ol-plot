@@ -1,3 +1,4 @@
+/** 标绘生命周期事件名。 */
 export const DrawEvent = {
   /** 开始绘制（落笔） */
   DRAW_START: 'drawstart',

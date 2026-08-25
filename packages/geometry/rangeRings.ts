@@ -13,6 +13,7 @@ export interface ParsedRangeSpacing {
   meters: number;
 }
 
+/** 解析并校验距离环间距。 */
 export function parseRangeSpacing(value: number | undefined, unit: DistanceUnit | undefined): ParsedRangeSpacing {
   const numeric = value ?? 10;
   const normalizedUnit = unit ?? 'm';
@@ -20,6 +21,7 @@ export function parseRangeSpacing(value: number | undefined, unit: DistanceUnit 
   return { value: numeric, unit: normalizedUnit, meters: numeric * UNIT_METERS[normalizedUnit] };
 }
 
+/** 根据圆心、外缘点和间距生成距离环。 */
 export function buildRangeRingsGeometries(
   controlPoints: number[][],
   spacing: number | undefined,
@@ -54,6 +56,7 @@ export function buildRangeRingsGeometries(
   return geom;
 }
 
+/** 创建距离环实时绘制函数。 */
 export function createRangeRingsGeometryFunction(
   spacing: number | undefined,
   unit: DistanceUnit | undefined,
@@ -71,6 +74,7 @@ export function createRangeRingsGeometryFunction(
   };
 }
 
+/** 格式化距离环标签数值。 */
 export function formatValue(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 }

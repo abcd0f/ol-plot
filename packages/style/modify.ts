@@ -5,7 +5,7 @@ import CircleStyle from 'ol/style/Circle';
 import type { ResolvedPlotConfig } from '../types/config';
 
 /**
- * Modity 交互使用的拖拽手柄样式。
+ * Modify 交互使用的拖拽手柄样式。
  *
  * @param config - 合并后的完整配置
  * @returns OL Style 数组

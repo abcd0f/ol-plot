@@ -62,6 +62,7 @@ export class AreaMeasureManager {
     });
   }
 
+  /** 为要素创建面积标签。 */
   attachFeature(feature: Feature): void {
     this.removeFeature(feature);
     const geom = feature.getGeometry() as Polygon;
@@ -74,6 +75,7 @@ export class AreaMeasureManager {
     this.renderNow(group, geom);
   }
 
+  /** 更新标签样式配置。 */
   setStyleConfig(config: ResolvedPlotConfig): void {
     this.unit = config.areaMeasure.unit!;
     this.labelStyle = config.areaMeasure.labelStyle!;
@@ -87,6 +89,7 @@ export class AreaMeasureManager {
     if (sketchGeom) this.renderNow(this.sketchGroup, sketchGeom);
   }
 
+  /** 移除要素对应的标签。 */
   removeFeature(feature: Feature): void {
     const group = this.groups.get(feature);
     if (group) {
@@ -112,6 +115,7 @@ export class AreaMeasureManager {
     this.sketchGroup.length = 0;
   }
 
+  /** 清除全部标签。 */
   clear(): void {
     this.stopSketch();
     for (const feature of [...this.groups.keys()]) {
@@ -119,6 +123,7 @@ export class AreaMeasureManager {
     }
   }
 
+  /** 销毁管理器。 */
   destroy(): void {
     this.clear();
     if (this.renderFrame !== null) {

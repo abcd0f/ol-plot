@@ -1,6 +1,7 @@
 import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import { DEFAULT_CONFIG } from './defaultConfig';
 
+/** 将用户配置与默认配置合并。 */
 export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
   return {
     ...DEFAULT_CONFIG,
@@ -51,6 +52,7 @@ export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
   };
 }
 
+/** 在当前运行时配置上合并增量配置。 */
 export function mergeRuntimeConfig(current: ResolvedPlotConfig, config?: InternalPlotConfig): ResolvedPlotConfig {
   if (!config) return current;
 

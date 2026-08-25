@@ -28,7 +28,7 @@ export class TaperedArrowTool extends HandleBasedTool {
     super(map, DrawType.TaperedArrow, config);
   }
 
-  // ─── HandleBasedTool implementations ──────────────────────────────────────
+  // ─── HandleBasedTool 实现 ─────────────────────────────────────────────────
 
   protected getPlotType(): string {
     return 'taperedArrow';
@@ -41,7 +41,7 @@ export class TaperedArrowTool extends HandleBasedTool {
     geom.setCoordinates(buildTaperedArrow(controlPoints));
   }
 
-  // ─── Abstract implementations ─────────────────────────────────────────────
+  // ─── 抽象方法实现 ─────────────────────────────────────────────────────────
 
   protected createGeometry(coordinates: number[][]): Geometry {
     return new Polygon(buildTaperedArrow(coordinates));

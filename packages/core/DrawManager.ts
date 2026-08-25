@@ -16,10 +16,10 @@ import { FEATURE_HIT_TOLERANCE } from './SelectManager';
  * 绘制管理器类，用于管理地图上的绘制交互功能。
  *
  * 设计要点（协调式交互）：
- *  - 构造时一次性创建并添加 Draw interaction，并保持常驻（不再惰性创建 / 反复增删）。
+ *  - 构造时一次性创建并添加 Draw 交互，并保持常驻（不再惰性创建 / 反复增删）。
  *    在 BaseTool 中 Draw 最后被添加，因此拥有最高的事件处理优先级。
  *  - 通过自定义 `style` 隐藏跟随鼠标的草图顶点。
- *  - 通过 `condition` 与 Select / Modify 协调：保证同一次点击只被一个 interaction
+ *  - 通过 `condition` 与 Select / Modify 协调：保证同一次点击只被一个交互处理
  *    真正处理，避免冲突。
  */
 export class DrawManager {
@@ -109,7 +109,7 @@ export class DrawManager {
   }
 
   /**
-   * Draw interaction 的起笔条件，用于与 Select / Modify 协调：
+   * Draw 交互的起笔条件，用于与 Select / Modify 协调：
    *  - 绘制进行中：允许在任意位置继续落点。
    *  - 已有选中要素：本次点击让给 Select 去取消选中，不起笔。
    *  - 点击落在已有要素上：让给 Select 去选中，不起笔。

@@ -45,7 +45,7 @@ export class HandleManager {
       this.eventBus.emit(DrawEvent.MODIFY_START);
     });
     this.handleModify.on('modifyend', () => {
-      // Tool classes emit MODIFY_END with their active feature.
+      // 工具类会在修改结束时携带当前要素派发事件。
     });
     map.addInteraction(this.handleModify);
   }

@@ -2,6 +2,7 @@ import Polygon, { fromExtent } from 'ol/geom/Polygon';
 import { boundingExtent } from 'ol/extent';
 import type { Coordinate } from 'ol/coordinate';
 
+/** 根据对角控制点生成矩形坐标。 */
 export function buildRectangle(controlPoints: number[][]): number[][][] {
   if (controlPoints.length < 2) return [[]];
 
@@ -10,6 +11,7 @@ export function buildRectangle(controlPoints: number[][]): number[][][] {
   return fromExtent(extent).getCoordinates();
 }
 
+/** 从矩形几何提取控制点。 */
 export function getRectangleControlPoints(polygon: Polygon): number[][] {
   const controlPoints = polygon.get('_controlPoints') as number[][] | undefined;
   if (Array.isArray(controlPoints) && controlPoints.length >= 2) {
@@ -37,23 +39,27 @@ export function getRectangleControlPoints(polygon: Polygon): number[][] {
   ];
 }
 
+/** 计算矩形中心。 */
 export function getRectangleCenter(controlPoints: number[][]): Coordinate {
   const [start, end] = controlPoints;
   return [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
 }
 
+/** 计算矩形宽度。 */
 export function getRectangleWidth(controlPoints: number[][]): number {
   if (controlPoints.length < 2) return 0;
   const [start, end] = controlPoints;
   return Math.abs(end[0] - start[0]);
 }
 
+/** 计算矩形高度。 */
 export function getRectangleHeight(controlPoints: number[][]): number {
   if (controlPoints.length < 2) return 0;
   const [start, end] = controlPoints;
   return Math.abs(end[1] - start[1]);
 }
 
+/** 创建矩形实时绘制函数。 */
 export function createRectangleGeometryFunction() {
   return (coordinates: number[][], geometry?: Polygon): Polygon => {
     const geom = geometry || new Polygon([]);

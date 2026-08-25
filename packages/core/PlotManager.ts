@@ -50,6 +50,7 @@ import { resolveSectorDrag } from '../geometry/sector';
 const DRAW_TYPE_PROPERTY = '_drawType';
 export type PlotManagerConfig = InternalPlotConfig & Pick<ImagePointConfig, 'image'>;
 
+/** 统一管理多种标绘工具的绘制、编辑和数据持久化。 */
 export class PlotManager {
   protected map: Map;
   protected config: ResolvedPlotConfig;
@@ -158,6 +159,7 @@ export class PlotManager {
     this.bindManagerEvents();
   }
 
+  /** 设置当前绘制工具，传入 null 可停止绘制。 */
   setActiveTool(drawType: PlotDrawType | null): this {
     this.activeDrawType = drawType ? this.normalizeDrawType(drawType) : null;
     this.activeDrawStyle = buildDrawStyle(this.config);
@@ -169,14 +171,17 @@ export class PlotManager {
     return this;
   }
 
+  /** 获取当前绘制工具。 */
   getActiveTool(): DrawType | null {
     return this.activeDrawType;
   }
 
+  /** 获取管理器状态。 */
   getState(): ToolState {
     return this.state;
   }
 
+  /** 更新当前活动要素的样式配置。 */
   setStyleConfig(config?: PlotManagerConfig): this {
     if (!this.activeFeature || !config) return this;
 
@@ -237,10 +242,12 @@ export class PlotManager {
     return this;
   }
 
+  /** 获取全部标绘要素。 */
   getFeatures(): Feature[] {
     return this.layerManager.getFeatures();
   }
 
+  /** 序列化指定要素。 */
   getFeatureData(feature: Feature): PlotFeatureData {
     const drawType = this.getFeatureDrawType(feature) ?? this.activeDrawType ?? DrawType.Line;
     const data = serializeFeature(feature, drawType, this.config, this.map.getView().getProjection());
@@ -257,14 +264,17 @@ export class PlotManager {
     return data;
   }
 
+  /** 序列化全部标绘要素。 */
   getPlotData(): PlotFeatureData[] {
     return this.getFeatures().map((feature) => this.getFeatureData(feature));
   }
 
+  /** 获取结构化标绘数据。 */
   getStructuredData(): PlotFeatureData[] {
     return this.getPlotData();
   }
 
+  /** 从序列化数据恢复要素。 */
   restorePlotData(data: PlotFeatureData | PlotFeatureData[], options: PlotRestoreOptions = {}): Feature[] {
     if (options.clear) this.clearFeatures();
 
@@ -313,10 +323,12 @@ export class PlotManager {
     });
   }
 
+  /** restorePlotData 的别名。 */
   loadPlotData(data: PlotFeatureData | PlotFeatureData[], options: PlotRestoreOptions = {}): Feature[] {
     return this.restorePlotData(data, options);
   }
 
+  /** 清空全部标绘要素。 */
   clearFeatures(): this {
     this.measureManager.clear();
     this.areaMeasureManager.clear();
@@ -326,6 +338,7 @@ export class PlotManager {
     return this;
   }
 
+  /** 销毁管理器及其交互。 */
   destroy(): void {
     this.stopAnimation();
     this.measureManager.destroy();
@@ -336,6 +349,7 @@ export class PlotManager {
     this.activeDrawType = null;
   }
 
+  /** 订阅标绘事件。 */
   on(event: string, handler: (...args: any[]) => void): this {
     const wrapper = (...args: any[]) => handler(...args.map((arg) => this.withStructuredData(arg)));
     if (!this.eventWrappers.has(event)) this.eventWrappers.set(event, new globalThis.Map());
@@ -344,6 +358,7 @@ export class PlotManager {
     return this;
   }
 
+  /** 取消订阅标绘事件。 */
   off(event: string, handler: (...args: any[]) => void): this {
     const wrapper = this.eventWrappers.get(event)?.get(handler);
     this.eventBus.off(event, wrapper ?? handler);
@@ -351,6 +366,7 @@ export class PlotManager {
     return this;
   }
 
+  /** 设置当前活动要素的控制点。 */
   setCoordinates(coordinates: number[][]): void {
     if (!this.activeFeature) return;
     const drawType = this.getFeatureDrawType(this.activeFeature);
@@ -358,15 +374,18 @@ export class PlotManager {
     this.updateFeatureGeometry(this.activeFeature, drawType, coordinates);
   }
 
+  /** 获取当前活动要素的控制点。 */
   getCoordinates(): number[][] {
     if (!this.activeFeature) return [];
     return this.extractCoordinates(this.activeFeature);
   }
 
+  /** 获取当前活动要素的控制点数量。 */
   getPointCount(): number {
     return this.getCoordinates().length;
   }
 
+  /** 更新指定控制点。 */
   updatePoint(index: number, coordinate: number[]): void {
     const coords = this.getCoordinates();
     if (index < 0 || index >= coords.length) return;
@@ -389,6 +408,7 @@ export class PlotManager {
     this.setCoordinates(coords);
   }
 
+  /** 更新图片点全局配置。 */
   updateImageConfig(imageConfig: ImagePointConfig['image']): void {
     if (!imageConfig) return;
 
@@ -397,6 +417,7 @@ export class PlotManager {
     this.layerManager.getLayer().changed();
   }
 
+  /** 更新告警点全局配置。 */
   updateAlarmConfig(alarmConfig: AlarmPointStyleConfig): void {
     if (!alarmConfig) return;
 

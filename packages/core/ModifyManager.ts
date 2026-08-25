@@ -58,7 +58,7 @@ export class ModifyManager {
   }
 
   /**
-   * Override the style used by the Modify interaction overlay.
+   * 覆盖 Modify 交互覆盖层使用的样式。
    */
   setStyle(style: StyleLike): void {
     this.modify.getOverlay().setStyle(style);

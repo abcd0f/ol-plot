@@ -78,7 +78,7 @@ export function buildLineArrowGeometries(controlPoints: number[][]): [LineString
 }
 
 /**
- * Draw geometryFunction
+ * Draw 几何函数。
  */
 export function createLineArrowGeometryFunction() {
   return (coordinates: number[][], geometry?: GeometryCollection): GeometryCollection => {

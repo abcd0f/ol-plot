@@ -7,6 +7,7 @@ const DEFAULT_FRAME_RATE = 30;
 
 export type ResolvedAlarmPointStyleConfig = Required<AlarmPointStyleConfig>;
 
+/** 补全并约束告警点样式配置。 */
 export function resolveAlarmPointConfig(
   alarmConfig: AlarmPointStyleConfig | undefined,
   nodeStyle: NodeStyle,
@@ -32,6 +33,7 @@ export function resolveAlarmPointConfig(
   };
 }
 
+/** 创建告警点动画样式。 */
 export function buildAlarmPointStyle(
   alarmConfig: AlarmPointStyleConfig | undefined,
   nodeStyle: NodeStyle,

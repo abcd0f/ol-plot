@@ -13,6 +13,7 @@ export interface SectorAngles {
   end: number;
 }
 
+/** 根据控制点生成扇形坐标。 */
 export function buildSector(controlPoints: number[][]): number[][][] {
   if (controlPoints.length < 2) return [[]];
 
@@ -40,6 +41,7 @@ export function buildSector(controlPoints: number[][]): number[][][] {
   return [ring];
 }
 
+/** 将扇形两条半径归一为等长。 */
 export function normalizeSectorControlPoints(controlPoints: number[][], radiusSourceIndex: 1 | 2 = 1): number[][] {
   if (controlPoints.length < 3) return controlPoints.slice(0, 2);
 
@@ -58,6 +60,7 @@ export function normalizeSectorControlPoints(controlPoints: number[][], radiusSo
   return radiusSourceIndex === 2 ? [center, projectedTarget, endPoint] : [center, startPoint, projectedTarget];
 }
 
+/** 根据拖拽点同步扇形控制点。 */
 export function resolveSectorDrag(
   previous: number[][],
   next: number[][],
@@ -76,6 +79,7 @@ export function resolveSectorDrag(
   return normalizeSectorControlPoints(next.slice(0, 3), draggingIndex === 2 ? 2 : 1);
 }
 
+/** 从扇形几何提取控制点。 */
 export function getSectorControlPoints(polygon: Polygon): number[][] {
   const controlPoints = polygon.get('_controlPoints') as number[][] | undefined;
   if (Array.isArray(controlPoints) && controlPoints.length >= 3) {
@@ -91,15 +95,18 @@ export function getSectorControlPoints(polygon: Polygon): number[][] {
   return [center, startPoint, endPoint];
 }
 
+/** 获取扇形圆心。 */
 export function getSectorCenter(controlPoints: number[][]): Coordinate | null {
   return controlPoints.length >= 1 ? controlPoints[0] : null;
 }
 
+/** 获取扇形半径。 */
 export function getSectorRadius(controlPoints: number[][]): number {
   if (controlPoints.length < 2) return 0;
   return dist(controlPoints[0], controlPoints[1]);
 }
 
+/** 获取扇形起止角。 */
 export function getSectorAngles(controlPoints: number[][]): SectorAngles | null {
   if (controlPoints.length < 3) return null;
   const [center, startPoint, endPoint] = controlPoints;
@@ -109,6 +116,7 @@ export function getSectorAngles(controlPoints: number[][]): SectorAngles | null 
   };
 }
 
+/** 创建扇形实时绘制函数。 */
 export function createSectorGeometryFunction() {
   return (coordinates: number[][], geometry?: Polygon): Polygon => {
     const geom = geometry || new Polygon([]);

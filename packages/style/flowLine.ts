@@ -95,6 +95,7 @@ function sampleArrowStyles(
 
 type FlowPhaseGetter = (feature: Feature, flowLine: FlowLineConfig) => number;
 
+/** 创建带流动箭头的线样式。 */
 export function buildFlowLineStyle(config: ResolvedPlotConfig, getPhase: FlowPhaseGetter = () => 0): StyleFunction {
   const defaultLineStyle = new Style({
     stroke: new Stroke({

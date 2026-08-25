@@ -8,6 +8,7 @@ import Fill from 'ol/style/Fill';
 import type { ResolvedPlotConfig } from '../types/config';
 import { getFeatureStyleData } from '../utils/data';
 
+/** 创建距离环及其标签样式。 */
 export function buildRangeRingsStyle(config: ResolvedPlotConfig): StyleFunction {
   return (feature) => {
     const styleData = getFeatureStyleData(feature as any);

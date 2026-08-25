@@ -4,6 +4,7 @@ import type { Coordinate } from 'ol/coordinate';
 const SEGMENTS = 64;
 const MIN_RADIUS = 1e-6;
 
+/** 根据对角控制点生成椭圆坐标。 */
 export function buildEllipse(controlPoints: number[][]): number[][][] {
   if (controlPoints.length < 2) return [[]];
 
@@ -21,6 +22,7 @@ export function buildEllipse(controlPoints: number[][]): number[][][] {
   return [ring];
 }
 
+/** 从椭圆几何提取控制点。 */
 export function getEllipseControlPoints(polygon: Polygon): number[][] {
   const controlPoints = polygon.get('_controlPoints') as number[][] | undefined;
   if (Array.isArray(controlPoints) && controlPoints.length >= 2) {
@@ -48,6 +50,7 @@ export function getEllipseControlPoints(polygon: Polygon): number[][] {
   ];
 }
 
+/** 计算椭圆中心。 */
 export function getEllipseCenter(controlPoints: number[][]): Coordinate {
   const [p1, p2] = controlPoints;
   return [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
@@ -55,12 +58,14 @@ export function getEllipseCenter(controlPoints: number[][]): Coordinate {
 
 export type EllipseRadii = [number, number] & { rx: number; ry: number };
 
+/** 计算椭圆横纵半径。 */
 export function getEllipseRadii(controlPoints: number[][]): EllipseRadii {
   if (controlPoints.length < 2) return toEllipseRadii(0, 0);
   const [p1, p2] = controlPoints;
   return toEllipseRadii(Math.abs(p2[0] - p1[0]) / 2, Math.abs(p2[1] - p1[1]) / 2);
 }
 
+/** 创建椭圆实时绘制函数。 */
 export function createEllipseGeometryFunction() {
   return (coordinates: number[][], geometry?: Polygon): Polygon => {
     const geom = geometry || new Polygon([]);

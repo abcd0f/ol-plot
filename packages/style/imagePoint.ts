@@ -12,6 +12,7 @@ const DEFAULT_LABEL_FONT_FAMILY = 'sans-serif';
 const DEFAULT_LABEL_FONT_WEIGHT = 'normal';
 const DEFAULT_LABEL_OFFSET_Y = 8;
 
+/** 补全图片点配置。 */
 export function resolveImageConfig(imageConfig?: ImageConfig): ImageConfig {
   return {
     src: imageConfig?.src ?? '',
@@ -22,6 +23,7 @@ export function resolveImageConfig(imageConfig?: ImageConfig): ImageConfig {
   };
 }
 
+/** 合并图片点配置。 */
 export function mergeImageConfig(base: ImageConfig, update?: ImageConfig): ImageConfig {
   if (!update) return resolveImageConfig(base);
 
@@ -39,6 +41,7 @@ export function mergeImageConfig(base: ImageConfig, update?: ImageConfig): Image
   });
 }
 
+/** 创建图片点样式。 */
 export function buildImagePointStyle(
   imageConfig: ImageConfig | undefined,
   nodeStyle: NodeStyle,

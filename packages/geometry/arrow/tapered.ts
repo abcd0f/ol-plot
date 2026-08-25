@@ -75,7 +75,7 @@ export function buildTaperedArrow(controlPoints: number[][]): number[][][] {
 }
 
 /**
- * Draw geometryFunction
+ * Draw 几何函数。
  */
 export function createTaperedArrowGeometryFunction() {
   return (coordinates: number[][], geometry?: Polygon): Polygon => {

@@ -8,7 +8,7 @@ import type { CursorHintConfig } from '../types/config';
 
 type EditableLayerProvider = () => BaseLayer[];
 
-/** Updates the map cursor and hint for selectable features and editable handles. */
+/** 更新可选要素与可编辑手柄对应的地图光标和提示。 */
 export class CursorManager {
   private map: Map;
   private getEditableLayers: EditableLayerProvider;
@@ -44,6 +44,7 @@ export class CursorManager {
     this.pointerMoveKey = this.map.on('pointermove', (e) => this.handlePointerMove(e as any));
   }
 
+  /** 设置编辑光标是否启用。 */
   setActive(active: boolean): void {
     this.active = active;
     if (!active) this.dragging = false;
@@ -52,6 +53,7 @@ export class CursorManager {
     this.hideHint();
   }
 
+  /** 设置手柄拖拽状态。 */
   setDragging(dragging: boolean): void {
     this.dragging = dragging;
     if (!this.active) return;
@@ -63,11 +65,13 @@ export class CursorManager {
     }
   }
 
+  /** 更新可编辑图层提供器。 */
   setEditableLayers(getEditableLayers: EditableLayerProvider): void {
     this.getEditableLayers = getEditableLayers;
     this.restoreCursor();
   }
 
+  /** 移除监听和提示元素。 */
   destroy(): void {
     unByKey(this.pointerMoveKey);
     this.cancelPendingHitTest();

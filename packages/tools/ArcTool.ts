@@ -28,7 +28,7 @@ export class ArcTool extends HandleBasedTool {
     });
   }
 
-  // ─── HandleBasedTool implementations ──────────────────────────────────────
+  // ─── HandleBasedTool 实现 ─────────────────────────────────────────────────
 
   protected getPlotType(): string {
     return 'arc';
@@ -41,7 +41,7 @@ export class ArcTool extends HandleBasedTool {
     geom.setCoordinates(buildArc(controlPoints));
   }
 
-  // ─── Abstract implementations ─────────────────────────────────────────────
+  // ─── 抽象方法实现 ─────────────────────────────────────────────────────────
 
   /**
    * 从坐标数组创建圆弧几何

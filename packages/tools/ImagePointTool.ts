@@ -22,7 +22,7 @@ export class ImagePointTool extends BaseTool {
   }
 
   /**
-   * Create the icon style used in normal, selected, and modifying states.
+   * 创建普通、选中和修改状态下使用的图标样式。
    */
   private createImageStyle(): Style {
     if (!this.imageConfig.src) {
@@ -33,7 +33,7 @@ export class ImagePointTool extends BaseTool {
   }
 
   /**
-   * Apply the icon style everywhere OpenLayers may render this point.
+   * 在 OpenLayers 可能渲染该点的位置统一应用图标样式。
    */
   private applyImageStyle(): void {
     const imageStyle = this.createImageStyle();
@@ -86,7 +86,7 @@ export class ImagePointTool extends BaseTool {
   }
 
   /**
-   * Update the image config and refresh all render states.
+   * 更新图片配置并刷新所有渲染状态。
    */
   updateImageConfig(imageConfig: ImagePointConfig['image']): void {
     if (!imageConfig) return;

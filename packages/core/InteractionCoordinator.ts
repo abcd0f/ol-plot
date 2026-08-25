@@ -18,7 +18,7 @@ export interface InteractionCoordinatorOptions {
   modifyOverlayLayer?: BaseLayer;
 }
 
-/** Explicitly coordinates mutually exclusive OL editing interactions. */
+/** 协调互斥的 OpenLayers 编辑交互。 */
 export class InteractionCoordinator {
   private readonly options: InteractionCoordinatorOptions;
   private editMode: EditMode = 'none';
@@ -31,21 +31,26 @@ export class InteractionCoordinator {
     this.options.handleModify?.setActive(false);
     this.options.cursor.setActive(false);
   }
+  /** 设置绘制交互状态。 */
   setDrawing(active: boolean): void {
     this.drawing = active;
     this.options.draw?.setActive(active);
     if (active) this.setEditMode('none');
   }
+  /** 中止当前绘制。 */
   abortDrawing(): void { this.options.draw?.abortDrawing(); this.drawing = false; }
+  /** 更新绘制交互。 */
   setDraw(draw: DrawToggle | null): void {
     this.options.draw = draw ?? undefined;
     if (draw) draw.setActive(this.drawing);
   }
+  /** 配置手柄修改交互。 */
   configureHandleInteraction(handleModify: InteractionToggle, handleLayer: BaseLayer): void {
     this.options.handleModify = handleModify;
     this.options.handleLayer = handleLayer;
     handleModify.setActive(this.editMode === 'handles');
   }
+  /** 切换互斥编辑模式。 */
   setEditMode(mode: EditMode): void {
     this.editMode = mode;
     this.options.modify.setActive(mode === 'feature');
@@ -57,7 +62,10 @@ export class InteractionCoordinator {
       this.options.cursor.setEditableLayers?.(() => [this.options.modifyOverlayLayer!]);
     }
   }
+  /** 设置拖拽状态。 */
   setDragging(dragging: boolean): void { this.options.cursor.setDragging(dragging); }
+  /** 获取编辑模式。 */
   getEditMode(): EditMode { return this.editMode; }
+  /** 判断是否处于绘制态。 */
   isDrawing(): boolean { return this.drawing; }
 }

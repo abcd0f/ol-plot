@@ -2,6 +2,7 @@ export class PlotAnimator {
   private frame: number | null = null;
   private lastFrameTime = 0;
 
+  /** 启动帧动画。 */
   start(shouldContinue: () => boolean, onFrame: (delta: number, time: number) => void): void {
     if (this.frame !== null) return;
     const tick = (time: number) => {
@@ -18,6 +19,7 @@ export class PlotAnimator {
     this.frame = requestAnimationFrame(tick);
   }
 
+  /** 停止帧动画。 */
   stop(): void {
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.frame = null;

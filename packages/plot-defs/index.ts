@@ -189,13 +189,17 @@ const defs: Record<DrawType, PlotDefinition> = {
   [DT.AreaMeasure]: polygonDef(DT.AreaMeasure, 'areaMeasure'),
 };
 
+/** 按绘制类型索引的标绘定义。 */
 export const PLOT_DEFS = defs;
+/** 绘制类型到标绘类型名的映射。 */
 export const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = Object.fromEntries(
   Object.values(defs).map((definition) => [definition.drawType, definition.plotType]),
 ) as Record<DrawType, string>;
+/** 标绘类型名到绘制类型的映射。 */
 export const DRAW_TYPE_BY_PLOT_TYPE = new Map(
   Object.values(defs).map((definition) => [definition.plotType, definition.drawType]),
 );
+/** 使用手柄编辑的标绘类型集合。 */
 export const HANDLE_PLOT_TYPES = new Set(
   Object.values(defs).filter((definition) => definition.editMode === 'handles').map((definition) => definition.plotType),
 );

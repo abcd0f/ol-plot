@@ -27,7 +27,7 @@ export class LineArrowTool extends HandleBasedTool {
     super(map, DrawType.LineArrow, config);
   }
 
-  // ─── HandleBasedTool implementations ──────────────────────────────────────
+  // ─── HandleBasedTool 实现 ─────────────────────────────────────────────────
 
   protected getPlotType(): string {
     return 'lineArrow';
@@ -41,7 +41,7 @@ export class LineArrowTool extends HandleBasedTool {
     geom.setGeometries([line, arrowHead]);
   }
 
-  // ─── Abstract implementations ─────────────────────────────────────────────
+  // ─── 抽象方法实现 ─────────────────────────────────────────────────────────
 
   protected createGeometry(coordinates: number[][]): Geometry {
     const [line, arrowHead] = buildLineArrowGeometries(coordinates);

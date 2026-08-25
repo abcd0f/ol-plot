@@ -23,7 +23,7 @@ export class DoubleArrowTool extends HandleBasedTool {
     super(map, DrawType.DoubleArrow, config);
   }
 
-  // ─── HandleBasedTool implementations ──────────────────────────────────────
+  // ─── HandleBasedTool 实现 ─────────────────────────────────────────────────
 
   protected getPlotType(): string {
     return 'doubleArrow';
@@ -42,7 +42,7 @@ export class DoubleArrowTool extends HandleBasedTool {
     return normalizeDoubleArrowControlPoints(controlPoints);
   }
 
-  // ─── Abstract implementations ─────────────────────────────────────────────
+  // ─── 抽象方法实现 ─────────────────────────────────────────────────────────
 
   protected createGeometry(coordinates: number[][]): Geometry {
     return new Polygon(buildDoubleArrow(coordinates));

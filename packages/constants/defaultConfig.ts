@@ -1,5 +1,6 @@
 import type { ResolvedPlotConfig } from '../types/config';
 
+/** 标绘工具默认配置。 */
 export const DEFAULT_CONFIG: ResolvedPlotConfig = {
   /** 线颜色 */
   strokeColor: '#2196f3',

@@ -10,7 +10,7 @@ import type { ResolvedPlotConfig } from '../types/config';
 import { DrawEvent } from '../constants/events';
 import { buildSelectStyle } from '../style/select';
 
-/** Allow narrow line features to be selected without hitting the exact stroke. */
+/** 放宽窄线要素的命中范围，便于选择。 */
 export const FEATURE_HIT_TOLERANCE = 8;
 
 /**
@@ -81,7 +81,7 @@ export class SelectManager {
     return this.select.getFeatures().getLength() === 0;
   }
 
-  /** Programmatically select a feature (e.g. after drawing completes) */
+  /** 以编程方式选中要素（如绘制完成后）。 */
   /**
    * 程序化选择指定要素（例如绘制完成后）
    * @param feature 要选择的要素
@@ -114,7 +114,7 @@ export class SelectManager {
   }
 
   /**
-   * Override the style applied by the Select interaction.
+   * 覆盖 Select 交互使用的样式。
    */
   setStyle(style: StyleLike | null): void {
     this.select.getFeatures().forEach((feature) => this.restoreStyle(feature as Feature));

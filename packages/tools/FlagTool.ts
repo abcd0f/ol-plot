@@ -32,7 +32,7 @@ export class FlagTool extends HandleBasedTool {
     super(map, DrawType.Flag, config);
   }
 
-  // ─── HandleBasedTool implementations ──────────────────────────────────────
+  // ─── HandleBasedTool 实现 ─────────────────────────────────────────────────
 
   protected getPlotType(): string {
     return 'flag';
@@ -57,7 +57,7 @@ export class FlagTool extends HandleBasedTool {
     return normalizeFlagControlPoints(controlPoints.slice(0, 2));
   }
 
-  // ─── Abstract implementations ─────────────────────────────────────────────
+  // ─── 抽象方法实现 ─────────────────────────────────────────────────────────
 
   protected createGeometry(coordinates: number[][]): Geometry {
     const points = normalizeFlagControlPoints(coordinates.slice(0, 2));

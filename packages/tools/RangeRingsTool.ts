@@ -11,7 +11,7 @@ import { buildRangeRingsGeometries } from '../geometry/rangeRings';
 import { HandleBasedTool } from '../core/HandleBasedTool';
 import { buildRangeRingsStyle } from '../style/rangeRings';
 
-/** Distance rings tool. Two points define the center and maximum radius. */
+/** 距离环工具，以两个点定义圆心和最大半径。 */
 export class RangeRingsTool extends HandleBasedTool {
   constructor(map: Map, config?: RangeRingsPlotConfig) {
     super(map, DrawType.RangeRings, config);

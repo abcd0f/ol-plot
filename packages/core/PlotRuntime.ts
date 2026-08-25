@@ -46,8 +46,8 @@ export interface PlotRuntimeOptions {
 }
 
 /**
- * Shared lifecycle for a single plotting tool.
- * Geometry and style policies remain in the tool adapter.
+ * 单个标绘工具共享的生命周期运行时。
+ * 几何与样式策略由工具适配器提供。
  */
 export class PlotRuntime {
   readonly map: Map;
@@ -122,23 +122,28 @@ export class PlotRuntime {
     this.setState(this.activeDrawType ? ToolState.Drawing : ToolState.Idle);
   }
 
+  /** 获取当前活动要素。 */
   getActiveFeature(): Feature | null {
     return this.activeFeature;
   }
 
+  /** 设置当前活动要素。 */
   setActiveFeature(feature: Feature | null): void {
     this.activeFeature = feature;
     this.onActiveFeatureChange?.(feature);
   }
 
+  /** 获取工具状态。 */
   getState(): ToolState {
     return this.state;
   }
 
+  /** 获取当前绘制类型。 */
   getActiveDrawType(): DrawType | null {
     return this.activeDrawType;
   }
 
+  /** 切换绘制工具。 */
   setDrawTool(drawType: DrawType | null, drawStyle?: StyleFunction): void {
     this.bumpRevision();
     this.drawManager?.abortDrawing();
@@ -167,10 +172,12 @@ export class PlotRuntime {
     this.setState(drawType ? ToolState.Drawing : ToolState.Idle);
   }
 
+  /** 配置要素编辑适配器。 */
   configureEditor(adapter: EditorAdapter): void {
     this.editorController.setAdapter(adapter);
   }
 
+  /** 配置手柄编辑运行时。 */
   configureHandleEditor(options: HandleEditorRuntimeOptions): void {
     this.handleEditor = options;
     this.interactionCoordinator.configureHandleInteraction(options.interaction, options.layer);
@@ -198,15 +205,18 @@ export class PlotRuntime {
     this.eventBus.on(DrawEvent.DESELECT, () => options.hide());
   }
 
+  /** 递增运行时修订号，使延迟任务失效。 */
   bumpRevision(): void {
     this.revision += 1;
   }
 
+  /** 更新工具状态。 */
   setState(state: ToolState): void {
     this.state = state;
     this.onStateChange?.(state);
   }
 
+  /** 删除当前活动要素。 */
   deleteActiveFeature(): void {
     const feature = this.activeFeature;
     if (!feature) return;
@@ -219,6 +229,7 @@ export class PlotRuntime {
     this.eventBus.emit(DrawEvent.DELETE, { feature });
   }
 
+  /** 清空全部要素。 */
   clearFeatures(): void {
     this.bumpRevision();
     this.drawManager?.abortDrawing();
@@ -229,6 +240,7 @@ export class PlotRuntime {
     this.setState(this.activeDrawType ? ToolState.Drawing : ToolState.Idle);
   }
 
+  /** 销毁运行时及其管理器。 */
   destroy(): void {
     this.bumpRevision();
     document.removeEventListener('keydown', this.handleKeyDown);

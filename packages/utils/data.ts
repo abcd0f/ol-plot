@@ -28,6 +28,7 @@ const RESERVED_PROPERTY_KEYS = new Set([
   PLOT_STYLE_PROPERTY,
 ]);
 
+/** 序列化单个要素及其样式。 */
 export function serializeFeature(
   feature: Feature,
   drawType: DrawType,
@@ -63,12 +64,14 @@ export function serializeFeature(
   return transformedData;
 }
 
+/** 将标绘数据坐标转换到目标投影。 */
 export function projectPlotDataCoordinates(data: PlotFeatureData, projection: ProjectionLike): PlotFeatureData {
   return transformFeatureDataCoordinates(data, (coordinate) =>
     isLonLatCoordinate(coordinate) ? fromLonLat(coordinate, projection) : [...coordinate],
   );
 }
 
+/** 提取配置中的可持久化样式。 */
 export function serializeStyle(
   config: ResolvedPlotConfig,
   includeFlowLine = false,
@@ -95,6 +98,7 @@ export function serializeStyle(
   return style;
 }
 
+/** 根据持久化样式创建 OpenLayers 样式。 */
 export function buildStyleFromData(style: PlotStyleData): Style {
   const nodeStyle = style.nodeStyle;
 
@@ -126,6 +130,7 @@ export function buildStyleFromData(style: PlotStyleData): Style {
   });
 }
 
+/** 合并基础样式与覆盖样式。 */
 export function resolveStyleData(
   baseConfig: ResolvedPlotConfig,
   override?: InternalPlotConfig,
@@ -135,10 +140,12 @@ export function resolveStyleData(
   return serializeStyle(mergeRuntimeConfig(baseConfig, override), includeFlowLine, includeAlarmPoint);
 }
 
+/** 将样式数据写入要素属性。 */
 export function setFeatureStyleData(feature: Feature, style: PlotStyleData): void {
   feature.set(PLOT_STYLE_PROPERTY, cloneJson(style));
 }
 
+/** 读取要素保存的样式数据。 */
 export function getFeatureStyleData(feature: Feature): PlotStyleData | undefined {
   const style = feature.get(PLOT_STYLE_PROPERTY) as PlotStyleData | undefined;
   return style ? cloneJson(style) : undefined;
