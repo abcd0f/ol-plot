@@ -50,6 +50,10 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
       pointerEvents: 'none',
     },
   },
+  rangeRings: {
+    spacing: 10,
+    unit: 'km',
+  },
   flowLine: {
     arrowColor: '',
     arrowSpacing: 48,

@@ -19,6 +19,8 @@ export enum DrawType {
   Rectangle = 'Rectangle',
   /** 圆 */
   Circle = 'Circle',
+  /** 距离环 */
+  RangeRings = 'RangeRings',
   /** 椭圆 */
   Ellipse = 'Ellipse',
   /** 扇形 */

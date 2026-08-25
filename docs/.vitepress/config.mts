@@ -61,6 +61,7 @@ export default defineConfig({
           { text: '多边形 Polygon', link: '/components/polygon' },
           { text: '矩形 Rectangle', link: '/components/rectangle' },
           { text: '圆 Circle', link: '/components/circle' },
+          { text: '距离环 RangeRings', link: '/components/range-rings' },
           { text: '方位角 Azimuth', link: '/components/azimuth' },
           { text: '椭圆 Ellipse', link: '/components/ellipse' },
           { text: '扇形 Sector', link: '/components/sector' },

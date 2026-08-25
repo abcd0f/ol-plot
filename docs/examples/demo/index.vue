@@ -204,6 +204,24 @@
           <em>{{ styleForm.alarmFrameRate }}</em>
         </label>
       </template>
+
+      <template v-if="selectedType === DrawType.RangeRings">
+        <div class="panel-title compact">距离环</div>
+
+        <label class="field">
+          <span>间距</span>
+          <input v-model.number="styleForm.rangeSpacing" type="number" min="0.01" step="0.01" :disabled="!hasSelection" />
+        </label>
+
+        <label class="field">
+          <span>单位</span>
+          <select v-model="styleForm.rangeUnit" :disabled="!hasSelection">
+            <option value="m">m</option>
+            <option value="km">km</option>
+            <option value="nm">nm</option>
+          </select>
+        </label>
+      </template>
     </div>
 
     <div ref="el" class="map-wrapper" />
@@ -238,6 +256,7 @@ const tools: ToolItem[] = [
   { label: '多边形', type: DrawType.Polygon },
   { label: '矩形', type: DrawType.Rectangle },
   { label: '圆', type: DrawType.Circle },
+  { label: '距离环', type: DrawType.RangeRings },
   { label: '方位角', type: DrawType.Azimuth },
   { label: '椭圆', type: DrawType.Ellipse },
   { label: '扇形', type: DrawType.Sector },
@@ -290,6 +309,8 @@ const styleForm = reactive({
   alarmDuration: 1200,
   alarmRings: 2,
   alarmFrameRate: 30,
+  rangeSpacing: 10,
+  rangeUnit: 'km' as 'm' | 'km' | 'nm',
 });
 
 let map: OlMap | null = null;
@@ -396,6 +417,11 @@ function applySelectedStyle(): void {
     };
   }
 
+  if (selectedType.value === DrawType.RangeRings) {
+    if (!Number.isFinite(styleForm.rangeSpacing) || styleForm.rangeSpacing <= 0) return;
+    config.rangeRings = { spacing: styleForm.rangeSpacing, unit: styleForm.rangeUnit };
+  }
+
   plot?.setStyleConfig(config);
 }
 
@@ -426,6 +452,8 @@ async function syncStyleForm(style: PlotStyleData): Promise<void> {
   styleForm.alarmDuration = style.alarm?.duration ?? 1200;
   styleForm.alarmRings = style.alarm?.rings ?? 2;
   styleForm.alarmFrameRate = style.alarm?.frameRate ?? 30;
+  styleForm.rangeSpacing = 10;
+  styleForm.rangeUnit = 'km';
 
   await nextTick();
   syncingStyle.value = false;
@@ -539,6 +567,10 @@ onMounted(() => {
       mode: 'both',
       unit: 'm',
     },
+    rangeRings: {
+      spacing: styleForm.rangeSpacing,
+      unit: styleForm.rangeUnit,
+    },
   });
 
   plot.setActiveTool(activeType.value);
@@ -551,6 +583,8 @@ onMounted(() => {
     selectedType.value = data.type;
     lastEvent.value = `选中 ${data.type}`;
     syncStyleForm(data.style);
+    if (data.rangeRingsSpacing) styleForm.rangeSpacing = data.rangeRingsSpacing;
+    if (data.rangeRingsUnit) styleForm.rangeUnit = data.rangeRingsUnit;
   });
   plot.on(DrawEvent.DESELECT, () => {
     selectedType.value = null;

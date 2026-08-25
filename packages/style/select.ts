@@ -10,6 +10,7 @@ import type CircleGeom from 'ol/geom/Circle';
 import type Point from 'ol/geom/Point';
 import type { ResolvedPlotConfig } from '../types/config';
 import { getFeatureStyleData } from '../utils/data';
+import { buildRangeRingsStyle } from './rangeRings';
 
 /** 从要素几何中提取所有顶点坐标。 */
 function extractVertices(feature: Feature): number[][] {
@@ -99,6 +100,7 @@ export function buildSelectStyle(config: ResolvedPlotConfig): StyleFunction {
   });
 
   return (feature) => {
+    if (feature.get('plotType') === 'rangeRings') return buildRangeRingsStyle(config)(feature, 1);
     const styleData = getFeatureStyleData(feature as Feature);
     if (!styleData) return [defaultGeometryStyle, defaultVertexStyle];
 

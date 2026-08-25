@@ -22,6 +22,15 @@ export interface AreaMeasureConfig {
   labelStyle?: Partial<CSSStyleDeclaration>;
 }
 
+export type RangeRingsUnit = 'm' | 'km' | 'nm';
+
+export interface RangeRingsConfig {
+  /** Numeric distance between adjacent rings. */
+  spacing?: number;
+  /** Unit used by spacing and ring labels. */
+  unit?: RangeRingsUnit;
+}
+
 export interface FlowLineConfig {
   arrowColor?: string;
   arrowSpacing?: number;
@@ -91,6 +100,10 @@ export interface AreaMeasurePlotConfig extends PlotConfig {
   areaMeasure?: AreaMeasureConfig;
 }
 
+export interface RangeRingsPlotConfig extends PlotConfig {
+  rangeRings?: RangeRingsConfig;
+}
+
 export interface FlowLinePlotConfig extends PlotConfig {
   flowLine?: FlowLineConfig;
 }
@@ -109,6 +122,7 @@ export interface InternalPlotConfig extends PlotConfig {
   flowLine?: FlowLineConfig;
   image?: ImageConfig;
   alarm?: AlarmPointStyleConfig;
+  rangeRings?: RangeRingsConfig;
 }
 
 export type ResolvedPlotConfig = Required<InternalPlotConfig>;

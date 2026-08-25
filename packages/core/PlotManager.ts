@@ -59,6 +59,8 @@ import { isEditableTarget } from '../utils/keyboard';
 import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
 import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
 import { buildAzimuthGeometries } from '../geometry/azimuth';
+import { buildRangeRingsGeometries } from '../geometry/rangeRings';
+import { buildRangeRingsStyle } from '../style/rangeRings';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
 const HANDLE_PLOT_TYPES = new Set([
@@ -72,6 +74,7 @@ const HANDLE_PLOT_TYPES = new Set([
   'arc',
   'flag',
   'azimuth',
+  'rangeRings',
 ]);
 
 export type PlotManagerConfig = InternalPlotConfig & Pick<ImagePointConfig, 'image'>;
@@ -190,6 +193,7 @@ export class PlotManager {
         this.activeDrawType,
         (feature, resolution) => this.activeDrawStyle(feature, resolution),
         () => this.selectManager.isEmpty(),
+        this.config,
       );
     }
 
@@ -225,12 +229,29 @@ export class PlotManager {
     if (drawType === DrawType.AlarmPoint && config.alarm) {
       styleData.alarm = { ...mergeAlarmPointConfig(this.config.alarm, config.alarm) };
     }
+    if (
+      drawType === DrawType.RangeRings &&
+      config.rangeRings &&
+      (config.rangeRings.spacing !== undefined || config.rangeRings.unit !== undefined)
+    ) {
+      this.activeFeature.set(
+        'rangeRingsSpacing',
+        config.rangeRings.spacing ?? this.activeFeature.get('rangeRingsSpacing') ?? this.config.rangeRings.spacing,
+      );
+      this.activeFeature.set(
+        'rangeRingsUnit',
+        config.rangeRings.unit ?? this.activeFeature.get('rangeRingsUnit') ?? this.config.rangeRings.unit,
+      );
+      this.updateFeatureGeometry(this.activeFeature, drawType, this.extractCoordinates(this.activeFeature));
+    }
 
     setFeatureStyleData(this.activeFeature, styleData);
     this.selectManager.setStyle(null);
     if (drawType === DrawType.FlowLine) {
       this.activeFeature.setStyle(undefined);
       this.updateAnimationState();
+    } else if (drawType === DrawType.RangeRings) {
+      this.activeFeature.setStyle(buildRangeRingsStyle(mergeRuntimeConfig(this.config, styleData)));
     } else {
       this.activeFeature.setStyle(buildStyleFromData(styleData));
     }
@@ -284,7 +305,12 @@ export class PlotManager {
       const projectedItem = projectPlotDataCoordinates(item, this.map.getView().getProjection());
       const feature = this.createFeature(drawType, projectedItem.controlPoints ?? projectedItem.coordinates);
       if (item.id !== undefined) feature.setId(item.id);
+      if (item.rangeRingsSpacing) feature.set('rangeRingsSpacing', item.rangeRingsSpacing);
+      if (item.rangeRingsUnit) feature.set('rangeRingsUnit', item.rangeRingsUnit);
       Object.entries(item.properties ?? {}).forEach(([key, value]) => feature.set(key, value));
+      if (drawType === DrawType.RangeRings) {
+        this.updateFeatureGeometry(feature, drawType, projectedItem.controlPoints ?? projectedItem.coordinates);
+      }
       if (item.plotType) feature.set('plotType', item.plotType);
       if (projectedItem.controlPoints) {
         feature.set(
@@ -296,6 +322,8 @@ export class PlotManager {
         setFeatureStyleData(feature, item.style);
         if (options.applyStyle !== false && drawType === DrawType.AlarmPoint && item.style.alarm) {
           feature.setStyle(buildStyleFromData(item.style));
+        } else if (options.applyStyle !== false && drawType === DrawType.RangeRings) {
+          feature.setStyle(buildRangeRingsStyle(mergeRuntimeConfig(this.config, item.style)));
         } else if (
           options.applyStyle !== false &&
           drawType === DrawType.ImagePoint &&
@@ -477,6 +505,10 @@ export class PlotManager {
   private prepareFeature(feature: Feature, drawType: DrawType, coordinates?: number[][]): void {
     feature.set(DRAW_TYPE_PROPERTY, drawType);
     feature.set('plotType', this.getPlotType(drawType));
+    if (drawType === DrawType.RangeRings) {
+      feature.set('rangeRingsSpacing', this.config.rangeRings.spacing);
+      feature.set('rangeRingsUnit', this.config.rangeRings.unit);
+    }
 
     const geom = feature.getGeometry();
     const controlPoints = coordinates ?? this.extractControlPoints(drawType, geom);
@@ -510,6 +542,13 @@ export class PlotManager {
       }
       case DrawType.Circle:
         return new Circle(coordinates[0], coordinates[1] ? dist(coordinates[0], coordinates[1]) : 0);
+      case DrawType.RangeRings:
+        return buildRangeRingsGeometries(
+          coordinates.slice(0, 2),
+          this.config.rangeRings.spacing,
+          this.config.rangeRings.unit,
+          this.map.getView().getProjection(),
+        );
       case DrawType.Rectangle:
         return new Polygon(buildRectangle(coordinates.slice(0, 2)));
       case DrawType.Ellipse:
@@ -580,6 +619,22 @@ export class PlotManager {
           (geom as Circle).setRadius(dist(coordinates[0], coordinates[1]));
         }
         break;
+      case DrawType.RangeRings: {
+        const points = coordinates.slice(0, 2);
+        const next = buildRangeRingsGeometries(
+          points,
+          feature.get('rangeRingsSpacing') ?? this.config.rangeRings.spacing,
+          feature.get('rangeRingsUnit') ?? this.config.rangeRings.unit,
+          this.map.getView().getProjection(),
+        );
+        feature.set('controlPoints', points);
+        geom.set('_controlPoints', points);
+        geom.set('rangeRingsSpacing', next.get('rangeRingsSpacing'));
+        geom.set('rangeRingsUnit', next.get('rangeRingsUnit'));
+        (geom as GeometryCollection).setGeometries(next.getGeometries());
+        this.handleManager.refresh(points);
+        break;
+      }
       case DrawType.Rectangle:
         this.updateHandleGeometry(
           feature,
@@ -779,6 +834,8 @@ export class PlotManager {
         return getFlagControlPoints(geom as GeometryCollection);
       case DrawType.Azimuth:
         return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
+      case DrawType.RangeRings:
+        return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
       default:
         return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
     }
@@ -868,6 +925,8 @@ export class PlotManager {
       style = this.createAlarmStyle(config.alarm);
     } else if (drawType === DrawType.ImagePoint) {
       style = this.createImageStyle(this.getImageConfig());
+    } else if (drawType === DrawType.RangeRings) {
+      style = buildRangeRingsStyle(config);
     } else {
       style = buildFeatureStyle(config);
     }
@@ -1097,6 +1156,7 @@ const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = {
   [DrawType.Polygon]: 'polygon',
   [DrawType.Rectangle]: 'rectangle',
   [DrawType.Circle]: 'circle',
+  [DrawType.RangeRings]: 'rangeRings',
   [DrawType.Ellipse]: 'ellipse',
   [DrawType.Sector]: 'sector',
   [DrawType.StraightArrow]: 'straightArrow',

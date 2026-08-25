@@ -26,6 +26,10 @@ export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
         ...config?.areaMeasure?.labelStyle,
       },
     },
+    rangeRings: {
+      ...DEFAULT_CONFIG.rangeRings,
+      ...config?.rangeRings,
+    },
     flowLine: {
       ...DEFAULT_CONFIG.flowLine,
       ...config?.flowLine,
@@ -63,6 +67,10 @@ export function mergeRuntimeConfig(current: ResolvedPlotConfig, config?: Interna
         ...current.areaMeasure.labelStyle,
         ...config.areaMeasure?.labelStyle,
       },
+    },
+    rangeRings: {
+      ...current.rangeRings,
+      ...config.rangeRings,
     },
     flowLine: {
       ...current.flowLine,

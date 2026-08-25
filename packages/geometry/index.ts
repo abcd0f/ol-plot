@@ -20,6 +20,12 @@ export { buildSector, getSectorControlPoints, createSectorGeometryFunction } fro
 export { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc';
 
 export { buildAzimuthGeometries, createAzimuthGeometryFunction } from './azimuth';
+export {
+  buildRangeRingsGeometries,
+  createRangeRingsGeometryFunction,
+  parseRangeSpacing,
+  formatValue,
+} from './rangeRings';
 
 export {
   buildFlagGeometries,

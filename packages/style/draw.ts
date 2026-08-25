@@ -2,6 +2,7 @@ import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import type { ResolvedPlotConfig } from '../types/config';
+import { buildRangeRingsStyle } from './rangeRings';
 
 /**
  * 绘制（草图）阶段使用的样式。
@@ -14,6 +15,7 @@ import type { ResolvedPlotConfig } from '../types/config';
  * @returns OL StyleFunction
  */
 export function buildDrawStyle(config: ResolvedPlotConfig): StyleFunction {
+  const rangeRingsStyle = buildRangeRingsStyle(config);
   const sketchStyle = new Style({
     stroke: new Stroke({
       color: config.strokeColor,
@@ -28,6 +30,7 @@ export function buildDrawStyle(config: ResolvedPlotConfig): StyleFunction {
   return (feature) => {
     const geom = feature.getGeometry();
     if (!geom) return undefined;
+    if (geom.get('rangeRingsSpacing')) return rangeRingsStyle(feature, 1);
     // 隐藏跟随鼠标的草图顶点
     if (geom.getType() === 'Point') return undefined;
     return sketchStyle;

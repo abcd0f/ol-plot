@@ -4,7 +4,7 @@
 
 ## 特性
 
-- **工具丰富**：内置点、图片点、折线、流向线、自由线、自由面、多边形、矩形、圆、椭圆、扇形、弧线、旗标、箭头、方位角、测距和测面等工具。
+- **工具丰富**：内置点、图片点、折线、流向线、自由线、自由面、多边形、矩形、圆、距离环、椭圆、扇形、弧线、旗标、箭头、方位角、测距和测面等工具。
 - **开箱即用的交互**：自动协调 Draw、Select、Modify 三类 OpenLayers interaction，支持绘制后选中、点击切换选中、拖拽控制点编辑和键盘删除。
 - **统一生命周期**：支持单工具 `BaseTool` 用法，也支持一个 `PlotManager` 管理多类型标绘、事件订阅、要素管理和销毁 API。
 - **灵活样式配置**：支持线色、线宽、虚线、填充色、控制点样式、测量标签样式和流向线动画参数。
@@ -115,6 +115,7 @@ plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
 | `PolygonTool`         | `Polygon`            | 单击添加顶点，双击或闭合结束                         |
 | `RectangleTool`       | `Polygon`            | 拖拽确定对角点                                       |
 | `CircleTool`          | `Circle`             | 拖拽确定圆心和半径                                   |
+| `RangeRingsTool`      | `GeometryCollection` | 两点确定圆心和覆盖半径，按间距绘制无填充同心距离环，并显示半径标签 |
 | `AzimuthTool`         | `GeometryCollection` | 两点确定方向，显示距离和方位角，并以距离为半径绘制圆 |
 | `EllipseTool`         | `Polygon`            | 拖拽确定外接矩形                                     |
 | `SectorTool`          | `Polygon`            | 依次点击圆心、起始点、结束点                         |
@@ -126,6 +127,18 @@ plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
 | `DoubleArrowTool`     | `Polygon`            | 多点绘制双箭头                                       |
 | `MeasureTool`         | `LineString`         | 绘制折线并显示距离标签                               |
 | `AreaMeasureTool`     | `Polygon`            | 绘制区域并显示面积标签                               |
+
+距离环的间距通过 `rangeRings.spacing` 和 `rangeRings.unit` 配置，支持 `m`、`km`、`nm`，例如：
+
+```ts
+import { RangeRingsTool } from '@seedlib/ol-plot';
+
+const tool = new RangeRingsTool(map, {
+  rangeRings: { spacing: 50, unit: 'nm' },
+});
+```
+
+第二个点只决定最大覆盖半径；若最大半径不是间距的整数倍，只绘制不超过该半径的完整距离环。
 
 ## 常用 API
 

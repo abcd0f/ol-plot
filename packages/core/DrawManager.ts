@@ -16,6 +16,8 @@ import { createFlagGeometryFunction } from '../geometry/flag';
 import { createRectangleGeometryFunction } from '../geometry/rectangle';
 import { createSectorGeometryFunction } from '../geometry/sector';
 import { createAzimuthGeometryFunction } from '../geometry/azimuth';
+import { createRangeRingsGeometryFunction } from '../geometry/rangeRings';
+import type { ResolvedPlotConfig } from '../types/config';
 import { ClickFreehandDraw } from './ClickFreehandDraw';
 
 type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
@@ -58,6 +60,7 @@ export class DrawManager {
     drawType: DrawType,
     style: StyleFunction,
     canStartDraw: () => boolean,
+    config?: ResolvedPlotConfig,
   ) {
     this.map = map;
     this.layer = layer;
@@ -75,6 +78,14 @@ export class DrawManager {
     if (drawType === DrawType.Ellipse) {
       type = 'LineString';
       geometryFunction = createEllipseGeometryFunction() as unknown as GeometryFunction;
+      maxPoints = 2;
+    } else if (drawType === DrawType.RangeRings) {
+      type = 'LineString';
+      geometryFunction = createRangeRingsGeometryFunction(
+        config?.rangeRings.spacing,
+        config?.rangeRings.unit,
+        map.getView().getProjection(),
+      ) as unknown as GeometryFunction;
       maxPoints = 2;
     } else if (drawType === DrawType.StraightArrow) {
       type = 'LineString';

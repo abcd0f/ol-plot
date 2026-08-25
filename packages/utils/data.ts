@@ -22,6 +22,8 @@ const RESERVED_PROPERTY_KEYS = new Set([
   'geometry',
   'controlPoints',
   'plotType',
+  'rangeRingsSpacing',
+  'rangeRingsUnit',
   DRAW_TYPE_PROPERTY,
   PLOT_STYLE_PROPERTY,
 ]);
@@ -46,6 +48,8 @@ export function serializeFeature(
     id: normalizeId(feature.getId()),
     type: drawType,
     plotType: feature.get('plotType') as string | undefined,
+    ...(feature.get('rangeRingsSpacing') ? { rangeRingsSpacing: feature.get('rangeRingsSpacing') as number } : {}),
+    ...(feature.get('rangeRingsUnit') ? { rangeRingsUnit: feature.get('rangeRingsUnit') as PlotFeatureData['rangeRingsUnit'] } : {}),
     coordinates,
     ...(controlPoints ? { controlPoints } : {}),
     style,

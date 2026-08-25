@@ -99,6 +99,7 @@ export abstract class BaseTool {
       drawType,
       (feature, resolution) => this.drawStyle(feature, resolution),
       () => this.selectManager.isEmpty(),
+      this.config,
     );
 
     this.bindEvents();
@@ -244,6 +245,8 @@ export abstract class BaseTool {
       const projectedItem = projectPlotDataCoordinates(item, this.map.getView().getProjection());
       const feature = this.createFeature(projectedItem.controlPoints ?? projectedItem.coordinates);
       if (item.id !== undefined) feature.setId(item.id);
+      if (item.rangeRingsSpacing) feature.set('rangeRingsSpacing', item.rangeRingsSpacing);
+      if (item.rangeRingsUnit) feature.set('rangeRingsUnit', item.rangeRingsUnit);
       if (item.plotType) feature.set('plotType', item.plotType);
       if (projectedItem.controlPoints)
         feature.set(
