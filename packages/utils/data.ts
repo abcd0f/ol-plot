@@ -5,7 +5,7 @@ import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
-import Style, { type StyleLike } from 'ol/style/Style';
+import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
@@ -91,7 +91,7 @@ export function serializeStyle(
   return style;
 }
 
-export function buildStyleFromData(style: PlotStyleData): StyleLike {
+export function buildStyleFromData(style: PlotStyleData): Style {
   const nodeStyle = style.nodeStyle;
 
   if (style.image) {
