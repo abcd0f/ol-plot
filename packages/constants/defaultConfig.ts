@@ -55,6 +55,12 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
     arrowSpacing: 48,
     speed: 60,
   },
+  image: {
+    src: '',
+    scale: 1,
+    anchor: [0.5, 0.5],
+    opacity: 1,
+  },
   alarm: {
     radius: 9,
     color: '#ff3b30',
