@@ -5,9 +5,11 @@ import type { StyleFunction, StyleLike } from 'ol/style/Style';
 import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotFeatureData, PlotRestoreOptions } from '../types/data';
 import { DrawType } from '../constants/drawType';
+import { PLOT_DEFS } from '../plot-defs';
+import type { PlotDefinition } from '../plot-defs';
 import { ToolState } from '../constants/toolState';
 import { EventBus } from './EventBus';
-import { LayerManager } from './LayerManager';
+import { FeatureStore } from './FeatureStore';
 import { DrawManager } from './DrawManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
@@ -48,9 +50,10 @@ export abstract class BaseTool {
   protected map: Map;
   protected config: ResolvedPlotConfig;
   protected drawType: DrawType;
+  protected readonly def: PlotDefinition;
 
   protected eventBus: EventBus;
-  protected layerManager: LayerManager;
+  protected layerManager: FeatureStore;
   protected drawManager: DrawManager;
   protected selectManager: SelectManager;
   protected modifyManager: ModifyManager;
@@ -77,6 +80,7 @@ export abstract class BaseTool {
   constructor(map: Map, drawType: DrawType, config?: InternalPlotConfig) {
     this.map = map;
     this.drawType = drawType;
+    this.def = PLOT_DEFS[drawType];
     this.config = mergeConfig(config);
     this.drawStyle = buildDrawStyle(this.config);
 

@@ -4,6 +4,7 @@ import type BaseLayer from 'ol/layer/Base';
 import type { Pixel } from 'ol/pixel';
 import type { EventsKey } from 'ol/events';
 import { unByKey } from 'ol/Observable';
+import type { CursorHintConfig } from '../types/config';
 
 type EditableLayerProvider = () => BaseLayer[];
 
@@ -27,6 +28,7 @@ export class CursorManager {
     getEditableLayers: EditableLayerProvider,
     hitTolerance = 8,
     getSelectableLayers: EditableLayerProvider = () => [],
+    hintConfig: CursorHintConfig = {},
   ) {
     this.map = map;
     this.getEditableLayers = getEditableLayers;
@@ -34,21 +36,9 @@ export class CursorManager {
     this.hitTolerance = hitTolerance;
 
     this.hint = document.createElement('div');
-    this.hint.textContent = '点击进入编辑';
-    Object.assign(this.hint.style, {
-      position: 'absolute',
-      zIndex: '1',
-      display: 'none',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      background: 'rgba(0, 0, 0, 0.72)',
-      color: '#fff',
-      fontSize: '12px',
-      lineHeight: '1.4',
-      whiteSpace: 'nowrap',
-      pointerEvents: 'none',
-      transform: 'translate(10px, 10px)',
-    });
+    this.hint.textContent = hintConfig.text ?? '';
+    Object.assign(this.hint.style, hintConfig.style);
+    if (hintConfig.enabled === false) this.hint.hidden = true;
     this.map.getViewport().appendChild(this.hint);
 
     this.pointerMoveKey = this.map.on('pointermove', (e) => this.handlePointerMove(e as any));
@@ -159,6 +149,7 @@ export class CursorManager {
   }
 
   private showHint(pixel: Pixel): void {
+    if (this.hint.hidden) return;
     this.hint.style.left = `${pixel[0]}px`;
     this.hint.style.top = `${pixel[1]}px`;
     this.hint.style.display = 'block';

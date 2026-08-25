@@ -38,6 +38,16 @@ export function mergeConfig(config?: InternalPlotConfig): ResolvedPlotConfig {
       ...DEFAULT_CONFIG.alarm,
       ...config?.alarm,
     },
+    image: {
+      ...DEFAULT_CONFIG.image,
+      ...config?.image,
+      label: config?.image?.label ? { ...DEFAULT_CONFIG.image.label, ...config.image.label } : DEFAULT_CONFIG.image.label,
+    },
+    hint: {
+      ...DEFAULT_CONFIG.hint,
+      ...config?.hint,
+      style: { ...DEFAULT_CONFIG.hint.style, ...config?.hint?.style },
+    },
   };
 }
 
@@ -79,6 +89,16 @@ export function mergeRuntimeConfig(current: ResolvedPlotConfig, config?: Interna
     alarm: {
       ...current.alarm,
       ...config.alarm,
+    },
+    image: {
+      ...current.image,
+      ...config.image,
+      label: config.image?.label ? { ...current.image.label, ...config.image.label } : current.image.label,
+    },
+    hint: {
+      ...current.hint,
+      ...config.hint,
+      style: { ...current.hint.style, ...config.hint?.style },
     },
   };
 }

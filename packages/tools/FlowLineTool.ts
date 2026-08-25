@@ -10,19 +10,18 @@ import { BaseTool } from '../core/BaseTool';
 import { buildFlowLineStyle } from '../style/flowLine';
 import { buildSelectStyle } from '../style/select';
 import { getFeatureStyleData } from '../utils/data';
+import { PlotAnimator } from '../helper/animator';
 
 export class FlowLineTool extends BaseTool {
-  private animationFrame: number | null = null;
+  private readonly animator = new PlotAnimator();
   private phase = 0;
   private elapsedTime = 0;
-  private lastFrameTime = 0;
 
   constructor(map: Map, config?: FlowLinePlotConfig) {
     super(map, DrawType.FlowLine, config);
     this.applyFlowLineStyle();
 
     this.eventBus.on(DrawEvent.DRAW_END, ({ feature }: { feature: Feature }) => {
-      feature.set('plotType', 'flowLine');
       this.ensureAnimation();
     });
     this.eventBus.on(DrawEvent.DELETE, () => {
@@ -61,28 +60,16 @@ export class FlowLineTool extends BaseTool {
   }
 
   private startAnimation(): void {
-    if (this.animationFrame !== null) return;
-
-    const tick = (time: number) => {
-      if (this.lastFrameTime === 0) this.lastFrameTime = time;
-      const delta = Math.min(time - this.lastFrameTime, 100);
-      this.lastFrameTime = time;
+    this.animator.start(() => this.hasAnimatedFlowLines(), (delta) => {
       this.elapsedTime += delta;
       this.phase += ((this.config.flowLine.speed ?? 60) * delta) / 1000;
       this.layerManager.getLayer().changed();
       this.map.render();
-      this.animationFrame = requestAnimationFrame(tick);
-    };
-
-    this.lastFrameTime = 0;
-    this.animationFrame = requestAnimationFrame(tick);
+    });
   }
 
   private stopAnimation(): void {
-    if (this.animationFrame === null) return;
-    cancelAnimationFrame(this.animationFrame);
-    this.animationFrame = null;
-    this.lastFrameTime = 0;
+    this.animator.stop();
     this.elapsedTime = 0;
     this.phase = 0;
   }

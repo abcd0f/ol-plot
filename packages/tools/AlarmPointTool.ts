@@ -10,10 +10,11 @@ import { DrawEvent } from '../constants/events';
 import { BaseTool } from '../core/BaseTool';
 import { mergeRuntimeConfig } from '../constants';
 import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
+import { PlotAnimator } from '../helper/animator';
 
 export class AlarmPointTool extends BaseTool {
-  private animationFrame: number | null = null;
-  private lastFrameTime = 0;
+  private readonly animator = new PlotAnimator();
+  private frameElapsed = 0;
 
   constructor(map: Map, config?: AlarmPointConfig) {
     super(map, DrawType.AlarmPoint, config);
@@ -49,8 +50,7 @@ export class AlarmPointTool extends BaseTool {
   }
 
   getPosition(): number[] | null {
-    if (!this.activeFeature) return null;
-    return (this.activeFeature.getGeometry() as Point).getCoordinates();
+    return this.getCoordinates()[0] ?? null;
   }
 
   updateAlarmConfig(alarmConfig: AlarmPointConfig['alarm']): void {
@@ -95,29 +95,20 @@ export class AlarmPointTool extends BaseTool {
   }
 
   private ensureAnimation(): void {
-    if (this.animationFrame !== null) return;
-
-    const tick = (time: number) => {
+    this.animator.start(() => this.getFeatures().length > 0, (delta) => {
       const frameInterval =
         1000 / resolveAlarmPointConfig(this.config.alarm, this.config.nodeStyle, this.config.strokeColor).frameRate;
-
-      if (this.lastFrameTime === 0 || time - this.lastFrameTime >= frameInterval) {
-        this.lastFrameTime = time;
+      this.frameElapsed += delta;
+      if (delta === 0 || this.frameElapsed >= frameInterval) {
+        this.frameElapsed = 0;
         this.layerManager.getLayer().changed();
         this.map.render();
       }
-
-      this.animationFrame = requestAnimationFrame(tick);
-    };
-
-    this.lastFrameTime = 0;
-    this.animationFrame = requestAnimationFrame(tick);
+    });
   }
 
   private stopAnimation(): void {
-    if (this.animationFrame === null) return;
-    cancelAnimationFrame(this.animationFrame);
-    this.animationFrame = null;
-    this.lastFrameTime = 0;
+    this.animator.stop();
+    this.frameElapsed = 0;
   }
 }

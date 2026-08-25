@@ -80,4 +80,22 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
     maxOpacity: 1,
     frameRate: 30,
   },
+  hint: {
+    text: '点击进入编辑',
+    enabled: true,
+    style: {
+      position: 'absolute',
+      zIndex: '1',
+      display: 'none',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      background: 'rgba(0, 0, 0, 0.72)',
+      color: '#fff',
+      fontSize: '12px',
+      lineHeight: '1.4',
+      whiteSpace: 'nowrap',
+      pointerEvents: 'none',
+      transform: 'translate(10px, 10px)',
+    },
+  },
 };

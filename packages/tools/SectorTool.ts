@@ -13,9 +13,9 @@ import {
   getSectorControlPoints,
   getSectorRadius,
   normalizeSectorControlPoints,
+  resolveSectorDrag,
 } from '../geometry/sector';
 
-const MOVE_TOLERANCE = 1e-9;
 type RadiusSourceIndex = 1 | 2;
 
 export class SectorTool extends HandleBasedTool {
@@ -43,7 +43,7 @@ export class SectorTool extends HandleBasedTool {
   protected onHandleSync(controlPoints: number[][]): void {
     if (!this.activeFeature) return;
 
-    const points = this.resolveDraggedControlPoints(controlPoints);
+    const points = resolveSectorDrag(this.getCoordinates(), controlPoints, this.draggingHandleIndex);
     this.activeFeature.set('controlPoints', points);
 
     const geom = this.activeFeature.getGeometry() as Polygon;
@@ -112,24 +112,4 @@ export class SectorTool extends HandleBasedTool {
     return getSectorAngles(this.getCoordinates());
   }
 
-  private resolveDraggedControlPoints(controlPoints: number[][]): number[][] {
-    if (controlPoints.length < 3) return controlPoints;
-
-    const previous = this.getCoordinates();
-    if (previous.length < 3) return normalizeSectorControlPoints(controlPoints.slice(0, 3));
-
-    const centerMoved = this.draggingHandleIndex === 0 || moved(previous[0], controlPoints[0]);
-
-    if (centerMoved && this.draggingHandleIndex !== 1 && this.draggingHandleIndex !== 2) {
-      const dx = controlPoints[0][0] - previous[0][0];
-      const dy = controlPoints[0][1] - previous[0][1];
-      return [controlPoints[0], [previous[1][0] + dx, previous[1][1] + dy], [previous[2][0] + dx, previous[2][1] + dy]];
-    }
-
-    return normalizeSectorControlPoints(controlPoints.slice(0, 3), this.draggingHandleIndex === 2 ? 2 : 1);
-  }
-}
-
-function moved(a: number[], b: number[]): boolean {
-  return Math.abs(a[0] - b[0]) > MOVE_TOLERANCE || Math.abs(a[1] - b[1]) > MOVE_TOLERANCE;
 }

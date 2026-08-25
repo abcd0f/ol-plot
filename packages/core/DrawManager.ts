@@ -1,27 +1,16 @@
 import Map from 'ol/Map';
-import Draw, { type GeometryFunction } from 'ol/interaction/Draw';
+import Draw from 'ol/interaction/Draw';
 import type VectorLayer from 'ol/layer/Vector';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import type { StyleFunction } from 'ol/style/Style';
 import type { EventBus } from './EventBus';
 import { DrawType } from '../constants/drawType';
 import { DrawEvent } from '../constants/events';
-import { createEllipseGeometryFunction } from '../geometry/ellipse';
-import { createStraightArrowGeometryFunction } from '../geometry/arrow/straight';
-import { createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
-import { createLineArrowGeometryFunction } from '../geometry/arrow/line';
-import { createDoubleArrowGeometryFunction } from '../geometry/arrow/double';
-import { createArcGeometryFunction } from '../geometry/arc';
-import { createFlagGeometryFunction } from '../geometry/flag';
-import { createRectangleGeometryFunction } from '../geometry/rectangle';
-import { createSectorGeometryFunction } from '../geometry/sector';
-import { createAzimuthGeometryFunction } from '../geometry/azimuth';
-import { createRangeRingsGeometryFunction } from '../geometry/rangeRings';
 import type { ResolvedPlotConfig } from '../types/config';
+import { mergeConfig } from '../constants';
+import { PLOT_DEFS } from '../plot-defs';
 import { ClickFreehandDraw } from './ClickFreehandDraw';
 import { FEATURE_HIT_TOLERANCE } from './SelectManager';
-
-type OLType = 'Point' | 'LineString' | 'Polygon' | 'Circle';
 
 /**
  * 绘制管理器类，用于管理地图上的绘制交互功能。
@@ -68,81 +57,18 @@ export class DrawManager {
     this.eventBus = eventBus;
     this.canStartDraw = canStartDraw;
 
-    let type: OLType;
-    let geometryFunction: GeometryFunction | undefined;
-    let freehand = false;
-    let minPoints: number | undefined;
-    let maxPoints: number | undefined;
+    const definition = PLOT_DEFS[drawType];
+    const context = {
+      config: config ?? mergeConfig(),
+      projection: map.getView().getProjection(),
+    };
+    const type = definition.olType;
+    const geometryFunction = definition.geometryFunction?.(context);
     let clickFreehandType: 'LineString' | 'Polygon' | null = null;
-
-    // 根据绘制类型设置相应的 OpenLayers 绘制配置
-    if (drawType === DrawType.Ellipse) {
-      type = 'LineString';
-      geometryFunction = createEllipseGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.RangeRings) {
-      type = 'LineString';
-      geometryFunction = createRangeRingsGeometryFunction(
-        config?.rangeRings.spacing,
-        config?.rangeRings.unit,
-        map.getView().getProjection(),
-      ) as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.StraightArrow) {
-      type = 'LineString';
-      geometryFunction = createStraightArrowGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.TaperedArrow) {
-      type = 'LineString';
-      geometryFunction = createTaperedArrowGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.LineArrow) {
-      type = 'LineString';
-      geometryFunction = createLineArrowGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.DoubleArrow) {
-      type = 'LineString';
-      geometryFunction = createDoubleArrowGeometryFunction() as unknown as GeometryFunction;
-      minPoints = 3;
-      maxPoints = 4;
-    } else if (drawType === DrawType.Arc) {
-      type = 'LineString';
-      geometryFunction = createArcGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 3;
-    } else if (drawType === DrawType.Flag) {
-      type = 'LineString';
-      geometryFunction = createFlagGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.Rectangle) {
-      type = 'LineString';
-      geometryFunction = createRectangleGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.Sector) {
-      type = 'LineString';
-      geometryFunction = createSectorGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 3;
-    } else if (drawType === DrawType.Azimuth) {
-      type = 'LineString';
-      geometryFunction = createAzimuthGeometryFunction() as unknown as GeometryFunction;
-      maxPoints = 2;
-    } else if (drawType === DrawType.FlowLine) {
-      type = 'LineString';
-    } else if (drawType === DrawType.FreehandLine) {
-      type = 'LineString';
+    if (drawType === DrawType.FreehandLine) {
       clickFreehandType = 'LineString';
     } else if (drawType === DrawType.FreehandPolygon) {
-      type = 'Polygon';
       clickFreehandType = 'Polygon';
-    } else if (drawType === DrawType.Measure) {
-      // 测距：绘制普通折线，距离标签由 MeasureTool 通过 Overlay 单独渲染
-      type = 'LineString';
-    } else if (drawType === DrawType.AreaMeasure) {
-      type = 'Polygon';
-    } else if (drawType === DrawType.ImagePoint || drawType === DrawType.AlarmPoint) {
-      // Point based tools provide their own render style.
-      type = 'Point';
-    } else {
-      type = drawType as OLType;
     }
 
     if (clickFreehandType) {
@@ -159,9 +85,8 @@ export class DrawManager {
         source: layer.getSource()!,
         type,
         geometryFunction,
-        freehand,
-        minPoints,
-        maxPoints,
+        minPoints: definition.minPoints,
+        maxPoints: definition.maxPoints,
         style,
         condition: (e) => this.condition(e),
       });

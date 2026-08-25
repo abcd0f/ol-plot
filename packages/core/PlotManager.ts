@@ -1,10 +1,5 @@
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
-import LineString from 'ol/geom/LineString';
-import Polygon from 'ol/geom/Polygon';
-import Circle from 'ol/geom/Circle';
-import GeometryCollection from 'ol/geom/GeometryCollection';
 import type Geometry from 'ol/geom/Geometry';
 import Style, { type StyleFunction, type StyleLike } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
@@ -28,7 +23,7 @@ import { buildSelectStyle } from '../style/select';
 import { buildModifyStyle } from '../style/modify';
 import { buildFlowLineStyle } from '../style/flowLine';
 import { EventBus } from './EventBus';
-import { LayerManager } from './LayerManager';
+import { FeatureStore } from './FeatureStore';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
 import { CursorManager } from './CursorManager';
@@ -37,16 +32,6 @@ import { HandleManager } from '../helper/handle';
 import { MeasureManager } from '../helper/measure';
 import { AreaMeasureManager } from '../helper/areaMeasure';
 import { AzimuthManager } from '../helper/azimuth';
-import { buildRectangle, getRectangleControlPoints } from '../geometry/rectangle';
-import { buildEllipse, getEllipseControlPoints } from '../geometry/ellipse';
-import { buildSector, getSectorControlPoints, normalizeSectorControlPoints } from '../geometry/sector';
-import { buildArc, getArcControlPoints } from '../geometry/arc';
-import { buildStraightArrow } from '../geometry/arrow/straight';
-import { buildTaperedArrow } from '../geometry/arrow/tapered';
-import { buildLineArrowGeometries } from '../geometry/arrow/line';
-import { buildDoubleArrow, normalizeDoubleArrowControlPoints } from '../geometry/arrow/double';
-import { buildFlagGeometries, getFlagControlPoints, normalizeFlagControlPoints } from '../geometry/flag';
-import { dist } from '../utils';
 import {
   buildStyleFromData,
   getFeatureStyleData,
@@ -57,32 +42,19 @@ import {
 } from '../utils/data';
 import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
 import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
-import { buildAzimuthGeometries } from '../geometry/azimuth';
-import { buildRangeRingsGeometries } from '../geometry/rangeRings';
 import { buildRangeRingsStyle } from '../style/rangeRings';
+import { PlotAnimator } from '../helper/animator';
+import { DRAW_TYPE_BY_PLOT_TYPE, HANDLE_PLOT_TYPES, PLOT_DEFS, PLOT_TYPE_BY_DRAW_TYPE } from '../plot-defs';
+import { resolveSectorDrag } from '../geometry/sector';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
-const HANDLE_PLOT_TYPES = new Set([
-  'rectangle',
-  'ellipse',
-  'sector',
-  'straightArrow',
-  'taperedArrow',
-  'lineArrow',
-  'doubleArrow',
-  'arc',
-  'flag',
-  'azimuth',
-  'rangeRings',
-]);
-
 export type PlotManagerConfig = InternalPlotConfig & Pick<ImagePointConfig, 'image'>;
 
 export class PlotManager {
   protected map: Map;
   protected config: ResolvedPlotConfig;
   protected eventBus: EventBus;
-  protected layerManager: LayerManager;
+  protected layerManager: FeatureStore;
   protected selectManager: SelectManager;
   protected modifyManager: ModifyManager;
   protected cursorManager: CursorManager;
@@ -99,10 +71,10 @@ export class PlotManager {
     string,
     globalThis.Map<(...args: any[]) => void, (...args: any[]) => void>
   >();
-  private animationFrame: number | null = null;
+  private readonly animator = new PlotAnimator();
   private phase = 0;
   private flowElapsedTime = 0;
-  private lastFrameTime = 0;
+  private alarmFrameElapsed = 0;
   private imageConfig: ImageConfig;
   private activeDrawStyle: StyleFunction = () => undefined;
   private featureStyleCache = new globalThis.Map<DrawType, StyleLike>();
@@ -463,210 +435,27 @@ export class PlotManager {
   }
 
   private createGeometry(drawType: DrawType, coordinates: number[][]): Geometry {
-    switch (drawType) {
-      case DrawType.Point:
-      case DrawType.AlarmPoint:
-      case DrawType.ImagePoint:
-        return new Point(coordinates[0]);
-      case DrawType.Line:
-      case DrawType.FlowLine:
-      case DrawType.FreehandLine:
-      case DrawType.Measure:
-        return new LineString(coordinates);
-      case DrawType.Polygon:
-      case DrawType.FreehandPolygon:
-      case DrawType.AreaMeasure:
-        return new Polygon([closeRing(coordinates)]);
-      case DrawType.Azimuth: {
-        const points = coordinates.slice(0, 2);
-        const geom = new GeometryCollection(buildAzimuthGeometries(points));
-        geom.set('_controlPoints', points);
-        return geom;
-      }
-      case DrawType.Circle:
-        return new Circle(coordinates[0], coordinates[1] ? dist(coordinates[0], coordinates[1]) : 0);
-      case DrawType.RangeRings:
-        return buildRangeRingsGeometries(
-          coordinates.slice(0, 2),
-          this.config.rangeRings.spacing,
-          this.config.rangeRings.unit,
-          this.map.getView().getProjection(),
-        );
-      case DrawType.Rectangle:
-        return new Polygon(buildRectangle(coordinates.slice(0, 2)));
-      case DrawType.Ellipse:
-        return new Polygon(buildEllipse(coordinates.slice(0, 2)));
-      case DrawType.Sector: {
-        const points = normalizeSectorControlPoints(coordinates.slice(0, 3));
-        return new Polygon(buildSector(points));
-      }
-      case DrawType.StraightArrow:
-        return new Polygon(buildStraightArrow(coordinates.slice(0, 2)));
-      case DrawType.TaperedArrow:
-        return new Polygon(buildTaperedArrow(coordinates.slice(0, 2)));
-      case DrawType.LineArrow: {
-        const [line, arrowHead] = buildLineArrowGeometries(coordinates.slice(0, 2));
-        return new GeometryCollection([line, arrowHead]);
-      }
-      case DrawType.DoubleArrow: {
-        const points = normalizeDoubleArrowControlPoints(coordinates.slice(0, 5));
-        return new Polygon(buildDoubleArrow(points));
-      }
-      case DrawType.Arc:
-        return new LineString(buildArc(coordinates.slice(0, 3)));
-      case DrawType.Flag: {
-        const points = normalizeFlagControlPoints(coordinates.slice(0, 2));
-        const [pole, flag] = buildFlagGeometries(points);
-        const geom = new GeometryCollection([pole, flag]);
-        geom.set('_controlPoints', points);
-        return geom;
-      }
-      default:
-        return new LineString(coordinates);
-    }
+    return PLOT_DEFS[drawType].build(coordinates, {
+      config: this.config,
+      projection: this.map.getView().getProjection(),
+    });
   }
 
   private updateFeatureGeometry(feature: Feature, drawType: DrawType, coordinates: number[][]): void {
-    const geom = feature.getGeometry();
-    if (!geom) return;
+    const geometry = feature.getGeometry();
+    if (!geometry) return;
 
-    switch (drawType) {
-      case DrawType.Point:
-      case DrawType.AlarmPoint:
-      case DrawType.ImagePoint:
-        (geom as Point).setCoordinates(coordinates[0]);
-        break;
-      case DrawType.Line:
-      case DrawType.FlowLine:
-      case DrawType.FreehandLine:
-      case DrawType.Measure:
-        (geom as LineString).setCoordinates(coordinates);
-        break;
-      case DrawType.Polygon:
-      case DrawType.FreehandPolygon:
-      case DrawType.AreaMeasure:
-        (geom as Polygon).setCoordinates([closeRing(coordinates)]);
-        break;
-      case DrawType.Azimuth: {
-        const points = coordinates.slice(0, 2);
-        const [line, circle] = buildAzimuthGeometries(points);
-        feature.set('controlPoints', points);
-        geom.set('_controlPoints', points);
-        (geom as GeometryCollection).setGeometries([line, circle]);
-        this.handleManager.refresh(points);
-        break;
-      }
-      case DrawType.Circle:
-        if (coordinates.length >= 2) {
-          (geom as Circle).setCenter(coordinates[0]);
-          (geom as Circle).setRadius(dist(coordinates[0], coordinates[1]));
-        }
-        break;
-      case DrawType.RangeRings: {
-        const points = coordinates.slice(0, 2);
-        const next = buildRangeRingsGeometries(
-          points,
-          feature.get('rangeRingsSpacing') ?? this.config.rangeRings.spacing,
-          feature.get('rangeRingsUnit') ?? this.config.rangeRings.unit,
-          this.map.getView().getProjection(),
-        );
-        feature.set('controlPoints', points);
-        geom.set('_controlPoints', points);
-        geom.set('rangeRingsSpacing', next.get('rangeRingsSpacing'));
-        geom.set('rangeRingsUnit', next.get('rangeRingsUnit'));
-        (geom as GeometryCollection).setGeometries(next.getGeometries());
-        this.handleManager.refresh(points);
-        break;
-      }
-      case DrawType.Rectangle:
-        this.updateHandleGeometry(
-          feature,
-          geom,
-          drawType,
-          coordinates.slice(0, 2),
-          buildRectangle(coordinates.slice(0, 2)),
-        );
-        break;
-      case DrawType.Ellipse:
-        this.updateHandleGeometry(
-          feature,
-          geom,
-          drawType,
-          coordinates.slice(0, 2),
-          buildEllipse(coordinates.slice(0, 2)),
-        );
-        break;
-      case DrawType.Sector: {
-        const points = normalizeSectorControlPoints(coordinates.slice(0, 3));
-        this.updateHandleGeometry(feature, geom, drawType, points, buildSector(points));
-        break;
-      }
-      case DrawType.StraightArrow:
-        this.updateHandleGeometry(
-          feature,
-          geom,
-          drawType,
-          coordinates.slice(0, 2),
-          buildStraightArrow(coordinates.slice(0, 2)),
-        );
-        break;
-      case DrawType.TaperedArrow:
-        this.updateHandleGeometry(
-          feature,
-          geom,
-          drawType,
-          coordinates.slice(0, 2),
-          buildTaperedArrow(coordinates.slice(0, 2)),
-        );
-        break;
-      case DrawType.LineArrow: {
-        const points = coordinates.slice(0, 2);
-        const [line, arrowHead] = buildLineArrowGeometries(points);
-        feature.set('controlPoints', points);
-        geom.set('_controlPoints', points);
-        (geom as GeometryCollection).setGeometries([line, arrowHead]);
-        this.handleManager.refresh(points);
-        break;
-      }
-      case DrawType.DoubleArrow: {
-        const points = normalizeDoubleArrowControlPoints(coordinates.slice(0, 5));
-        this.updateHandleGeometry(feature, geom, drawType, points, buildDoubleArrow(points));
-        break;
-      }
-      case DrawType.Arc: {
-        const points = coordinates.slice(0, 3);
-        feature.set('controlPoints', points);
-        geom.set('_controlPoints', points);
-        (geom as LineString).setCoordinates(buildArc(points));
-        this.handleManager.refresh(points);
-        break;
-      }
-      case DrawType.Flag: {
-        const points = normalizeFlagControlPoints(coordinates.slice(0, 2));
-        const [pole, flag] = buildFlagGeometries(points);
-        feature.set('controlPoints', points);
-        geom.set('_controlPoints', points);
-        (geom as GeometryCollection).setGeometries([pole, flag]);
-        this.handleManager.refresh(points);
-        break;
-      }
-    }
-
-    this.updateAnimationState();
-  }
-
-  private updateHandleGeometry(
-    feature: Feature,
-    geom: Geometry,
-    drawType: DrawType,
-    controlPoints: number[][],
-    coordinates: number[][][],
-  ): void {
-    const points = this.normalizeControlPoints(drawType, controlPoints);
+    const definition = PLOT_DEFS[drawType];
+    const points = this.normalizeControlPoints(drawType, coordinates);
+    definition.update(geometry, points, {
+      config: this.config,
+      projection: this.map.getView().getProjection(),
+      feature,
+    });
     feature.set('controlPoints', points);
-    geom.set('_controlPoints', points);
-    (geom as Polygon).setCoordinates(coordinates);
-    this.handleManager.refresh(points);
+    geometry.set('_controlPoints', points);
+    if (definition.editMode === 'handles') this.handleManager.refresh(points);
+    this.updateAnimationState();
   }
 
   private syncHandleGeometry(controlPoints: number[][]): void {
@@ -676,10 +465,14 @@ export class PlotManager {
     if (!drawType || !geom) return;
 
     if (drawType === DrawType.Sector) {
-      const points = this.resolveSectorDraggedControlPoints(controlPoints);
+      const points = resolveSectorDrag(this.getCoordinates(), controlPoints, this.draggingHandleIndex);
       this.activeFeature.set('controlPoints', points);
       geom.set('_controlPoints', points);
-      (geom as Polygon).setCoordinates(buildSector(points));
+      PLOT_DEFS[drawType].update(geom, points, {
+        config: this.config,
+        projection: this.map.getView().getProjection(),
+        feature: this.activeFeature,
+      });
       this.handleManager.refreshExcept(points, this.draggingHandleIndex);
       return;
     }
@@ -706,84 +499,12 @@ export class PlotManager {
     return [];
   }
 
-  private extractControlPoints(drawType: DrawType, geom: Geometry | undefined): number[][] {
-    if (!geom) return [];
-
-    switch (drawType) {
-      case DrawType.Point:
-      case DrawType.AlarmPoint:
-      case DrawType.ImagePoint:
-        return [(geom as Point).getCoordinates()];
-      case DrawType.Line:
-      case DrawType.FlowLine:
-      case DrawType.FreehandLine:
-      case DrawType.Measure:
-        return (geom as LineString).getCoordinates();
-      case DrawType.Polygon:
-      case DrawType.FreehandPolygon:
-      case DrawType.AreaMeasure:
-        return (geom as Polygon).getCoordinates()[0] ?? [];
-      case DrawType.Circle: {
-        const circle = geom as Circle;
-        const center = circle.getCenter();
-        return [center, [center[0] + circle.getRadius(), center[1]]];
-      }
-      case DrawType.Rectangle:
-        return getRectangleControlPoints(geom as Polygon);
-      case DrawType.Ellipse:
-        return getEllipseControlPoints(geom as Polygon);
-      case DrawType.Sector:
-        return getSectorControlPoints(geom as Polygon);
-      case DrawType.Arc: {
-        const original = (geom as any)._plotCoordinates as number[][] | undefined;
-        if (original && original.length >= 3) return original.slice(0, 3);
-        const stored = geom.get('_controlPoints') as number[][] | undefined;
-        return stored ?? getArcControlPoints(geom as LineString);
-      }
-      case DrawType.Flag:
-        return getFlagControlPoints(geom as GeometryCollection);
-      case DrawType.Azimuth:
-        return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
-      case DrawType.RangeRings:
-        return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
-      default:
-        return (geom.get('_controlPoints') as number[][] | undefined) ?? [];
-    }
+  private extractControlPoints(drawType: DrawType, geometry: Geometry | undefined): number[][] {
+    return geometry ? PLOT_DEFS[drawType].extract(geometry) : [];
   }
 
   private normalizeControlPoints(drawType: DrawType, controlPoints: number[][]): number[][] {
-    if (drawType === DrawType.Sector) return normalizeSectorControlPoints(controlPoints.slice(0, 3));
-    if (drawType === DrawType.DoubleArrow) return normalizeDoubleArrowControlPoints(controlPoints.slice(0, 5));
-    if (
-      drawType === DrawType.Rectangle ||
-      drawType === DrawType.Ellipse ||
-      drawType === DrawType.StraightArrow ||
-      drawType === DrawType.TaperedArrow ||
-      drawType === DrawType.LineArrow ||
-      drawType === DrawType.Flag
-    ) {
-      return controlPoints.slice(0, 2);
-    }
-    if (drawType === DrawType.Arc) return controlPoints.slice(0, 3);
-    if (drawType === DrawType.Azimuth) return controlPoints.slice(0, 2);
-    return controlPoints;
-  }
-
-  private resolveSectorDraggedControlPoints(controlPoints: number[][]): number[][] {
-    if (controlPoints.length < 3) return controlPoints;
-
-    const previous = this.getCoordinates();
-    if (previous.length < 3) return normalizeSectorControlPoints(controlPoints.slice(0, 3));
-
-    const centerMoved = this.draggingHandleIndex === 0 || moved(previous[0], controlPoints[0]);
-
-    if (centerMoved && this.draggingHandleIndex !== 1 && this.draggingHandleIndex !== 2) {
-      const dx = controlPoints[0][0] - previous[0][0];
-      const dy = controlPoints[0][1] - previous[0][1];
-      return [controlPoints[0], [previous[1][0] + dx, previous[1][1] + dy], [previous[2][0] + dx, previous[2][1] + dy]];
-    }
-
-    return normalizeSectorControlPoints(controlPoints.slice(0, 3), this.draggingHandleIndex === 2 ? 2 : 1);
+    return PLOT_DEFS[drawType].normalize?.(controlPoints) ?? controlPoints;
   }
 
   private createLayerStyle(): StyleFunction {
@@ -969,21 +690,12 @@ export class PlotManager {
   }
 
   private startAnimation(): void {
-    if (this.animationFrame !== null) return;
-
-    const tick = (time: number) => {
-      if (this.lastFrameTime === 0) this.lastFrameTime = time;
-      const delta = Math.min(time - this.lastFrameTime, 100);
+    this.animator.start(() => this.hasAnimatedFlowLines() || this.hasAlarmPoints(), (delta) => {
       const hasFlowLine = this.hasAnimatedFlowLines();
       const hasAlarmPoint = this.hasAlarmPoints();
-
-      if (!hasFlowLine && !hasAlarmPoint) {
-        this.stopAnimation();
-        return;
-      }
-
-      if (hasFlowLine || delta >= this.getAlarmFrameInterval()) {
-        this.lastFrameTime = time;
+      this.alarmFrameElapsed += delta;
+      if (hasFlowLine || delta === 0 || (hasAlarmPoint && this.alarmFrameElapsed >= this.getAlarmFrameInterval())) {
+        this.alarmFrameElapsed = 0;
         if (hasFlowLine) {
           this.flowElapsedTime += delta;
           this.phase += ((this.config.flowLine.speed ?? 60) * delta) / 1000;
@@ -991,19 +703,12 @@ export class PlotManager {
         this.layerManager.getLayer().changed();
         this.map.render();
       }
-
-      this.animationFrame = requestAnimationFrame(tick);
-    };
-
-    this.lastFrameTime = 0;
-    this.animationFrame = requestAnimationFrame(tick);
+    });
   }
 
   private stopAnimation(): void {
-    if (this.animationFrame === null) return;
-    cancelAnimationFrame(this.animationFrame);
-    this.animationFrame = null;
-    this.lastFrameTime = 0;
+    this.animator.stop();
+    this.alarmFrameElapsed = 0;
     this.flowElapsedTime = 0;
     this.phase = 0;
   }
@@ -1021,8 +726,7 @@ export class PlotManager {
     const plotType = feature.get('plotType') as string | undefined;
     if (!plotType) return null;
 
-    const entry = Object.entries(PLOT_TYPE_BY_DRAW_TYPE).find(([, value]) => value === plotType);
-    return (entry?.[0] as DrawType | undefined) ?? null;
+    return DRAW_TYPE_BY_PLOT_TYPE.get(plotType) ?? null;
   }
 
   private getPlotType(drawType: DrawType): string {
@@ -1053,58 +757,6 @@ export class PlotManager {
 
     return arg;
   }
-}
-
-const PLOT_TYPE_BY_DRAW_TYPE: Record<DrawType, string> = {
-  [DrawType.Point]: 'point',
-  [DrawType.AlarmPoint]: 'alarmPoint',
-  [DrawType.ImagePoint]: 'imagePoint',
-  [DrawType.Line]: 'line',
-  [DrawType.FlowLine]: 'flowLine',
-  [DrawType.FreehandLine]: 'freehandLine',
-  [DrawType.FreehandPolygon]: 'freehandPolygon',
-  [DrawType.Polygon]: 'polygon',
-  [DrawType.Rectangle]: 'rectangle',
-  [DrawType.Circle]: 'circle',
-  [DrawType.RangeRings]: 'rangeRings',
-  [DrawType.Ellipse]: 'ellipse',
-  [DrawType.Sector]: 'sector',
-  [DrawType.StraightArrow]: 'straightArrow',
-  [DrawType.TaperedArrow]: 'taperedArrow',
-  [DrawType.LineArrow]: 'lineArrow',
-  [DrawType.DoubleArrow]: 'doubleArrow',
-  [DrawType.Arc]: 'arc',
-  [DrawType.Flag]: 'flag',
-  [DrawType.Measure]: 'measure',
-  [DrawType.Azimuth]: 'azimuth',
-  [DrawType.AreaMeasure]: 'areaMeasure',
-};
-
-function closeRing(coordinates: number[][]): number[][] {
-  if (coordinates.length === 0) return [];
-
-  const ring = coordinates.map((point) => point.slice());
-  const first = ring[0];
-  const last = ring[ring.length - 1];
-
-  if (ring.length === 1) {
-    ring.push(first.slice(), first.slice());
-    return ring;
-  }
-
-  if (!last || !coordinatesEqual(first, last)) {
-    ring.push(first.slice());
-  }
-
-  return ring;
-}
-
-function coordinatesEqual(a: number[], b: number[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
-}
-
-function moved(a: number[], b: number[]): boolean {
-  return Math.abs(a[0] - b[0]) > 1e-9 || Math.abs(a[1] - b[1]) > 1e-9;
 }
 
 function mergeAlarmPointConfig(

@@ -96,6 +96,12 @@ export interface AreaMeasurePlotConfig extends PlotConfig {
   areaMeasure?: AreaMeasureConfig;
 }
 
+export interface CursorHintConfig {
+  text?: string;
+  enabled?: boolean;
+  style?: Partial<CSSStyleDeclaration>;
+}
+
 export interface RangeRingsPlotConfig extends PlotConfig {
   rangeRings?: RangeRingsConfig;
 }
@@ -119,6 +125,8 @@ export interface InternalPlotConfig extends PlotConfig {
   image?: ImageConfig;
   alarm?: AlarmPointStyleConfig;
   rangeRings?: RangeRingsConfig;
+  hint?: CursorHintConfig;
 }
 
+/** Fully resolved runtime configuration. All top-level sections are present. */
 export type ResolvedPlotConfig = Required<InternalPlotConfig>;

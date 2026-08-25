@@ -6,7 +6,7 @@ import { DrawType } from '../constants/drawType';
 import { ToolState } from '../constants/toolState';
 import { DrawEvent } from '../constants/events';
 import { EventBus } from './EventBus';
-import { LayerManager } from './LayerManager';
+import { FeatureStore } from './FeatureStore';
 import { DrawManager } from './DrawManager';
 import { SelectManager } from './SelectManager';
 import { ModifyManager } from './ModifyManager';
@@ -53,7 +53,7 @@ export class PlotRuntime {
   readonly map: Map;
   readonly config: ResolvedPlotConfig;
   readonly eventBus: EventBus;
-  readonly layerManager: LayerManager;
+  readonly layerManager: FeatureStore;
   drawManager: DrawManager | null = null;
   readonly selectManager: SelectManager;
   readonly modifyManager: ModifyManager;
@@ -78,7 +78,7 @@ export class PlotRuntime {
     this.onStateChange = options.onStateChange;
     this.prepareDrawnFeature = options.prepareDrawnFeature;
     this.eventBus = new EventBus();
-    this.layerManager = new LayerManager(this.map, options.featureStyle);
+    this.layerManager = new FeatureStore(this.map, options.featureStyle);
     this.selectManager = new SelectManager(
       this.map,
       this.layerManager.getLayer(),
@@ -97,6 +97,7 @@ export class PlotRuntime {
       () => [this.modifyManager.getOverlayLayer()],
       8,
       () => [this.layerManager.getLayer()],
+      this.config.hint,
     );
     this.interactionCoordinator = new InteractionCoordinator({
       select: this.selectManager,

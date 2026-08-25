@@ -193,7 +193,7 @@ ol-plot/
 - **`BaseTool.ts`** — 所有工具的抽象基类，协调 Draw / Select / Modify 三种交互
 - **`HandleBasedTool.ts`** — 自定义控制点工具的抽象基类（继承自 `BaseTool`）
 - **`EventBus.ts`** — 事件总线，统一事件分发
-- **`LayerManager.ts`** — 图层管理，控制要素的添加、删除、清空
+- **`FeatureStore.ts`** — 图层与要素存储，控制要素的添加、删除、清空
 - **`DrawManager.ts`** — 绘制交互管理
 - **`SelectManager.ts`** — 选择交互管理
 - **`ModifyManager.ts`** — 编辑交互管理
@@ -311,71 +311,17 @@ ol-plot/
 
 ## 创建新工具的规范（Tool Creation Guidelines）
 
-### 判断工具类型
+### 新增工具的唯一入口：PlotDefinition
 
-在创建新工具之前，首先判断它属于哪种类型：
+几何算法继续放在 `packages/geometry/` 的纯函数中；绘制参数、成型、更新、控制点提取和规范化统一定义在 `packages/plot-defs/index.ts` 的 `PLOT_DEFS` 中。新增一种图形时：
 
-#### 类型 1：简单几何工具
+1. 在 `packages/constants/drawType.ts` 增加 `DrawType`。
+2. 在 `packages/plot-defs/index.ts` 增加对应的 `PlotDefinition`，注册 `olType`、`geometryFunction`、点数限制和几何生命周期方法。
+3. 只有存在领域行为时才在 `packages/tools/` 增加薄工具类；通用几何读写由 `BaseTool` / `HandleBasedTool` 提供。
+4. 在 `packages/index.ts` 导出工具（如需公开）。
+5. 更新 README.md、API 文档与回归测试。
 
-**特征**：
-
-- 使用 OpenLayers 原生几何类型（`Point`、`LineString`、`Polygon`、`Circle`）
-- 不需要自定义控制点
-- 顶点即控制点，可以直接拖拽修改
-
-**示例**：`LineTool`、`PolygonTool`、`CircleTool`
-
-**实现步骤**：
-
-1. 在 `packages/constants/drawType.ts` 中添加新的 `DrawType` 枚举值
-2. 在 `packages/tools/` 中创建新工具文件，继承 `BaseTool`
-3. 实现五个抽象方法：
-   ```ts
-   protected createGeometry(coordinates: number[][]): Geometry
-   setCoordinates(coordinates: number[][]): void
-   getCoordinates(): number[][]
-   getPointCount(): number
-   updatePoint(index: number, coordinate: number[]): void
-   ```
-4. 在 `packages/index.ts` 中导出新工具
-5. 更新 README.md 和文档
-
----
-
-#### 类型 2：自定义几何工具
-
-**特征**：
-
-- 需要自定义几何计算（箭头、旗标、扇形等）
-- 需要自定义控制点（控制点 ≠ 几何顶点）
-- 拖拽控制点时重新计算整个几何
-
-**示例**：`StraightArrowTool`、`DoubleArrowTool`、`FlagTool`、`SectorTool`
-
-**实现步骤**：
-
-1. **创建几何计算函数**：
-   - 在 `packages/geometry/` 中创建对应的几何计算文件
-   - 实现纯函数：`createXxxGeometry(controlPoints: number[][]): number[][]`
-   - 在 `packages/geometry/index.ts` 中导出
-
-2. **创建工具类**：
-   - 在 `packages/constants/drawType.ts` 中添加新的 `DrawType` 枚举值
-   - 在 `packages/tools/` 中创建新工具文件，继承 `HandleBasedTool`
-   - 实现以下方法：
-     ```ts
-     protected getPlotType(): string  // 返回工具类型标识
-     protected onHandleSync(controlPoints: number[][]): void  // 控制点同步逻辑
-     ```
-   - 实现 `BaseTool` 的五个抽象方法（通常是读写 `controlPoints` 属性）
-
-3. **配置 DrawManager**：
-   - 在 `packages/core/DrawManager.ts` 中添加对应的 `geometryFunction`
-   - 确保绘制过程中调用几何计算函数
-
-4. **导出和文档**：
-   - 在 `packages/index.ts` 中导出新工具
-   - 更新 README.md 和文档
+不要再修改 `DrawManager` 或 `PlotManager` 来添加图形分支；它们只消费注册表。自由手绘是唯一保留在 `DrawManager` 的交互特例。
 
 ---
 

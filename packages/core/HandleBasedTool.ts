@@ -33,16 +33,20 @@ export abstract class HandleBasedTool extends BaseTool {
     });
   }
 
-  protected abstract getPlotType(): string;
+  protected getPlotType(): string {
+    return this.def.plotType;
+  }
 
-  protected abstract onHandleSync(controlPoints: number[][]): void;
+  protected onHandleSync(controlPoints: number[][]): void {
+    this.setCoordinates(controlPoints);
+  }
 
   protected extractControlPoints(geom: Geometry): number[][] {
     return (geom.get('_controlPoints') as number[][] | undefined) || [];
   }
 
   protected normalizeControlPoints(controlPoints: number[][]): number[][] {
-    return controlPoints;
+    return this.def.normalize?.(controlPoints) ?? controlPoints;
   }
 
   protected refreshStyles(): void {

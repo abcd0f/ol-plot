@@ -58,6 +58,24 @@ export function normalizeSectorControlPoints(controlPoints: number[][], radiusSo
   return radiusSourceIndex === 2 ? [center, projectedTarget, endPoint] : [center, startPoint, projectedTarget];
 }
 
+export function resolveSectorDrag(
+  previous: number[][],
+  next: number[][],
+  draggingIndex: number | null,
+): number[][] {
+  if (next.length < 3) return next;
+  if (previous.length < 3) return normalizeSectorControlPoints(next.slice(0, 3));
+
+  const centerMoved = draggingIndex === 0 || moved(previous[0], next[0]);
+  if (centerMoved && draggingIndex !== 1 && draggingIndex !== 2) {
+    const dx = next[0][0] - previous[0][0];
+    const dy = next[0][1] - previous[0][1];
+    return [next[0], [previous[1][0] + dx, previous[1][1] + dy], [previous[2][0] + dx, previous[2][1] + dy]];
+  }
+
+  return normalizeSectorControlPoints(next.slice(0, 3), draggingIndex === 2 ? 2 : 1);
+}
+
 export function getSectorControlPoints(polygon: Polygon): number[][] {
   const controlPoints = polygon.get('_controlPoints') as number[][] | undefined;
   if (Array.isArray(controlPoints) && controlPoints.length >= 3) {
@@ -125,4 +143,8 @@ function projectToRadius(center: number[], point: number[], radius: number): num
 
   const scale = radius / pointDistance;
   return [center[0] + (point[0] - center[0]) * scale, center[1] + (point[1] - center[1]) * scale];
+}
+
+function moved(a: number[], b: number[]): boolean {
+  return Math.abs(a[0] - b[0]) > 1e-9 || Math.abs(a[1] - b[1]) > 1e-9;
 }

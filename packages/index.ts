@@ -1,6 +1,5 @@
 export { BaseTool } from './core/BaseTool';
 export { EventBus } from './core/EventBus';
-export { LayerManager } from './core/LayerManager';
 export { FeatureStore } from './core/FeatureStore';
 export { InteractionCoordinator } from './core/InteractionCoordinator';
 export { EditorController } from './core/EditorController';
@@ -10,6 +9,8 @@ export { SelectManager } from './core/SelectManager';
 export { ModifyManager } from './core/ModifyManager';
 export { PlotManager } from './core/PlotManager';
 export type { PlotManagerConfig } from './core/PlotManager';
+export { PLOT_DEFS } from './plot-defs';
+export type { PlotDefinition, PlotContext } from './plot-defs';
 
 export { PointTool } from './tools/PointTool';
 export { AlarmPointTool } from './tools/AlarmPointTool';

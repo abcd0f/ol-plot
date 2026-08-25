@@ -20,6 +20,8 @@ export class SelectManager {
   private map: Map;
   private select: Select;
   private eventBus: EventBus;
+  private selectionStyle: StyleLike | null;
+  private previousStyles = new WeakMap<Feature, ReturnType<Feature['getStyle']>>();
 
   /**
    * 构造函数，初始化选择管理器
@@ -37,20 +39,23 @@ export class SelectManager {
   ) {
     this.map = map;
     this.eventBus = eventBus;
+    this.selectionStyle = buildSelectStyle(config);
 
     // 创建选择交互实例，配置选择条件、样式等参数
     this.select = new Select({
       layers: [layer],
       condition: click,
       hitTolerance: FEATURE_HIT_TOLERANCE,
-      style: buildSelectStyle(config),
+      style: null,
       multi: false,
       features: selectedFeatures,
     });
 
     // 监听选择事件，根据选中或取消选中的要素触发相应的事件
     this.select.on('select', (e) => {
+      e.deselected.forEach((feature) => this.restoreStyle(feature as Feature));
       if (e.selected.length > 0) {
+        this.applyStyle(e.selected[0] as Feature);
         this.eventBus.emit(DrawEvent.SELECT, { feature: e.selected[0] });
       } else if (e.deselected.length > 0) {
         this.eventBus.emit(DrawEvent.DESELECT, { features: e.deselected });
@@ -83,8 +88,10 @@ export class SelectManager {
    */
   selectFeature(feature: Feature): void {
     const col = this.select.getFeatures();
+    col.forEach((selected) => this.restoreStyle(selected as Feature));
     col.clear();
     col.push(feature as any);
+    this.applyStyle(feature);
     this.eventBus.emit(DrawEvent.SELECT, { feature });
   }
 
@@ -92,7 +99,9 @@ export class SelectManager {
    * 清除当前选择
    */
   clearSelection(): void {
-    this.select.getFeatures().clear();
+    const features = this.select.getFeatures();
+    features.forEach((feature) => this.restoreStyle(feature as Feature));
+    features.clear();
     this.eventBus.emit(DrawEvent.DESELECT, { features: [] });
   }
 
@@ -108,31 +117,28 @@ export class SelectManager {
    * Override the style applied by the Select interaction.
    */
   setStyle(style: StyleLike | null): void {
-    const select = this.select as unknown as {
-      style_: StyleLike | null;
-      applySelectedStyle_: (feature: Feature) => void;
-      restorePreviousStyle_: (feature: Feature) => void;
-    };
-
-    if (select.style_) {
-      this.select.getFeatures().forEach((feature) => {
-        select.restorePreviousStyle_(feature as Feature);
-      });
-    }
-
-    select.style_ = style;
-
-    if (style) {
-      this.select.getFeatures().forEach((feature) => {
-        select.applySelectedStyle_(feature as Feature);
-      });
-    }
+    this.select.getFeatures().forEach((feature) => this.restoreStyle(feature as Feature));
+    this.selectionStyle = style;
+    this.select.getFeatures().forEach((feature) => this.applyStyle(feature as Feature));
   }
 
   /**
    * 销毁选择管理器，移除地图上的选择交互
    */
   destroy(): void {
+    this.select.getFeatures().forEach((feature) => this.restoreStyle(feature as Feature));
     this.map.removeInteraction(this.select);
+  }
+
+  private applyStyle(feature: Feature): void {
+    if (!this.selectionStyle) return;
+    if (!this.previousStyles.has(feature)) this.previousStyles.set(feature, feature.getStyle());
+    feature.setStyle(this.selectionStyle);
+  }
+
+  private restoreStyle(feature: Feature): void {
+    if (!this.previousStyles.has(feature)) return;
+    feature.setStyle(this.previousStyles.get(feature));
+    this.previousStyles.delete(feature);
   }
 }
