@@ -8,7 +8,6 @@ import { serializeFeature, projectPlotDataCoordinates } from '../packages/utils/
 import { mergeConfig } from '../packages/constants';
 import { DrawType } from '../packages/constants/drawType';
 import { buildStraightArrow } from '../packages/geometry/arrow/straight';
-import { buildSector } from '../packages/geometry/sector';
 import { buildRangeRingsGeometries } from '../packages/geometry/rangeRings';
 
 /**
@@ -75,23 +74,6 @@ describe('serializeFeature + projectPlotDataCoordinates round-trip', () => {
     // serialization prefers controlPoints → coordinates mirror them
     expect(data.coordinates).toEqual(data.controlPoints);
     data.controlPoints!.forEach(expectLonLat);
-
-    const restored = projectPlotDataCoordinates(data, PROJECTION);
-    restored.controlPoints!.forEach((point, index) => expectClose(point, controlPoints[index]));
-  });
-
-  it('sector (controlPoints path)', () => {
-    const controlPoints = [
-      [0, 0],
-      [100000, 0],
-      [0, 100000],
-    ];
-    const feature = new Feature({ geometry: new Polygon(buildSector(controlPoints)) });
-    feature.set('controlPoints', controlPoints.map((point) => [...point]));
-    feature.set('plotType', 'sector');
-
-    const data = serializeFeature(feature, DrawType.Sector, config, PROJECTION);
-    expect(data.plotType).toBe('sector');
 
     const restored = projectPlotDataCoordinates(data, PROJECTION);
     restored.controlPoints!.forEach((point, index) => expectClose(point, controlPoints[index]));

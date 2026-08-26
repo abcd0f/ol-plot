@@ -11,7 +11,6 @@ describe('PLOT_DEFS', () => {
   it('builds representative geometries through the registry', () => {
     const context = { config: mergeConfig(), projection: 'EPSG:3857' };
     expect(PLOT_DEFS[DrawType.Point].build([[0, 0]], context).getType()).toBe('Point');
-    expect(PLOT_DEFS[DrawType.Sector].build([[0, 0], [10, 0], [0, 10]], context).getType()).toBe('Polygon');
     expect(PLOT_DEFS[DrawType.StraightArrow].build([[0, 0], [10, 0]], context).getType()).toBe('Polygon');
     expect(PLOT_DEFS[DrawType.RangeRings].build([[0, 0], [0, 1000]], context).getType()).toBe('GeometryCollection');
   });

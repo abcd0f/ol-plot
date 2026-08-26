@@ -15,8 +15,6 @@ export {
   getEllipseRadii,
 } from './ellipse';
 
-export { buildSector, getSectorControlPoints, createSectorGeometryFunction } from './sector';
-
 export { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc';
 
 export { buildAzimuthGeometries, createAzimuthGeometryFunction } from './azimuth';

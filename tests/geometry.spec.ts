@@ -1,12 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import Polygon from 'ol/geom/Polygon';
 import { getDistance } from 'ol/sphere';
 import { toLonLat } from 'ol/proj';
-import {
-  buildSector,
-  normalizeSectorControlPoints,
-  getSectorControlPoints,
-} from '../packages/geometry/sector';
 import { buildStraightArrow, getStraightArrowCenter } from '../packages/geometry/arrow/straight';
 import {
   buildRangeRingsGeometries,
@@ -64,117 +58,6 @@ describe('buildStraightArrow', () => {
         [100, 40],
       ]),
     ).toEqual([50, 20]);
-  });
-});
-
-describe('buildSector', () => {
-  it('builds an arc ring + center for a 90° sector', () => {
-    const rings = buildSector([
-      [0, 0],
-      [100, 0],
-      [0, 100],
-    ]);
-    expect(rings).toHaveLength(1);
-    const ring = rings[0];
-
-    // angleSpan = π/2 → ceil(π/2 * 24) = 38 segments → ring length = 38 + 3 = 41
-    expect(ring).toHaveLength(41);
-
-    expect(ring[0][0]).toBeCloseTo(100, 6); // arc start at angle 0
-    expect(ring[0][1]).toBeCloseTo(0, 6);
-    expect(ring[38][0]).toBeCloseTo(0, 6); // arc end at angle π/2
-    expect(ring[38][1]).toBeCloseTo(100, 6);
-    expect(ring[39]).toEqual([0, 0]); // center vertex
-    expect(ring[40]).toEqual(ring[0]); // closed
-
-    // every arc vertex sits on the radius
-    for (let i = 0; i <= 38; i += 1) {
-      const r = Math.hypot(ring[i][0], ring[i][1]);
-      expect(r).toBeCloseTo(100, 6);
-    }
-  });
-
-  it('returns a degenerate triangle when only two control points are given', () => {
-    const rings = buildSector([
-      [0, 0],
-      [50, 0],
-    ]);
-    expect(rings).toEqual([[[0, 0], [50, 0], [0, 0]]]);
-  });
-});
-
-describe('normalizeSectorControlPoints', () => {
-  it('projects the end point onto the start radius (default source index)', () => {
-    const [center, start, end] = normalizeSectorControlPoints([
-      [0, 0],
-      [100, 0],
-      [0, 50],
-    ]);
-    expect(center).toEqual([0, 0]);
-    expect(start).toEqual([100, 0]);
-    expect(end[0]).toBeCloseTo(0, 6);
-    expect(end[1]).toBeCloseTo(100, 6); // projected from radius 50 up to 100
-  });
-
-  it('projects the start point when radiusSourceIndex = 2', () => {
-    const [center, start, end] = normalizeSectorControlPoints(
-      [
-        [0, 0],
-        [50, 0],
-        [0, 100],
-      ],
-      2,
-    );
-    expect(center).toEqual([0, 0]);
-    expect(end).toEqual([0, 100]);
-    expect(start[0]).toBeCloseTo(100, 6); // projected from radius 50 out to 100
-    expect(start[1]).toBeCloseTo(0, 6);
-  });
-
-  it('keeps only the first two points when radius collapses', () => {
-    expect(
-      normalizeSectorControlPoints([
-        [0, 0],
-        [0, 0],
-        [10, 10],
-      ]),
-    ).toEqual([[0, 0], [0, 0], [10, 10]]);
-  });
-});
-
-describe('getSectorControlPoints', () => {
-  it('reads the stored _controlPoints when present', () => {
-    const polygon = new Polygon(
-      buildSector([
-        [0, 0],
-        [100, 0],
-        [0, 100],
-      ]),
-    );
-    polygon.set('_controlPoints', [
-      [0, 0],
-      [100, 0],
-      [0, 100],
-    ]);
-    expect(getSectorControlPoints(polygon)).toEqual([
-      [0, 0],
-      [100, 0],
-      [0, 100],
-    ]);
-  });
-
-  it('derives control points from the ring when _controlPoints is absent', () => {
-    const polygon = new Polygon(
-      buildSector([
-        [0, 0],
-        [100, 0],
-        [0, 100],
-      ]),
-    );
-    const [center, start] = getSectorControlPoints(polygon);
-    expect(center).toEqual([0, 0]); // ring[len-2]
-    expect(start[0]).toBeCloseTo(100, 6); // ring[0]
-    expect(start[1]).toBeCloseTo(0, 6);
   });
 });
 

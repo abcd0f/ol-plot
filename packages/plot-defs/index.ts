@@ -13,12 +13,6 @@ import {
   createEllipseGeometryFunction,
 } from '../geometry/ellipse';
 import { buildRectangle, getRectangleControlPoints, createRectangleGeometryFunction } from '../geometry/rectangle';
-import {
-  buildSector,
-  getSectorControlPoints,
-  normalizeSectorControlPoints,
-  createSectorGeometryFunction,
-} from '../geometry/sector';
 import { buildArc, getArcControlPoints, createArcGeometryFunction } from '../geometry/arc';
 import { buildStraightArrow, createStraightArrowGeometryFunction } from '../geometry/arrow/straight';
 import { buildTaperedArrow, createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
@@ -142,11 +136,6 @@ const defs: Record<DrawType, PlotDefinition> = {
     (geometry, points) => (geometry as Polygon).setCoordinates(buildEllipse(points.slice(0, 2))),
     (geometry) => getEllipseControlPoints(geometry as Polygon),
     (points) => points.slice(0, 2), () => createEllipseGeometryFunction() as any, 2),
-  [DT.Sector]: custom(DT.Sector, 'sector', 'LineString',
-    (points) => new Polygon(buildSector(normalizeSectorControlPoints(points.slice(0, 3)))),
-    (geometry, points) => (geometry as Polygon).setCoordinates(buildSector(normalizeSectorControlPoints(points.slice(0, 3)))),
-    (geometry) => getSectorControlPoints(geometry as Polygon),
-    (points, hint) => normalizeSectorControlPoints(points.slice(0, 3), hint === 2 ? 2 : 1), () => createSectorGeometryFunction() as any, 3),
   [DT.StraightArrow]: custom(DT.StraightArrow, 'straightArrow', 'LineString',
     (points) => new Polygon(buildStraightArrow(points.slice(0, 2))),
     (geometry, points) => (geometry as Polygon).setCoordinates(buildStraightArrow(points.slice(0, 2))),

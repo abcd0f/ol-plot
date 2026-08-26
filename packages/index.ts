@@ -13,7 +13,6 @@ export { RectangleTool } from './tools/RectangleTool';
 export { CircleTool } from './tools/CircleTool';
 export { RangeRingsTool } from './tools/RangeRingsTool';
 export { EllipseTool } from './tools/EllipseTool';
-export { SectorTool } from './tools/SectorTool';
 export { StraightArrowTool } from './tools/StraightArrowTool';
 export { TaperedArrowTool } from './tools/TaperedArrowTool';
 export { LineArrowTool } from './tools/LineArrowTool';

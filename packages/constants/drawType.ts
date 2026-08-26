@@ -23,8 +23,6 @@ export enum DrawType {
   RangeRings = 'RangeRings',
   /** 椭圆 */
   Ellipse = 'Ellipse',
-  /** 扇形 */
-  Sector = 'Sector',
   /** 直箭头 */
   StraightArrow = 'StraightArrow',
   /** 渐缩箭头 */

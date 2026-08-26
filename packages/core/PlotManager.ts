@@ -45,7 +45,6 @@ import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoi
 import { buildRangeRingsStyle } from '../style/rangeRings';
 import { PlotAnimator } from '../helper/animator';
 import { DRAW_TYPE_BY_PLOT_TYPE, HANDLE_PLOT_TYPES, PLOT_DEFS, PLOT_TYPE_BY_DRAW_TYPE } from '../plot-defs';
-import { resolveSectorDrag } from '../geometry/sector';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
 export type PlotManagerConfig = InternalPlotConfig & Pick<ImagePointConfig, 'image'>;
@@ -81,7 +80,6 @@ export class PlotManager {
   private featureStyleCache = new globalThis.Map<DrawType, StyleLike>();
   private selectStyleCache = new globalThis.Map<DrawType, StyleFunction>();
   private modifyStyleCache = new globalThis.Map<DrawType, Style[]>();
-  private draggingHandleIndex: number | null = null;
 
   constructor(map: Map, config?: PlotManagerConfig) {
     this.map = map;
@@ -118,13 +116,6 @@ export class PlotManager {
     this.handleManager = new HandleManager(map, this.eventBus, this.config, (controlPoints) =>
       this.runtime.editorController.updateControlPoints(controlPoints),
     );
-    this.handleManager.handleModify.on('modifystart', (event) => {
-      const feature = event.features.item(0);
-      this.draggingHandleIndex = feature?.get('_handleIndex') ?? null;
-    });
-    this.handleManager.handleModify.on('modifyend', () => {
-      this.draggingHandleIndex = null;
-    });
     this.runtime.configureHandleEditor({
       interaction: this.handleManager.handleModify,
       layer: this.handleManager.handleLayer,
@@ -487,19 +478,6 @@ export class PlotManager {
     const drawType = this.getFeatureDrawType(this.activeFeature);
     const geom = this.activeFeature.getGeometry();
     if (!drawType || !geom) return;
-
-    if (drawType === DrawType.Sector) {
-      const points = resolveSectorDrag(this.getCoordinates(), controlPoints, this.draggingHandleIndex);
-      this.activeFeature.set('controlPoints', points);
-      geom.set('_controlPoints', points);
-      PLOT_DEFS[drawType].update(geom, points, {
-        config: this.config,
-        projection: this.map.getView().getProjection(),
-        feature: this.activeFeature,
-      });
-      this.handleManager.refreshExcept(points, this.draggingHandleIndex);
-      return;
-    }
 
     this.updateFeatureGeometry(this.activeFeature, drawType, controlPoints);
   }
