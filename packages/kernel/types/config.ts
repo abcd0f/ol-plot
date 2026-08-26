@@ -1,4 +1,4 @@
-import type { AreaUnits, Units } from '@turf/helpers';
+import type { AreaUnits, Units } from '@turf/turf';
 
 export interface NodeStyle {
   /** 节点半径（像素）。 */

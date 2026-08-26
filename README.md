@@ -232,7 +232,7 @@ interface NodeStyle {
   strokeWidth?: number;
 }
 
-import type { Units, AreaUnits } from '@turf/helpers';
+import type { Units, AreaUnits } from '@turf/turf';
 
 type DistanceUnit = Units;
 type AreaUnit = AreaUnits;

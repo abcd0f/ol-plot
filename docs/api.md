@@ -482,7 +482,7 @@ interface AreaMeasurePlotConfig extends PlotConfig {
 距离配置使用 Turf 的 `Units`，面积配置使用 Turf 的 `AreaUnits`，因此可直接使用 Turf 支持的完整单位和别名（如 `meters`、`kilometers`、`miles`、`nauticalmiles`、`acres`、`hectares` 等）：
 
 ```ts
-import type { Units, AreaUnits } from '@turf/helpers'
+import type { Units, AreaUnits } from '@turf/turf'
 
 type DistanceUnit = Units
 type AreaUnit = AreaUnits

@@ -1,4 +1,4 @@
-import { convertLength } from '@turf/helpers';
+import { convertLength } from '@turf/turf';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import LineString from 'ol/geom/LineString';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
