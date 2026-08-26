@@ -1,7 +1,7 @@
 import OLMap from 'ol/Map';
 import Overlay from 'ol/Overlay';
 import Polygon from 'ol/geom/Polygon';
-import { getArea } from 'ol/sphere';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
@@ -9,6 +9,7 @@ import type { EventBus } from '../../engine/runtime/EventBus';
 import type { DistanceUnit, ResolvedPlotConfig } from '../../kernel/types/config';
 import { DrawEvent } from '../../kernel/constants/events';
 import type { DrawType } from '../../kernel/constants/drawType';
+import { areaSquareMeters, centerOfMassLonLat } from '../../kernel/utils/geodesy';
 
 const SQUARE_METERS_PER_SQUARE_NAUTICAL_MILE = 1852 * 1852;
 
@@ -168,8 +169,10 @@ export class AreaMeasureManager {
     if (ring.length < 4) return [];
 
     const projection = this.map.getView().getProjection();
-    const area = Math.abs(getArea(geom, { projection }));
-    return [{ position: geom.getInteriorPoint().getCoordinates(), text: this.format(area) }];
+    const ringLonLat = ring.map((coordinate) => toLonLat(coordinate, projection));
+    const area = areaSquareMeters(ringLonLat);
+    const center = fromLonLat(centerOfMassLonLat(ringLonLat), projection);
+    return [{ position: center, text: this.format(area) }];
   }
 
   private format(area: number): string {

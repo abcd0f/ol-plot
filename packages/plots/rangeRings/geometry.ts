@@ -1,8 +1,8 @@
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import LineString from 'ol/geom/LineString';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
-import { getDistance, offset } from 'ol/sphere';
 import type { DistanceUnit } from '../../kernel/types/config';
+import { destinationLonLat, distanceMeters } from '../../kernel/utils/geodesy';
 
 const SEGMENTS = 96;
 const UNIT_METERS: Record<DistanceUnit, number> = { m: 1, km: 1000, nm: 1852 };
@@ -35,14 +35,14 @@ export function buildRangeRingsGeometries(
 
   const parsed = parseRangeSpacing(spacing, unit);
   const center = toLonLat(points[0], projection);
-  const outerDistance = getDistance(center, toLonLat(points[1], projection));
+  const outerDistance = distanceMeters(center, toLonLat(points[1], projection));
   const count = Math.floor(outerDistance / parsed.meters + 1e-9);
   const rings: LineString[] = [];
   for (let index = 1; index <= count; index += 1) {
     const ringRadius = index * parsed.meters;
     const coordinates: number[][] = [];
     for (let i = 0; i <= SEGMENTS; i += 1) {
-      const point = offset(center, ringRadius, (i / SEGMENTS) * Math.PI * 2);
+      const point = destinationLonLat(center, ringRadius, (i / SEGMENTS) * 360);
       coordinates.push(fromLonLat(point, projection));
     }
     const ring = new LineString(coordinates);

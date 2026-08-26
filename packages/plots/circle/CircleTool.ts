@@ -4,7 +4,8 @@ import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../../kernel/types/config';
 import { DrawType } from '../../kernel/constants/drawType';
 import { BaseTool } from '../../engine/tool/BaseTool';
-import { dist } from '../../kernel/utils';
+import { bearingDegrees, destinationLonLat, distanceMeters, projectedGeodesicRadius } from '../../kernel/utils';
+import { fromLonLat, toLonLat } from 'ol/proj';
 
 /**
  * 圆形绘制工具类，继承自BaseTool
@@ -26,7 +27,7 @@ export class CircleTool extends BaseTool {
    */
   protected createGeometry(coordinates: number[][]): Geometry {
     const center = coordinates[0];
-    const radius = dist(center, coordinates[1]);
+    const radius = projectedGeodesicRadius(center, coordinates[1], this.map.getView().getProjection());
     return new Circle(center, radius);
   }
 
@@ -38,7 +39,7 @@ export class CircleTool extends BaseTool {
     if (!this.activeFeature || coordinates.length < 2) return;
     const geom = this.activeFeature.getGeometry() as Circle;
     geom.setCenter(coordinates[0]);
-    geom.setRadius(dist(coordinates[0], coordinates[1]));
+    geom.setRadius(projectedGeodesicRadius(coordinates[0], coordinates[1], this.map.getView().getProjection()));
   }
 
   /**
@@ -87,7 +88,13 @@ export class CircleTool extends BaseTool {
    */
   getRadius(): number {
     if (!this.activeFeature) return 0;
-    return (this.activeFeature.getGeometry() as Circle).getRadius();
+    const points = this.getCoordinates();
+    return points.length < 2
+      ? 0
+      : distanceMeters(
+          toLonLat(points[0], this.map.getView().getProjection()),
+          toLonLat(points[1], this.map.getView().getProjection()),
+        );
   }
 
   /**
@@ -96,7 +103,12 @@ export class CircleTool extends BaseTool {
    */
   setRadius(radius: number): void {
     if (!this.activeFeature) return;
-    (this.activeFeature.getGeometry() as Circle).setRadius(radius);
+    const points = this.getCoordinates();
+    if (points.length < 2) return;
+    const center = toLonLat(points[0], this.map.getView().getProjection());
+    const bearing = bearingDegrees(center, toLonLat(points[1], this.map.getView().getProjection()));
+    points[1] = fromLonLat(destinationLonLat(center, radius, bearing), this.map.getView().getProjection());
+    this.setCoordinates(points);
   }
 
   /**

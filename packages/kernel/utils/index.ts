@@ -11,6 +11,18 @@ export {
   getBezierPoints,
 } from './math';
 export {
+  distanceMeters,
+  projectedDistanceMeters,
+  bearingDegrees,
+  destinationLonLat,
+  projectedGeodesicRadius,
+  midpointLonLat,
+  areaSquareMeters,
+  centerOfMassLonLat,
+  buildGeodesicCircleLonLat,
+  buildGeodesicSectorLonLat,
+} from './geodesy';
+export {
   serializeFeature,
   serializeStyle,
   resolveStyleData,

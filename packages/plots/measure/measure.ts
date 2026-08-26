@@ -1,8 +1,7 @@
 import OLMap from 'ol/Map';
 import Overlay from 'ol/Overlay';
 import LineString from 'ol/geom/LineString';
-import { getDistance } from 'ol/sphere';
-import { getTransform } from 'ol/proj';
+import { fromLonLat, getTransform, toLonLat } from 'ol/proj';
 import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
@@ -10,7 +9,7 @@ import type { EventBus } from '../../engine/runtime/EventBus';
 import type { ResolvedPlotConfig, MeasureMode, DistanceUnit } from '../../kernel/types/config';
 import { DrawEvent } from '../../kernel/constants/events';
 import type { DrawType } from '../../kernel/constants/drawType';
-import { mid } from '../../kernel/utils/math';
+import { distanceMeters, midpointLonLat } from '../../kernel/utils/geodesy';
 
 const METERS_PER_NAUTICAL_MILE = 1852;
 
@@ -28,7 +27,7 @@ interface Label {
  * - `segment`：在每一段的中点显示该段距离
  * - `both`：两者同时显示
  *
- * 距离基于 `ol/sphere` 的 `getDistance`，按地图投影换算为真实距离；单位由 `unit` 控制。
+ * 距离和分段中点基于 Turf 测地计算，按地图投影换算显示；单位由 `unit` 控制。
  * 采用 Overlay 而非矢量文字，标签独立于矢量渲染，在绘制中、绘制完成、编辑状态下都保持可见，
  * 且无需改动其它工具共用的样式逻辑。
  */
@@ -206,7 +205,9 @@ export class MeasureManager {
 
     if (this.mode === 'segment' || this.mode === 'both') {
       for (let i = 1; i < coords.length; i++) {
-        labels.push({ position: mid(coords[i - 1], coords[i]), text: this.format(segmentLengths[i - 1]) });
+        const projection = this.map.getView().getProjection();
+        const midpoint = midpointLonLat(toLonLat(coords[i - 1], projection), toLonLat(coords[i], projection));
+        labels.push({ position: fromLonLat(midpoint, projection), text: this.format(segmentLengths[i - 1]) });
       }
     }
 
@@ -239,7 +240,7 @@ export class MeasureManager {
       a[1] = flat[i - 1];
       b[0] = flat[i];
       b[1] = flat[i + 1];
-      const length = getDistance(a, b);
+      const length = distanceMeters(a, b);
       segmentLengths.push(length);
       total += length;
     }

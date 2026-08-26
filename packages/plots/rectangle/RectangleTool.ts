@@ -5,13 +5,8 @@ import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../../kernel/types/config';
 import { DrawType } from '../../kernel/constants/drawType';
 import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
-import {
-  buildRectangle,
-  getRectangleCenter,
-  getRectangleControlPoints,
-  getRectangleHeight,
-  getRectangleWidth,
-} from './geometry';
+import { buildRectangle, getRectangleCenter, getRectangleControlPoints } from './geometry';
+import { projectedDistanceMeters } from '../../kernel/utils';
 
 export class RectangleTool extends HandleBasedTool {
   constructor(map: Map, config?: PlotConfig) {
@@ -83,10 +78,16 @@ export class RectangleTool extends HandleBasedTool {
   }
 
   getWidth(): number {
-    return getRectangleWidth(this.getCoordinates());
+    const points = this.getCoordinates();
+    return points.length < 2
+      ? 0
+      : projectedDistanceMeters([points[0][0], points[1][1]], points[1], this.map.getView().getProjection());
   }
 
   getHeight(): number {
-    return getRectangleHeight(this.getCoordinates());
+    const points = this.getCoordinates();
+    return points.length < 2
+      ? 0
+      : projectedDistanceMeters(points[0], [points[0][0], points[1][1]], this.map.getView().getProjection());
   }
 }

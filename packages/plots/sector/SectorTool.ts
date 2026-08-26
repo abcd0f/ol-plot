@@ -5,8 +5,9 @@ import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../../kernel/types/config';
 import { DrawType } from '../../kernel/constants/drawType';
 import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
-import { buildSector, getSectorAngles } from './geometry';
-import { dist } from '../../kernel/utils';
+import { buildSector } from './geometry';
+import { bearingDegrees, distanceMeters } from '../../kernel/utils';
+import { toLonLat } from 'ol/proj';
 
 /** 通过圆心、起始半径点和终止方向点绘制并编辑扇形。 */
 export class SectorTool extends HandleBasedTool {
@@ -27,12 +28,12 @@ export class SectorTool extends HandleBasedTool {
     const points = controlPoints.slice(0, 3);
     const geom = this.activeFeature.getGeometry() as Polygon;
     this.activeFeature.set('controlPoints', points);
-    geom.setCoordinates(buildSector(points));
+    geom.setCoordinates(buildSector(points, undefined, this.map.getView().getProjection()));
     geom.set('_controlPoints', points);
   }
   protected createGeometry(coordinates: number[][]): Geometry {
     const points = coordinates.slice(0, 3);
-    const geom = new Polygon(buildSector(points));
+    const geom = new Polygon(buildSector(points, undefined, this.map.getView().getProjection()));
     geom.set('_controlPoints', points);
     return geom;
   }
@@ -48,7 +49,7 @@ export class SectorTool extends HandleBasedTool {
     const points = coordinates.slice(0, 3);
     this.activeFeature.set('controlPoints', points);
     const geom = this.activeFeature.getGeometry() as Polygon;
-    geom.setCoordinates(buildSector(points));
+    geom.setCoordinates(buildSector(points, undefined, this.map.getView().getProjection()));
     geom.set('_controlPoints', points);
     this.handleManager.refresh(points);
   }
@@ -71,9 +72,21 @@ export class SectorTool extends HandleBasedTool {
   }
   getRadius(): number {
     const points = this.getCoordinates();
-    return points.length >= 2 ? dist(points[0], points[1]) : 0;
+    return points.length >= 2
+      ? distanceMeters(
+          toLonLat(points[0], this.map.getView().getProjection()),
+          toLonLat(points[1], this.map.getView().getProjection()),
+        )
+      : 0;
   }
   getAngles(): { start: number; end: number } | null {
-    return getSectorAngles(this.getCoordinates());
+    const points = this.getCoordinates();
+    if (points.length < 3) return null;
+    const projection = this.map.getView().getProjection();
+    const center = toLonLat(points[0], projection);
+    return {
+      start: (bearingDegrees(center, toLonLat(points[1], projection)) * Math.PI) / 180,
+      end: (bearingDegrees(center, toLonLat(points[2], projection)) * Math.PI) / 180,
+    };
   }
 }

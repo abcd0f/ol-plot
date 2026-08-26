@@ -5,7 +5,7 @@ import Circle from 'ol/geom/Circle';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import type { DrawType } from '../kernel/constants/drawType';
 import { DrawType as DT } from '../kernel/constants/drawType';
-import { dist } from '../kernel/utils';
+import { dist, projectedGeodesicRadius } from '../kernel/utils';
 import { buildEllipse, getEllipseControlPoints, createEllipseGeometryFunction } from './ellipse/geometry';
 import { buildRectangle, getRectangleControlPoints, createRectangleGeometryFunction } from './rectangle/geometry';
 import { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc/geometry';
@@ -128,12 +128,23 @@ const defs: Record<DrawType, PlotDefinition> = {
     plotType: 'circle',
     editMode: 'feature',
     olType: 'Circle',
-    build: (points) => new Circle(points[0] ?? [], points[1] ? dist(points[0], points[1]) : 0),
-    update: (geometry, points) => {
+    geometryFunction:
+      ({ projection }) =>
+      (coordinates, geometry) => {
+        const points = coordinates as number[][];
+        const circle = (geometry as Circle | undefined) ?? new Circle(points[0] ?? [0, 0], 0);
+        if (points.length < 2) return circle;
+        circle.setCenter(points[0]);
+        circle.setRadius(projectedGeodesicRadius(points[0], points[1], projection));
+        return circle;
+      },
+    build: (points, context) =>
+      new Circle(points[0] ?? [], points[1] ? projectedGeodesicRadius(points[0], points[1], context.projection) : 0),
+    update: (geometry, points, context) => {
       if (points.length < 1) return;
       const circle = geometry as Circle;
       circle.setCenter(points[0]);
-      circle.setRadius(points[1] ? dist(points[0], points[1]) : 0);
+      circle.setRadius(points[1] ? projectedGeodesicRadius(points[0], points[1], context.projection) : 0);
     },
     extract: (geometry) => {
       const circle = geometry as Circle;
@@ -250,19 +261,19 @@ const defs: Record<DrawType, PlotDefinition> = {
     DT.Sector,
     'sector',
     'LineString',
-    (points) => {
-      const geometry = new Polygon(buildSector(points.slice(0, 3)));
+    (points, context) => {
+      const geometry = new Polygon(buildSector(points.slice(0, 3), undefined, context.projection));
       geometry.set('_controlPoints', points.slice(0, 3));
       return geometry;
     },
-    (geometry, points) => {
+    (geometry, points, context) => {
       const controlPoints = points.slice(0, 3);
-      (geometry as Polygon).setCoordinates(buildSector(controlPoints));
+      (geometry as Polygon).setCoordinates(buildSector(controlPoints, undefined, context.projection));
       geometry.set('_controlPoints', controlPoints);
     },
     (geometry) => getSectorControlPoints(geometry as Polygon),
     (points) => points.slice(0, 3),
-    () => createSectorGeometryFunction() as any,
+    ({ projection }) => createSectorGeometryFunction(projection) as any,
     3,
     3,
   ),
@@ -285,11 +296,12 @@ const defs: Record<DrawType, PlotDefinition> = {
     DT.Azimuth,
     'azimuth',
     'LineString',
-    (points) => new GeometryCollection(buildAzimuthGeometries(points.slice(0, 2))),
-    (geometry, points) => (geometry as GeometryCollection).setGeometries(buildAzimuthGeometries(points.slice(0, 2))),
+    (points, context) => new GeometryCollection(buildAzimuthGeometries(points.slice(0, 2), context.projection)),
+    (geometry, points, context) =>
+      (geometry as GeometryCollection).setGeometries(buildAzimuthGeometries(points.slice(0, 2), context.projection)),
     (geometry) => (geometry.get('_controlPoints') as number[][] | undefined) ?? [],
     (points) => points.slice(0, 2),
-    () => createAzimuthGeometryFunction() as any,
+    ({ projection }) => createAzimuthGeometryFunction(projection) as any,
     2,
   ),
   [DT.AreaMeasure]: polygonDef(DT.AreaMeasure, 'areaMeasure'),

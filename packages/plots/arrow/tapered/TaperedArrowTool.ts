@@ -6,6 +6,7 @@ import type { PlotConfig } from '../../../kernel/types/config';
 import { DrawType } from '../../../kernel/constants/drawType';
 import { HandleBasedTool } from '../../../engine/tool/HandleBasedTool';
 import { buildTaperedArrow } from './geometry';
+import { projectedDistanceMeters } from '../../../kernel/utils';
 
 /**
  * 斜箭头（TaperedArrow）绘制工具类，继承自 HandleBasedTool。
@@ -107,6 +108,6 @@ export class TaperedArrowTool extends HandleBasedTool {
     const coords = this.getCoordinates();
     if (coords.length < 2) return 0;
     const [p0, p1] = coords;
-    return Math.sqrt((p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2);
+    return projectedDistanceMeters(p0, p1, this.map.getView().getProjection());
   }
 }

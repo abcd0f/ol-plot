@@ -1,17 +1,37 @@
 import Polygon from 'ol/geom/Polygon';
-import { dist } from '../../kernel/utils';
+import type { ProjectionLike } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
+import { bearingDegrees, buildGeodesicSectorLonLat, distanceMeters, dist } from '../../kernel/utils';
 
 const SEGMENTS = 100;
 const TAU = Math.PI * 2;
 
 /** 根据圆心、起始半径点和终止方向点生成扇形坐标。 */
-export function buildSector(controlPoints: number[][], segments: number = SEGMENTS): number[][][] {
+export function buildSector(
+  controlPoints: number[][],
+  segments: number = SEGMENTS,
+  projection?: ProjectionLike,
+): number[][][] {
   if (controlPoints.length === 0) return [[]];
   const center = controlPoints[0];
   if (controlPoints.length < 2) return [[[...center], [...center], [...center]]];
 
-  const radius = dist(center, controlPoints[1]);
+  const centerLonLat = projection ? toLonLat(center, projection) : center;
+  const radius = projection
+    ? distanceMeters(centerLonLat, toLonLat(controlPoints[1], projection))
+    : dist(center, controlPoints[1]);
   if (radius === 0) return [[[...center], [...center], [...center]]];
+
+  const startBearing = projection ? bearingDegrees(centerLonLat, toLonLat(controlPoints[1], projection)) : 0;
+  const endBearing = projection
+    ? bearingDegrees(centerLonLat, toLonLat(controlPoints[2] ?? controlPoints[1], projection))
+    : 0;
+  if (projection) {
+    const sectorRing = buildGeodesicSectorLonLat(centerLonLat, radius, startBearing, endBearing, segments);
+    const arc = sectorRing.slice(1, -1).map((coordinate) => fromLonLat(coordinate, projection));
+    const ring = [...arc, [...center], [...arc[0]]];
+    return [ring];
+  }
 
   const startAngle = getAngle(center, controlPoints[1]);
   const endAngle = getAngle(center, controlPoints[2] ?? controlPoints[1]);
@@ -39,12 +59,12 @@ export function getSectorAngles(controlPoints: number[][]): { start: number; end
 }
 
 /** 创建 OL Draw 实时预览使用的扇形 geometryFunction。 */
-export function createSectorGeometryFunction() {
+export function createSectorGeometryFunction(projection?: ProjectionLike) {
   return (coordinates: number[][], geometry?: Polygon): Polygon => {
     const geom = geometry || new Polygon([]);
     const controlPoints = coordinates.slice(0, 3);
     if (controlPoints.length > 0) {
-      geom.setCoordinates(buildSector(controlPoints));
+      geom.setCoordinates(buildSector(controlPoints, SEGMENTS, projection));
       geom.set('_controlPoints', controlPoints);
     }
     return geom;

@@ -5,13 +5,8 @@ import type Geometry from 'ol/geom/Geometry';
 import type { PlotConfig } from '../../kernel/types/config';
 import { DrawType } from '../../kernel/constants/drawType';
 import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
-import {
-  buildEllipse,
-  type EllipseRadii,
-  getEllipseCenter,
-  getEllipseControlPoints,
-  getEllipseRadii,
-} from './geometry';
+import { buildEllipse, type EllipseRadii, getEllipseCenter, getEllipseControlPoints } from './geometry';
+import { projectedDistanceMeters } from '../../kernel/utils';
 
 export class EllipseTool extends HandleBasedTool {
   constructor(map: Map, config?: PlotConfig) {
@@ -85,6 +80,10 @@ export class EllipseTool extends HandleBasedTool {
   getRadii(): EllipseRadii | null {
     const coords = this.getCoordinates();
     if (coords.length < 2) return null;
-    return getEllipseRadii(coords);
+    const projection = this.map.getView().getProjection();
+    const center = getEllipseCenter(coords);
+    const rx = projectedDistanceMeters(center, [coords[1][0], center[1]], projection);
+    const ry = projectedDistanceMeters(center, [center[0], coords[1][1]], projection);
+    return Object.assign([rx, ry] as [number, number], { rx, ry });
   }
 }

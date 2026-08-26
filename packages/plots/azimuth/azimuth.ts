@@ -1,7 +1,6 @@
 import OLMap from 'ol/Map';
 import Overlay from 'ol/Overlay';
 import GeometryCollection from 'ol/geom/GeometryCollection';
-import { getDistance } from 'ol/sphere';
 import { toLonLat } from 'ol/proj';
 import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
@@ -10,6 +9,7 @@ import type { DrawType } from '../../kernel/constants/drawType';
 import { DrawEvent } from '../../kernel/constants/events';
 import type { EventBus } from '../../engine/runtime/EventBus';
 import type { DistanceUnit, ResolvedPlotConfig } from '../../kernel/types/config';
+import { bearingDegrees, distanceMeters } from '../../kernel/utils';
 
 const METERS_PER_NAUTICAL_MILE = 1852;
 
@@ -115,8 +115,8 @@ export class AzimuthManager {
     const [start, end] = points;
     const startLonLat = toLonLat(start, this.map.getView().getProjection());
     const endLonLat = toLonLat(end, this.map.getView().getProjection());
-    const distance = getDistance(startLonLat, endLonLat);
-    const azimuth = calculateBearing(startLonLat, endLonLat);
+    const distance = distanceMeters(startLonLat, endLonLat);
+    const azimuth = bearingDegrees(startLonLat, endLonLat);
     overlay.getElement()!.innerText = `${this.format(distance)} · 方位角 ${azimuth.toFixed(2)}°`;
     overlay.setPosition([(start[0] + end[0]) / 2, (start[1] + end[1]) / 2]);
   }
@@ -136,11 +136,5 @@ export class AzimuthManager {
 
 /** 计算起点到终点的地理方位角。 */
 export function calculateBearing(start: number[], end: number[]): number {
-  const phi1 = (start[1] * Math.PI) / 180;
-  const phi2 = (end[1] * Math.PI) / 180;
-  const deltaLambda = ((end[0] - start[0]) * Math.PI) / 180;
-  const y = Math.sin(deltaLambda) * Math.cos(phi2);
-  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda);
-  const degrees = (Math.atan2(y, x) * 180) / Math.PI;
-  return (degrees + 360) % 360;
+  return bearingDegrees(start, end);
 }

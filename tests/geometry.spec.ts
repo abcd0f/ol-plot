@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { getDistance } from 'ol/sphere';
 import { toLonLat } from 'ol/proj';
 import { buildStraightArrow, getStraightArrowCenter } from '../packages/plots/arrow/straight/geometry';
 import { buildRangeRingsGeometries, parseRangeSpacing, formatValue } from '../packages/plots/rangeRings/geometry';
 import { buildSector, getSectorAngles } from '../packages/plots/sector/geometry';
+import { bearingDegrees, destinationLonLat, distanceMeters } from '../packages/kernel/utils/geodesy';
 
 /**
  * Characterization tests: lock the *current* output of the pure geometry
@@ -85,7 +85,7 @@ describe('buildRangeRingsGeometries', () => {
 
       // every vertex is ~`radius` metres from the centre (great-circle)
       coordinates.forEach((coordinate) => {
-        const metres = getDistance(centerLonLat, toLonLat(coordinate, 'EPSG:3857'));
+        const metres = distanceMeters(centerLonLat, toLonLat(coordinate, 'EPSG:3857'));
         expect(metres).toBeCloseTo(radius, -1); // within ~10 m of the nominal radius
       });
     });
@@ -145,5 +145,17 @@ describe('formatValue', () => {
     expect(formatValue(5.5)).toBe('5.5');
     expect(formatValue(5.25)).toBe('5.25');
     expect(formatValue(5.1)).toBe('5.1');
+  });
+});
+
+describe('geodesy helpers', () => {
+  it('calculates nautical distances and bearings from lon/lat', () => {
+    expect(distanceMeters([0, 0], [0, 1])).toBeCloseTo(111195, -2);
+    expect(bearingDegrees([0, 0], [1, 0])).toBeCloseTo(90, 5);
+  });
+
+  it('returns a destination at the requested distance', () => {
+    const destination = destinationLonLat([120, 60], 1852, 90);
+    expect(distanceMeters([120, 60], destination)).toBeCloseTo(1852, 0);
   });
 });

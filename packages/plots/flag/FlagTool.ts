@@ -6,6 +6,7 @@ import type { PlotConfig } from '../../kernel/types/config';
 import { DrawType } from '../../kernel/constants/drawType';
 import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
 import { buildFlagGeometries, getFlagControlPoints, normalizeFlagControlPoints } from './geometry';
+import { projectedDistanceMeters } from '../../kernel/utils';
 
 /**
  * 旗帜（Flag）绘制工具类，继承自 HandleBasedTool。
@@ -111,7 +112,7 @@ export class FlagTool extends HandleBasedTool {
   getPoleLength(): number {
     const coords = this.getCoordinates();
     if (coords.length < 2) return 0;
-    return Math.abs(coords[1][1] - coords[0][1]);
+    return projectedDistanceMeters(coords[0], [coords[0][0], coords[1][1]], this.map.getView().getProjection());
   }
 
   /**
@@ -122,6 +123,6 @@ export class FlagTool extends HandleBasedTool {
   getFlagWidth(): number {
     const coords = this.getCoordinates();
     if (coords.length < 2) return 0;
-    return Math.abs(coords[1][0] - coords[0][0]);
+    return projectedDistanceMeters(coords[0], [coords[1][0], coords[0][1]], this.map.getView().getProjection());
   }
 }

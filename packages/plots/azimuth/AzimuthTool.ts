@@ -2,13 +2,13 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import type Geometry from 'ol/geom/Geometry';
-import { getDistance } from 'ol/sphere';
 import { toLonLat } from 'ol/proj';
 import type { MeasurePlotConfig } from '../../kernel/types/config';
 import { DrawType } from '../../kernel/constants/drawType';
 import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
-import { AzimuthManager, calculateBearing } from './azimuth';
+import { AzimuthManager } from './azimuth';
 import { buildAzimuthGeometries } from './geometry';
+import { bearingDegrees, distanceMeters } from '../../kernel/utils';
 
 export class AzimuthTool extends HandleBasedTool {
   private azimuthManager: AzimuthManager;
@@ -26,14 +26,16 @@ export class AzimuthTool extends HandleBasedTool {
     if (!this.activeFeature) return;
     const points = controlPoints.slice(0, 2);
     const geom = this.activeFeature.getGeometry() as GeometryCollection;
-    const [line, circle] = buildAzimuthGeometries(points);
+    const [line, circle] = buildAzimuthGeometries(points, this.map.getView().getProjection());
     this.activeFeature.set('controlPoints', points);
     geom.set('_controlPoints', points);
     geom.setGeometries([line, circle]);
   }
 
   protected createGeometry(coordinates: number[][]): Geometry {
-    const geom = new GeometryCollection(buildAzimuthGeometries(coordinates.slice(0, 2)));
+    const geom = new GeometryCollection(
+      buildAzimuthGeometries(coordinates.slice(0, 2), this.map.getView().getProjection()),
+    );
     geom.set('_controlPoints', coordinates.slice(0, 2));
     return geom;
   }
@@ -50,7 +52,7 @@ export class AzimuthTool extends HandleBasedTool {
     if (!this.activeFeature || coordinates.length < 2) return;
     const points = coordinates.slice(0, 2);
     const geom = this.activeFeature.getGeometry() as GeometryCollection;
-    const [line, circle] = buildAzimuthGeometries(points);
+    const [line, circle] = buildAzimuthGeometries(points, this.map.getView().getProjection());
     this.activeFeature.set('controlPoints', points);
     geom.set('_controlPoints', points);
     geom.setGeometries([line, circle]);
@@ -77,14 +79,14 @@ export class AzimuthTool extends HandleBasedTool {
     const points = this.getCoordinates();
     if (points.length < 2) return 0;
     const projection = this.map.getView().getProjection();
-    return getDistance(toLonLat(points[0], projection), toLonLat(points[1], projection));
+    return distanceMeters(toLonLat(points[0], projection), toLonLat(points[1], projection));
   }
 
   getAzimuth(): number {
     const points = this.getCoordinates();
     if (points.length < 2) return 0;
     const projection = this.map.getView().getProjection();
-    return calculateBearing(toLonLat(points[0], projection), toLonLat(points[1], projection));
+    return bearingDegrees(toLonLat(points[0], projection), toLonLat(points[1], projection));
   }
 
   clearFeatures(): this {
