@@ -2,11 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { getDistance } from 'ol/sphere';
 import { toLonLat } from 'ol/proj';
 import { buildStraightArrow, getStraightArrowCenter } from '../packages/geometry/arrow/straight';
-import {
-  buildRangeRingsGeometries,
-  parseRangeSpacing,
-  formatValue,
-} from '../packages/geometry/rangeRings';
+import { buildRangeRingsGeometries, parseRangeSpacing, formatValue } from '../packages/geometry/rangeRings';
+import { buildSector, getSectorAngles } from '../packages/geometry/sector';
 
 /**
  * Characterization tests: lock the *current* output of the pure geometry
@@ -98,6 +95,31 @@ describe('buildRangeRingsGeometries', () => {
     const collection = buildRangeRingsGeometries([[0, 0]], 10, 'm', 'EPSG:3857');
     expect(collection.getGeometries()).toHaveLength(0);
     expect(collection.get('_controlPoints')).toEqual([[0, 0]]);
+  });
+});
+
+describe('buildSector', () => {
+  it('builds a closed sector from center, radius and end-angle points', () => {
+    const ring = buildSector([
+      [0, 0],
+      [10, 0],
+      [0, 10],
+    ])[0];
+
+    expect(ring[0]).toEqual([10, 0]);
+    expect(ring[ring.length - 2]).toEqual([0, 0]);
+    expect(ring[ring.length - 1]).toEqual(ring[0]);
+    expect(ring.length).toBe(103);
+  });
+
+  it('returns the start and end angles for the three control points', () => {
+    expect(
+      getSectorAngles([
+        [0, 0],
+        [1, 0],
+        [0, 1],
+      ]),
+    ).toEqual({ start: 0, end: Math.PI / 2 });
   });
 });
 

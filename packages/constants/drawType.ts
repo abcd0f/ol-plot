@@ -33,6 +33,8 @@ export enum DrawType {
   DoubleArrow = 'DoubleArrow',
   /** 弓形 */
   Arc = 'Arc',
+  /** 扇形 */
+  Sector = 'Sector',
   /** 旗帜 */
   Flag = 'Flag',
   /** 测距 */

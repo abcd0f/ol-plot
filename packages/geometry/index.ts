@@ -16,6 +16,7 @@ export {
 } from './ellipse';
 
 export { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc';
+export { buildSector, getSectorControlPoints, getSectorAngles, createSectorGeometryFunction } from './sector';
 
 export { buildAzimuthGeometries, createAzimuthGeometryFunction } from './azimuth';
 export {

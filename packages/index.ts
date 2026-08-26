@@ -18,6 +18,7 @@ export { TaperedArrowTool } from './tools/TaperedArrowTool';
 export { LineArrowTool } from './tools/LineArrowTool';
 export { DoubleArrowTool } from './tools/DoubleArrowTool';
 export { ArcTool } from './tools/ArcTool';
+export { SectorTool } from './tools/SectorTool';
 export { FlagTool } from './tools/FlagTool';
 export { MeasureTool } from './tools/MeasureTool';
 export { AzimuthTool } from './tools/AzimuthTool';
