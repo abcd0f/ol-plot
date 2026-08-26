@@ -9,7 +9,7 @@ import {
   isClockWise,
   mid,
   wholeDistance,
-} from '@/packages/kernel/utils';
+} from '../../../kernel/utils';
 
 const HALF_PI = Math.PI / 2;
 // 箭头头部高度相对于基准长度的比例
