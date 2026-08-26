@@ -3,7 +3,6 @@ import LineString from 'ol/geom/LineString';
 import Polygon from 'ol/geom/Polygon';
 import Circle from 'ol/geom/Circle';
 import GeometryCollection from 'ol/geom/GeometryCollection';
-import type Geometry from 'ol/geom/Geometry';
 import type { DrawType } from '../kernel/constants/drawType';
 import { DrawType as DT } from '../kernel/constants/drawType';
 import { dist } from '../kernel/utils';
@@ -27,7 +26,7 @@ import {
 } from './flag/geometry';
 import { buildAzimuthGeometries, createAzimuthGeometryFunction } from './azimuth/geometry';
 import { buildRangeRingsGeometries, createRangeRingsGeometryFunction } from './rangeRings/geometry';
-import type { PlotContext, PlotDefinition } from '../kernel/types/plotDefinition';
+import type { PlotDefinition } from '../kernel/types/plotDefinition';
 
 export type { PlotContext, PlotDefinition } from '../kernel/types/plotDefinition';
 

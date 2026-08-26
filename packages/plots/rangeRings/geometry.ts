@@ -2,7 +2,7 @@ import GeometryCollection from 'ol/geom/GeometryCollection';
 import LineString from 'ol/geom/LineString';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
 import { getDistance, offset } from 'ol/sphere';
-import type { DistanceUnit } from '@/packages/kernel/types/config';
+import type { DistanceUnit } from '../../kernel/types/config';
 
 const SEGMENTS = 96;
 const UNIT_METERS: Record<DistanceUnit, number> = { m: 1, km: 1000, nm: 1852 };

@@ -2,10 +2,10 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '@/packages/kernel/types/config';
-import { DrawType } from '@/packages/kernel/constants/drawType';
-import { DrawEvent } from '@/packages/kernel/constants/events';
-import { HandleBasedTool } from '@/packages/engine/tool/HandleBasedTool';
+import type { PlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { DrawEvent } from '../../kernel/constants/events';
+import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
 import { buildArc, getArcControlPoints } from './geometry';
 
 export class ArcTool extends HandleBasedTool {

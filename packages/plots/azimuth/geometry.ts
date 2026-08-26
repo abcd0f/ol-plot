@@ -1,7 +1,7 @@
 import Circle from 'ol/geom/Circle';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import LineString from 'ol/geom/LineString';
-import { dist } from '@/packages/kernel/utils';
+import { dist } from '../../kernel/utils';
 
 /** 根据两个控制点生成方位角工具的线段与圆。 */
 export function buildAzimuthGeometries(controlPoints: number[][]): [LineString, Circle] {

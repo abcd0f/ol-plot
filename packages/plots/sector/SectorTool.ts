@@ -2,11 +2,11 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '@/packages/kernel/types/config';
-import { DrawType } from '@/packages/kernel/constants/drawType';
-import { HandleBasedTool } from '@/packages/engine/tool/HandleBasedTool';
+import type { PlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
 import { buildSector, getSectorAngles } from './geometry';
-import { dist } from '@/packages/kernel/utils';
+import { dist } from '../../kernel/utils';
 
 /** 通过圆心、起始半径点和终止方向点绘制并编辑扇形。 */
 export class SectorTool extends HandleBasedTool {

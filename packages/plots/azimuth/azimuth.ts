@@ -6,10 +6,10 @@ import { toLonLat } from 'ol/proj';
 import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
-import type { DrawType } from '@/packages/kernel/constants/drawType';
-import { DrawEvent } from '@/packages/kernel/constants/events';
-import type { EventBus } from '@/packages/engine/runtime/EventBus';
-import type { DistanceUnit, ResolvedPlotConfig } from '@/packages/kernel/types/config';
+import type { DrawType } from '../../kernel/constants/drawType';
+import { DrawEvent } from '../../kernel/constants/events';
+import type { EventBus } from '../../engine/runtime/EventBus';
+import type { DistanceUnit, ResolvedPlotConfig } from '../../kernel/types/config';
 
 const METERS_PER_NAUTICAL_MILE = 1852;
 
@@ -60,7 +60,10 @@ export class AzimuthManager {
     const overlay = this.createOverlay();
     this.map.addOverlay(overlay);
     this.groups.set(feature, overlay);
-    this.changeKeys.set(feature, geom.on('change', () => this.render(overlay, geom)));
+    this.changeKeys.set(
+      feature,
+      geom.on('change', () => this.render(overlay, geom)),
+    );
     this.render(overlay, geom);
   }
 

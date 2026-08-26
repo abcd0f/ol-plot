@@ -2,9 +2,9 @@ import Map from 'ol/Map';
 import type Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
 import type Geometry from 'ol/geom/Geometry';
-import type { MeasurePlotConfig } from '@/packages/kernel/types/config';
-import { DrawType } from '@/packages/kernel/constants/drawType';
-import { BaseTool } from '@/packages/engine/tool/BaseTool';
+import type { MeasurePlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { BaseTool } from '../../engine/tool/BaseTool';
 import { MeasureManager } from './measure';
 
 /**

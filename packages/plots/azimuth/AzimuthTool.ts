@@ -4,9 +4,9 @@ import GeometryCollection from 'ol/geom/GeometryCollection';
 import type Geometry from 'ol/geom/Geometry';
 import { getDistance } from 'ol/sphere';
 import { toLonLat } from 'ol/proj';
-import type { MeasurePlotConfig } from '@/packages/kernel/types/config';
-import { DrawType } from '@/packages/kernel/constants/drawType';
-import { HandleBasedTool } from '@/packages/engine/tool/HandleBasedTool';
+import type { MeasurePlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
 import { AzimuthManager, calculateBearing } from './azimuth';
 import { buildAzimuthGeometries } from './geometry';
 

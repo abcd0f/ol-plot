@@ -5,8 +5,8 @@ import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Text from 'ol/style/Text';
 import Fill from 'ol/style/Fill';
-import type { ResolvedPlotConfig } from '@/packages/kernel/types/config';
-import { getFeatureStyleData } from '@/packages/kernel/utils/data';
+import type { ResolvedPlotConfig } from '../../kernel/types/config';
+import { getFeatureStyleData } from '../../kernel/utils/data';
 
 /** 创建距离环及其标签样式。 */
 export function buildRangeRingsStyle(config: ResolvedPlotConfig): StyleFunction {

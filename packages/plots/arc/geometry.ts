@@ -1,5 +1,5 @@
 import LineString from 'ol/geom/LineString';
-import { dist } from '@/packages/kernel/utils';
+import { dist } from '../../kernel/utils';
 
 const DEFAULT_SEGMENTS = 64;
 

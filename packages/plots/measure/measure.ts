@@ -6,11 +6,11 @@ import { getTransform } from 'ol/proj';
 import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
-import type { EventBus } from '@/packages/engine/runtime/EventBus';
-import type { ResolvedPlotConfig, MeasureMode, DistanceUnit } from '@/packages/kernel/types/config';
-import { DrawEvent } from '@/packages/kernel/constants/events';
-import type { DrawType } from '@/packages/kernel/constants/drawType';
-import { mid } from '@/packages/kernel/utils/math';
+import type { EventBus } from '../../engine/runtime/EventBus';
+import type { ResolvedPlotConfig, MeasureMode, DistanceUnit } from '../../kernel/types/config';
+import { DrawEvent } from '../../kernel/constants/events';
+import type { DrawType } from '../../kernel/constants/drawType';
+import { mid } from '../../kernel/utils/math';
 
 const METERS_PER_NAUTICAL_MILE = 1852;
 

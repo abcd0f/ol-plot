@@ -2,9 +2,9 @@ import Map from 'ol/Map';
 import type Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
-import type { AreaMeasurePlotConfig } from '@/packages/kernel/types/config';
-import { DrawType } from '@/packages/kernel/constants/drawType';
-import { BaseTool } from '@/packages/engine/tool/BaseTool';
+import type { AreaMeasurePlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { BaseTool } from '../../engine/tool/BaseTool';
 import { AreaMeasureManager } from './areaMeasure';
 
 export class AreaMeasureTool extends BaseTool {

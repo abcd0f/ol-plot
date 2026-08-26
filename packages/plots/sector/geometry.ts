@@ -1,5 +1,5 @@
 import Polygon from 'ol/geom/Polygon';
-import { dist } from '@/packages/kernel/utils';
+import { dist } from '../../kernel/utils';
 
 const SEGMENTS = 100;
 const TAU = Math.PI * 2;

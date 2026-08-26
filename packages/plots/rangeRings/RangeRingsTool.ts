@@ -3,12 +3,12 @@ import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import type { StyleLike } from 'ol/style/Style';
-import { DrawType } from '@/packages/kernel/constants/drawType';
-import { DrawEvent } from '@/packages/kernel/constants/events';
-import type { InternalPlotConfig, RangeRingsPlotConfig } from '@/packages/kernel/types/config';
-import type { PlotFeatureData, PlotRestoreOptions } from '@/packages/kernel/types/data';
+import { DrawType } from '../../kernel/constants/drawType';
+import { DrawEvent } from '../../kernel/constants/events';
+import type { InternalPlotConfig, RangeRingsPlotConfig } from '../../kernel/types/config';
+import type { PlotFeatureData, PlotRestoreOptions } from '../../kernel/types/data';
 import { buildRangeRingsGeometries } from './geometry';
-import { HandleBasedTool } from '@/packages/engine/tool/HandleBasedTool';
+import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
 import { buildRangeRingsStyle } from './style';
 
 /** 距离环工具，以两个点定义圆心和最大半径。 */

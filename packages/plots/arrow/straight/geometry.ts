@@ -1,6 +1,6 @@
 import Polygon from 'ol/geom/Polygon';
 import type { Coordinate } from 'ol/coordinate';
-import { dist, computeDirectionAndNormal, createDegeneratePolygon } from '@/packages/kernel/utils';
+import { dist, computeDirectionAndNormal, createDegeneratePolygon } from '../../../kernel/utils';
 
 /** 箭头身体宽度占箭头总长度的比例 */
 const BODY_WIDTH_RATIO = 0.1;

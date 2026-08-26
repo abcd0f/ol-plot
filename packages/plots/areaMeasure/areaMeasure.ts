@@ -5,10 +5,10 @@ import { getArea } from 'ol/sphere';
 import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
-import type { EventBus } from '@/packages/engine/runtime/EventBus';
-import type { DistanceUnit, ResolvedPlotConfig } from '@/packages/kernel/types/config';
-import { DrawEvent } from '@/packages/kernel/constants/events';
-import type { DrawType } from '@/packages/kernel/constants/drawType';
+import type { EventBus } from '../../engine/runtime/EventBus';
+import type { DistanceUnit, ResolvedPlotConfig } from '../../kernel/types/config';
+import { DrawEvent } from '../../kernel/constants/events';
+import type { DrawType } from '../../kernel/constants/drawType';
 
 const SQUARE_METERS_PER_SQUARE_NAUTICAL_MILE = 1852 * 1852;
 
