@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DrawType } from '../packages/constants/drawType';
-import { mergeConfig } from '../packages/constants';
-import { PLOT_DEFS } from '../packages/plot-defs';
+import { DrawType } from '../packages/kernel/constants/drawType';
+import { mergeConfig } from '../packages/kernel/constants';
+import { PLOT_DEFS } from '../packages/plots/registry';
 
 describe('PLOT_DEFS', () => {
   it('defines every public draw type', () => {

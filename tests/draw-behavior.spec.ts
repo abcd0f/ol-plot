@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { mergeConfig } from '../packages/constants';
-import { resolveDrawEndAction } from '../packages/core/drawBehavior';
+import { mergeConfig } from '../packages/kernel/constants';
+import { resolveDrawEndAction } from '../packages/engine/runtime/drawBehavior';
 
 describe('绘制行为配置', () => {
   it('保持原有默认行为', () => {

@@ -4,11 +4,11 @@ import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
 import Polygon from 'ol/geom/Polygon';
 import Circle from 'ol/geom/Circle';
-import { serializeFeature, projectPlotDataCoordinates } from '../packages/utils/data';
-import { mergeConfig } from '../packages/constants';
-import { DrawType } from '../packages/constants/drawType';
-import { buildStraightArrow } from '../packages/geometry/arrow/straight';
-import { buildRangeRingsGeometries } from '../packages/geometry/rangeRings';
+import { serializeFeature, projectPlotDataCoordinates } from '../packages/kernel/utils/data';
+import { mergeConfig } from '../packages/kernel/constants';
+import { DrawType } from '../packages/kernel/constants/drawType';
+import { buildStraightArrow } from '../packages/plots/arrow/straight/geometry';
+import { buildRangeRingsGeometries } from '../packages/plots/rangeRings/geometry';
 
 /**
  * Serialize → project round-trip regression net.

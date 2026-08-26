@@ -3,12 +3,12 @@ import Draw from 'ol/interaction/Draw';
 import type VectorLayer from 'ol/layer/Vector';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import type { StyleFunction } from 'ol/style/Style';
-import type { EventBus } from './EventBus';
-import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
-import type { ResolvedPlotConfig } from '../types/config';
-import { mergeConfig } from '../constants';
-import { PLOT_DEFS } from '../plot-defs';
+import type { EventBus } from '../runtime/EventBus';
+import { DrawType } from '../../kernel/constants/drawType';
+import { DrawEvent } from '../../kernel/constants/events';
+import type { ResolvedPlotConfig } from '../../kernel/types/config';
+import { mergeConfig } from '../../kernel/constants';
+import { PLOT_DEFS } from '../../plots/registry';
 import { ClickFreehandDraw } from './ClickFreehandDraw';
 import { FEATURE_HIT_TOLERANCE } from './SelectManager';
 

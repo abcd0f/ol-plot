@@ -2,7 +2,7 @@ import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { GeometryFunction } from 'ol/interaction/Draw';
 import type { ProjectionLike } from 'ol/proj';
-import type { ResolvedPlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from './config';
 import type { DrawType } from '../constants/drawType';
 
 export interface PlotContext {

@@ -11,27 +11,27 @@ import type {
   ImageConfig,
   ImagePointConfig,
   ResolvedPlotConfig,
-} from '../types/config';
-import type { PlotFeatureData, PlotRestoreOptions, PlotDrawType } from '../types/data';
-import { DrawType } from '../constants/drawType';
-import { ToolState } from '../constants/toolState';
-import { DrawEvent } from '../constants/events';
-import { mergeConfig, mergeRuntimeConfig } from '../constants';
-import { buildFeatureStyle } from '../style/feature';
-import { buildDrawStyle } from '../style/draw';
-import { buildSelectStyle } from '../style/select';
-import { buildModifyStyle } from '../style/modify';
-import { buildFlowLineStyle } from '../style/flowLine';
+} from '../../kernel/types/config';
+import type { PlotFeatureData, PlotRestoreOptions, PlotDrawType } from '../../kernel/types/data';
+import { DrawType } from '../../kernel/constants/drawType';
+import { ToolState } from '../../kernel/constants/toolState';
+import { DrawEvent } from '../../kernel/constants/events';
+import { mergeConfig, mergeRuntimeConfig } from '../../kernel/constants';
+import { buildFeatureStyle } from '../../shared-style/feature';
+import { buildDrawStyle } from '../../shared-style/draw';
+import { buildSelectStyle } from '../../shared-style/select';
+import { buildModifyStyle } from '../../shared-style/modify';
+import { buildFlowLineStyle } from '../../plots/flowLine/style';
 import { EventBus } from './EventBus';
 import { FeatureStore } from './FeatureStore';
-import { SelectManager } from './SelectManager';
-import { ModifyManager } from './ModifyManager';
-import { CursorManager } from './CursorManager';
+import { SelectManager } from '../interactions/SelectManager';
+import { ModifyManager } from '../interactions/ModifyManager';
+import { CursorManager } from '../interactions/CursorManager';
 import { PlotRuntime } from './PlotRuntime';
-import { HandleManager } from '../helper/handle';
-import { MeasureManager } from '../helper/measure';
-import { AreaMeasureManager } from '../helper/areaMeasure';
-import { AzimuthManager } from '../helper/azimuth';
+import { HandleManager } from '../../shared-runtime-helpers/handle';
+import { MeasureManager } from '../../plots/measure/measure';
+import { AreaMeasureManager } from '../../plots/areaMeasure/areaMeasure';
+import { AzimuthManager } from '../../plots/azimuth/azimuth';
 import {
   buildStyleFromData,
   getFeatureStyleData,
@@ -39,12 +39,12 @@ import {
   resolveStyleData,
   serializeFeature,
   setFeatureStyleData,
-} from '../utils/data';
-import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
-import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
-import { buildRangeRingsStyle } from '../style/rangeRings';
-import { PlotAnimator } from '../helper/animator';
-import { DRAW_TYPE_BY_PLOT_TYPE, HANDLE_PLOT_TYPES, PLOT_DEFS, PLOT_TYPE_BY_DRAW_TYPE } from '../plot-defs';
+} from '../../kernel/utils/data';
+import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../../plots/imagePoint/style';
+import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../../plots/alarmPoint/style';
+import { buildRangeRingsStyle } from '../../plots/rangeRings/style';
+import { PlotAnimator } from '../../shared-runtime-helpers/animator';
+import { DRAW_TYPE_BY_PLOT_TYPE, HANDLE_PLOT_TYPES, PLOT_DEFS, PLOT_TYPE_BY_DRAW_TYPE } from '../../plots/registry';
 
 const DRAW_TYPE_PROPERTY = '_drawType';
 export type PlotManagerConfig = InternalPlotConfig & Pick<ImagePointConfig, 'image'>;

@@ -1,5 +1,5 @@
 import type Feature from 'ol/Feature';
-import type { EditMode, EditorAdapter } from '../types/runtime';
+import type { EditMode, EditorAdapter } from '../../kernel/types/runtime';
 
 export interface EditorControllerOptions {
   onModeChange?: (mode: EditMode, feature: Feature | null) => void;

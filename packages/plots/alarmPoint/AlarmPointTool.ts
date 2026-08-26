@@ -3,14 +3,14 @@ import Point from 'ol/geom/Point';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { StyleLike } from 'ol/style/Style';
-import type { AlarmPointConfig } from '../types/config';
-import type { PlotFeatureData, PlotRestoreOptions } from '../types/data';
-import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
-import { BaseTool } from '../core/BaseTool';
-import { mergeRuntimeConfig } from '../constants';
-import { buildAlarmPointStyle, resolveAlarmPointConfig } from '../style/alarmPoint';
-import { PlotAnimator } from '../helper/animator';
+import type { AlarmPointConfig } from '../../kernel/types/config';
+import type { PlotFeatureData, PlotRestoreOptions } from '../../kernel/types/data';
+import { DrawType } from '../../kernel/constants/drawType';
+import { DrawEvent } from '../../kernel/constants/events';
+import { BaseTool } from '../../engine/tool/BaseTool';
+import { mergeRuntimeConfig } from '../../kernel/constants';
+import { buildAlarmPointStyle, resolveAlarmPointConfig } from './style';
+import { PlotAnimator } from '../../shared-runtime-helpers/animator';
 
 export class AlarmPointTool extends BaseTool {
   private readonly animator = new PlotAnimator();

@@ -4,10 +4,10 @@ import type Collection from 'ol/Collection';
 import type Feature from 'ol/Feature';
 import type VectorLayer from 'ol/layer/Vector';
 import type { StyleLike } from 'ol/style/Style';
-import type { EventBus } from './EventBus';
-import type { ResolvedPlotConfig } from '../types/config';
-import { DrawEvent } from '../constants/events';
-import { buildModifyStyle } from '../style/modify';
+import type { EventBus } from '../runtime/EventBus';
+import type { ResolvedPlotConfig } from '../../kernel/types/config';
+import { DrawEvent } from '../../kernel/constants/events';
+import { buildModifyStyle } from '../../shared-style/modify';
 
 /**
  * 修改管理器类，用于处理地图要素的修改操作

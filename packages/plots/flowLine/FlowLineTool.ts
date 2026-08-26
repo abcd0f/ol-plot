@@ -3,14 +3,14 @@ import Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
 import type { StyleFunction } from 'ol/style/Style';
 import type Geometry from 'ol/geom/Geometry';
-import type { FlowLinePlotConfig } from '../types/config';
-import { DrawType } from '../constants/drawType';
-import { DrawEvent } from '../constants/events';
-import { BaseTool } from '../core/BaseTool';
-import { buildFlowLineStyle } from '../style/flowLine';
-import { buildSelectStyle } from '../style/select';
-import { getFeatureStyleData } from '../utils/data';
-import { PlotAnimator } from '../helper/animator';
+import type { FlowLinePlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { DrawEvent } from '../../kernel/constants/events';
+import { BaseTool } from '../../engine/tool/BaseTool';
+import { buildFlowLineStyle } from './style';
+import { buildSelectStyle } from '../../shared-style/select';
+import { getFeatureStyleData } from '../../kernel/utils/data';
+import { PlotAnimator } from '../../shared-runtime-helpers/animator';
 
 export class FlowLineTool extends BaseTool {
   private readonly animator = new PlotAnimator();

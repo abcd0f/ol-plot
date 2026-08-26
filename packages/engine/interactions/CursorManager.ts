@@ -4,7 +4,7 @@ import type BaseLayer from 'ol/layer/Base';
 import type { Pixel } from 'ol/pixel';
 import type { EventsKey } from 'ol/events';
 import { unByKey } from 'ol/Observable';
-import type { CursorHintConfig } from '../types/config';
+import type { CursorHintConfig } from '../../kernel/types/config';
 
 type EditableLayerProvider = () => BaseLayer[];
 

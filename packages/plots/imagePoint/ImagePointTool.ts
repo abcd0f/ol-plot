@@ -3,12 +3,12 @@ import type Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Style from 'ol/style/Style';
 import type Geometry from 'ol/geom/Geometry';
-import type { ImagePointConfig } from '../types/config';
-import type { PlotFeatureData } from '../types/data';
-import { DrawType } from '../constants/drawType';
-import { BaseTool } from '../core/BaseTool';
-import { buildStyleFromData, getFeatureStyleData } from '../utils/data';
-import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from '../style/imagePoint';
+import type { ImagePointConfig } from '../../kernel/types/config';
+import type { PlotFeatureData } from '../../kernel/types/data';
+import { DrawType } from '../../kernel/constants/drawType';
+import { BaseTool } from '../../engine/tool/BaseTool';
+import { buildStyleFromData, getFeatureStyleData } from '../../kernel/utils/data';
+import { buildImagePointStyle, mergeImageConfig, resolveImageConfig } from './style';
 
 export class ImagePointTool extends BaseTool {
   private imageConfig: NonNullable<ImagePointConfig['image']>;

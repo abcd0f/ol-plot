@@ -1,5 +1,5 @@
 import type BaseLayer from 'ol/layer/Base';
-import type { EditMode } from '../types/runtime';
+import type { EditMode } from '../../kernel/types/runtime';
 
 export interface InteractionToggle { setActive(active: boolean): void; }
 export interface DrawToggle extends InteractionToggle { abortDrawing(): void; }

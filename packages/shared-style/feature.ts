@@ -1,8 +1,8 @@
 import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
-import type { ResolvedPlotConfig } from '../types/config';
-import { getFeatureStyleData } from '../utils/data';
+import type { ResolvedPlotConfig } from '../kernel/types/config';
+import { getFeatureStyleData } from '../kernel/utils/data';
 
 /**
  * 构建要素的默认渲染样式。

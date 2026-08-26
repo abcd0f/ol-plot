@@ -4,7 +4,7 @@ import Text from 'ol/style/Text';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import CircleStyle from 'ol/style/Circle';
-import type { ImageConfig, ImageLabelConfig, NodeStyle } from '../types/config';
+import type { ImageConfig, ImageLabelConfig, NodeStyle } from '../../kernel/types/config';
 
 const DEFAULT_LABEL_COLOR = '#1f2937';
 const DEFAULT_LABEL_FONT_SIZE = 12;

@@ -5,10 +5,10 @@ import Collection from 'ol/Collection';
 import type Feature from 'ol/Feature';
 import type VectorLayer from 'ol/layer/Vector';
 import type { StyleLike } from 'ol/style/Style';
-import type { EventBus } from './EventBus';
-import type { ResolvedPlotConfig } from '../types/config';
-import { DrawEvent } from '../constants/events';
-import { buildSelectStyle } from '../style/select';
+import type { EventBus } from '../runtime/EventBus';
+import type { ResolvedPlotConfig } from '../../kernel/types/config';
+import { DrawEvent } from '../../kernel/constants/events';
+import { buildSelectStyle } from '../../shared-style/select';
 
 /** 放宽窄线要素的命中范围，便于选择。 */
 export const FEATURE_HIT_TOLERANCE = 8;

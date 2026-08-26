@@ -8,9 +8,9 @@ import type LineString from 'ol/geom/LineString';
 import type Polygon from 'ol/geom/Polygon';
 import type CircleGeom from 'ol/geom/Circle';
 import type Point from 'ol/geom/Point';
-import type { ResolvedPlotConfig } from '../types/config';
-import { getFeatureStyleData } from '../utils/data';
-import { buildRangeRingsStyle } from './rangeRings';
+import type { ResolvedPlotConfig } from '../kernel/types/config';
+import { getFeatureStyleData } from '../kernel/utils/data';
+import { buildRangeRingsStyle } from '../plots/rangeRings/style';
 
 /** 从要素几何中提取所有顶点坐标。 */
 function extractVertices(feature: Feature): number[][] {

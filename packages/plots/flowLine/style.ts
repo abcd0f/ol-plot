@@ -4,8 +4,8 @@ import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import type Feature from 'ol/Feature';
-import type { FlowLineConfig, ResolvedPlotConfig } from '../types/config';
-import { getFeatureStyleData } from '../utils/data';
+import type { FlowLineConfig, ResolvedPlotConfig } from '../../kernel/types/config';
+import { getFeatureStyleData } from '../../kernel/utils/data';
 
 const MAX_ARROW_COUNT = 200;
 const PHASE_CACHE_STEP_PX = 2;

@@ -4,32 +4,32 @@ import Polygon from 'ol/geom/Polygon';
 import Circle from 'ol/geom/Circle';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import type Geometry from 'ol/geom/Geometry';
-import type { DrawType } from '../constants/drawType';
-import { DrawType as DT } from '../constants/drawType';
-import { dist } from '../utils';
-import { buildEllipse, getEllipseControlPoints, createEllipseGeometryFunction } from '../geometry/ellipse';
-import { buildRectangle, getRectangleControlPoints, createRectangleGeometryFunction } from '../geometry/rectangle';
-import { buildArc, getArcControlPoints, createArcGeometryFunction } from '../geometry/arc';
-import { buildSector, createSectorGeometryFunction, getSectorControlPoints } from '../geometry/sector';
-import { buildStraightArrow, createStraightArrowGeometryFunction } from '../geometry/arrow/straight';
-import { buildTaperedArrow, createTaperedArrowGeometryFunction } from '../geometry/arrow/tapered';
-import { buildLineArrowGeometries, createLineArrowGeometryFunction } from '../geometry/arrow/line';
+import type { DrawType } from '../kernel/constants/drawType';
+import { DrawType as DT } from '../kernel/constants/drawType';
+import { dist } from '../kernel/utils';
+import { buildEllipse, getEllipseControlPoints, createEllipseGeometryFunction } from './ellipse/geometry';
+import { buildRectangle, getRectangleControlPoints, createRectangleGeometryFunction } from './rectangle/geometry';
+import { buildArc, getArcControlPoints, createArcGeometryFunction } from './arc/geometry';
+import { buildSector, createSectorGeometryFunction, getSectorControlPoints } from './sector/geometry';
+import { buildStraightArrow, createStraightArrowGeometryFunction } from './arrow/straight/geometry';
+import { buildTaperedArrow, createTaperedArrowGeometryFunction } from './arrow/tapered/geometry';
+import { buildLineArrowGeometries, createLineArrowGeometryFunction } from './arrow/line/geometry';
 import {
   buildDoubleArrow,
   normalizeDoubleArrowControlPoints,
   createDoubleArrowGeometryFunction,
-} from '../geometry/arrow/double';
+} from './arrow/double/geometry';
 import {
   buildFlagGeometries,
   getFlagControlPoints,
   normalizeFlagControlPoints,
   createFlagGeometryFunction,
-} from '../geometry/flag';
-import { buildAzimuthGeometries, createAzimuthGeometryFunction } from '../geometry/azimuth';
-import { buildRangeRingsGeometries, createRangeRingsGeometryFunction } from '../geometry/rangeRings';
-import type { PlotContext, PlotDefinition } from './types';
+} from './flag/geometry';
+import { buildAzimuthGeometries, createAzimuthGeometryFunction } from './azimuth/geometry';
+import { buildRangeRingsGeometries, createRangeRingsGeometryFunction } from './rangeRings/geometry';
+import type { PlotContext, PlotDefinition } from '../kernel/types/plotDefinition';
 
-export type { PlotContext, PlotDefinition } from './types';
+export type { PlotContext, PlotDefinition } from '../kernel/types/plotDefinition';
 
 function closeRing(points: number[][]): number[][] {
   if (points.length === 0) return [];

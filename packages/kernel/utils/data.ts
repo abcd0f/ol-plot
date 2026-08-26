@@ -13,8 +13,8 @@ import { DrawType } from '../constants/drawType';
 import { mergeRuntimeConfig } from '../constants';
 import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
 import type { PlotCoordinates, PlotFeatureData, PlotGeometryData, PlotStyleData } from '../types/data';
-import { buildImagePointStyle } from '../style/imagePoint';
-import { buildAlarmPointStyle } from '../style/alarmPoint';
+import { buildImagePointStyle } from '../../plots/imagePoint/style';
+import { buildAlarmPointStyle } from '../../plots/alarmPoint/style';
 
 const PLOT_STYLE_PROPERTY = '_plotStyleData';
 const DRAW_TYPE_PROPERTY = '_drawType';

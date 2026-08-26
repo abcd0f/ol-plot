@@ -2,24 +2,24 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type { StyleFunction, StyleLike } from 'ol/style/Style';
-import type { InternalPlotConfig, ResolvedPlotConfig } from '../types/config';
-import type { PlotFeatureData, PlotRestoreOptions } from '../types/data';
-import { DrawType } from '../constants/drawType';
-import { PLOT_DEFS } from '../plot-defs';
-import type { PlotDefinition } from '../plot-defs';
-import { ToolState } from '../constants/toolState';
-import { EventBus } from './EventBus';
-import { FeatureStore } from './FeatureStore';
-import { DrawManager } from './DrawManager';
-import { SelectManager } from './SelectManager';
-import { ModifyManager } from './ModifyManager';
-import { CursorManager } from './CursorManager';
-import { PlotRuntime } from './PlotRuntime';
-import { mergeConfig, mergeRuntimeConfig } from '../constants';
-import { buildFeatureStyle } from '../style/feature';
-import { buildDrawStyle } from '../style/draw';
-import { buildSelectStyle } from '../style/select';
-import { buildModifyStyle } from '../style/modify';
+import type { InternalPlotConfig, ResolvedPlotConfig } from '../../kernel/types/config';
+import type { PlotFeatureData, PlotRestoreOptions } from '../../kernel/types/data';
+import { DrawType } from '../../kernel/constants/drawType';
+import { PLOT_DEFS } from '../../plots/registry';
+import type { PlotDefinition } from '../../plots/registry';
+import { ToolState } from '../../kernel/constants/toolState';
+import { EventBus } from '../runtime/EventBus';
+import { FeatureStore } from '../runtime/FeatureStore';
+import { DrawManager } from '../interactions/DrawManager';
+import { SelectManager } from '../interactions/SelectManager';
+import { ModifyManager } from '../interactions/ModifyManager';
+import { CursorManager } from '../interactions/CursorManager';
+import { PlotRuntime } from '../runtime/PlotRuntime';
+import { mergeConfig, mergeRuntimeConfig } from '../../kernel/constants';
+import { buildFeatureStyle } from '../../shared-style/feature';
+import { buildDrawStyle } from '../../shared-style/draw';
+import { buildSelectStyle } from '../../shared-style/select';
+import { buildModifyStyle } from '../../shared-style/modify';
 import {
   buildStyleFromData,
   getFeatureStyleData,
@@ -27,7 +27,7 @@ import {
   resolveStyleData,
   serializeFeature,
   setFeatureStyleData,
-} from '../utils/data';
+} from '../../kernel/utils/data';
 
 /**
  * BaseTool 是一个抽象基类，用于创建地图绘制工具。

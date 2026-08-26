@@ -5,9 +5,9 @@ import CircleStyle from 'ol/style/Circle';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
-import { DrawType } from '../constants/drawType';
-import { BaseTool } from '../core/BaseTool';
+import type { PlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { BaseTool } from '../../engine/tool/BaseTool';
 
 export class PointTool extends BaseTool {
   constructor(map: Map, config?: PlotConfig) {

@@ -1,11 +1,11 @@
 import Map from 'ol/Map';
 import type Geometry from 'ol/geom/Geometry';
-import type { InternalPlotConfig } from '../types/config';
-import { DrawType } from '../constants/drawType';
-import { mergeRuntimeConfig } from '../constants';
-import { getFeatureStyleData } from '../utils/data';
+import type { InternalPlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { mergeRuntimeConfig } from '../../kernel/constants';
+import { getFeatureStyleData } from '../../kernel/utils/data';
 import { BaseTool } from './BaseTool';
-import { HandleManager } from '../helper/handle';
+import { HandleManager } from '../../shared-runtime-helpers/handle';
 
 export abstract class HandleBasedTool extends BaseTool {
   protected handleManager: HandleManager;

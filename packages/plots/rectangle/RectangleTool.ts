@@ -2,16 +2,16 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
-import { DrawType } from '../constants/drawType';
-import { HandleBasedTool } from '../core/HandleBasedTool';
+import type { PlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { HandleBasedTool } from '../../engine/tool/HandleBasedTool';
 import {
   buildRectangle,
   getRectangleCenter,
   getRectangleControlPoints,
   getRectangleHeight,
   getRectangleWidth,
-} from '../geometry/rectangle';
+} from './geometry';
 
 export class RectangleTool extends HandleBasedTool {
   constructor(map: Map, config?: PlotConfig) {

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { getDistance } from 'ol/sphere';
 import { toLonLat } from 'ol/proj';
-import { buildStraightArrow, getStraightArrowCenter } from '../packages/geometry/arrow/straight';
-import { buildRangeRingsGeometries, parseRangeSpacing, formatValue } from '../packages/geometry/rangeRings';
-import { buildSector, getSectorAngles } from '../packages/geometry/sector';
+import { buildStraightArrow, getStraightArrowCenter } from '../packages/plots/arrow/straight/geometry';
+import { buildRangeRingsGeometries, parseRangeSpacing, formatValue } from '../packages/plots/rangeRings/geometry';
+import { buildSector, getSectorAngles } from '../packages/plots/sector/geometry';
 
 /**
  * Characterization tests: lock the *current* output of the pure geometry

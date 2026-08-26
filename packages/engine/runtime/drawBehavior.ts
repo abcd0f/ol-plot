@@ -1,4 +1,4 @@
-import type { ResolvedPlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../../kernel/types/config';
 
 export type DrawEndAction = 'continue' | 'edit' | 'stop';
 

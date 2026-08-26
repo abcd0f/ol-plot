@@ -1,5 +1,5 @@
 import Style, { type RenderFunction } from 'ol/style/Style';
-import type { AlarmPointStyleConfig, NodeStyle } from '../types/config';
+import type { AlarmPointStyleConfig, NodeStyle } from '../../kernel/types/config';
 
 const DEFAULT_ALARM_COLOR = '#ff3b30';
 const DEFAULT_DURATION = 1200;

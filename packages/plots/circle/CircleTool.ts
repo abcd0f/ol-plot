@@ -1,10 +1,10 @@
 import Map from 'ol/Map';
 import Circle from 'ol/geom/Circle';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
-import { DrawType } from '../constants/drawType';
-import { BaseTool } from '../core/BaseTool';
-import { dist } from '../utils';
+import type { PlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { BaseTool } from '../../engine/tool/BaseTool';
+import { dist } from '../../kernel/utils';
 
 /**
  * 圆形绘制工具类，继承自BaseTool

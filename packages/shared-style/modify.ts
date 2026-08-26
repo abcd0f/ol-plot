@@ -2,7 +2,7 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import type { ResolvedPlotConfig } from '../types/config';
+import type { ResolvedPlotConfig } from '../kernel/types/config';
 
 /**
  * Modify 交互使用的拖拽手柄样式。

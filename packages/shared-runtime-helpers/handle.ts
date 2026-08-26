@@ -8,10 +8,10 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
-import type { EventBus } from '../core/EventBus';
-import type { ResolvedPlotConfig } from '../types/config';
-import { DrawEvent } from '../constants/events';
-import { buildModifyStyle } from '../style/modify';
+import type { EventBus } from '../engine/runtime/EventBus';
+import type { ResolvedPlotConfig } from '../kernel/types/config';
+import { DrawEvent } from '../kernel/constants/events';
+import { buildModifyStyle } from '../shared-style/modify';
 
 export type SyncCallback = (controlPoints: number[][]) => void;
 

@@ -1,9 +1,9 @@
 import Map from 'ol/Map';
 import LineString from 'ol/geom/LineString';
 import type Geometry from 'ol/geom/Geometry';
-import type { PlotConfig } from '../types/config';
-import { DrawType } from '../constants/drawType';
-import { BaseTool } from '../core/BaseTool';
+import type { PlotConfig } from '../../kernel/types/config';
+import { DrawType } from '../../kernel/constants/drawType';
+import { BaseTool } from '../../engine/tool/BaseTool';
 
 /**
  * 自由手绘线工具类，继承自基础工具类。
