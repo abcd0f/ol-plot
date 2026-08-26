@@ -81,7 +81,7 @@ export abstract class BaseTool {
     this.drawType = drawType;
     this.def = PLOT_DEFS[drawType];
     this.config = mergeConfig(config);
-    this.drawStyle = buildDrawStyle(this.config);
+    this.drawStyle = buildDrawStyle(this.config, this.drawType);
 
     this.runtime = new PlotRuntime({
       map,
@@ -312,7 +312,7 @@ export abstract class BaseTool {
   abstract updatePoint(index: number, coordinate: number[]): void;
 
   protected refreshStyles(): void {
-    this.drawStyle = buildDrawStyle(this.config);
+    this.drawStyle = buildDrawStyle(this.config, this.drawType);
     this.layerManager.getLayer().setStyle(this.createFeatureStyle());
     this.selectManager.setStyle(buildSelectStyle(this.config));
     this.modifyManager.setStyle(buildModifyStyle(this.config));

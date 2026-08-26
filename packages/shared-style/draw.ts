@@ -2,6 +2,7 @@ import Style, { type StyleFunction } from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import type { ResolvedPlotConfig } from '../kernel/types/config';
+import { DrawType } from '../kernel/constants/drawType';
 import { buildRangeRingsStyle } from '../plots/rangeRings/style';
 
 /**
@@ -14,7 +15,7 @@ import { buildRangeRingsStyle } from '../plots/rangeRings/style';
  * @param config - 合并后的完整配置
  * @returns OL StyleFunction
  */
-export function buildDrawStyle(config: ResolvedPlotConfig): StyleFunction {
+export function buildDrawStyle(config: ResolvedPlotConfig, drawType?: DrawType): StyleFunction {
   const rangeRingsStyle = buildRangeRingsStyle(config);
   const sketchStyle = new Style({
     stroke: new Stroke({
@@ -31,6 +32,9 @@ export function buildDrawStyle(config: ResolvedPlotConfig): StyleFunction {
     const geom = feature.getGeometry();
     if (!geom) return undefined;
     if (geom.get('rangeRingsSpacing')) return rangeRingsStyle(feature, 1);
+    // DoubleArrow uses a Polygon geometry function while Draw also keeps an
+    // auxiliary LineString sketch for the clicked control points.
+    if (drawType === DrawType.DoubleArrow && geom.getType() === 'LineString') return undefined;
     // 隐藏跟随鼠标的草图顶点
     if (geom.getType() === 'Point') return undefined;
     return sketchStyle;

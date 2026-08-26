@@ -85,7 +85,7 @@ export class PlotManager {
     this.map = map;
     this.config = mergeConfig(config);
     this.imageConfig = resolveImageConfig(config?.image);
-    this.activeDrawStyle = buildDrawStyle(this.config);
+    this.activeDrawStyle = buildDrawStyle(this.config, this.activeDrawType ?? undefined);
     this.runtime = new PlotRuntime({
       map,
       config: this.config,
@@ -156,7 +156,7 @@ export class PlotManager {
   /** 设置当前绘制工具，传入 null 可停止绘制。 */
   setActiveTool(drawType: PlotDrawType | null): this {
     this.activeDrawType = drawType ? this.normalizeDrawType(drawType) : null;
-    this.activeDrawStyle = buildDrawStyle(this.config);
+    this.activeDrawStyle = buildDrawStyle(this.config, this.activeDrawType ?? undefined);
     this.runtime.setDrawTool(
       this.activeDrawType,
       this.activeDrawType ? (feature, resolution) => this.activeDrawStyle(feature, resolution) : undefined,
