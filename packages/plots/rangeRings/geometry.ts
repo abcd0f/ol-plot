@@ -1,3 +1,4 @@
+import { convertLength } from '@turf/helpers';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import LineString from 'ol/geom/LineString';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
@@ -5,8 +6,6 @@ import type { DistanceUnit } from '../../kernel/types/config';
 import { destinationLonLat, distanceMeters } from '../../kernel/utils/geodesy';
 
 const SEGMENTS = 96;
-const UNIT_METERS: Record<DistanceUnit, number> = { m: 1, km: 1000, nm: 1852 };
-
 export interface ParsedRangeSpacing {
   value: number;
   unit: DistanceUnit;
@@ -16,9 +15,9 @@ export interface ParsedRangeSpacing {
 /** 解析并校验距离环间距。 */
 export function parseRangeSpacing(value: number | undefined, unit: DistanceUnit | undefined): ParsedRangeSpacing {
   const numeric = value ?? 10;
-  const normalizedUnit = unit ?? 'm';
+  const normalizedUnit = unit ?? 'meters';
   if (!Number.isFinite(numeric) || numeric <= 0) throw new Error(`Invalid range rings spacing: ${numeric}`);
-  return { value: numeric, unit: normalizedUnit, meters: numeric * UNIT_METERS[normalizedUnit] };
+  return { value: numeric, unit: normalizedUnit, meters: convertLength(numeric, normalizedUnit, 'meters') };
 }
 
 /** 根据圆心、外缘点和间距生成距离环。 */

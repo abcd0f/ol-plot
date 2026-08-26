@@ -14,7 +14,7 @@ title: 方位角
 import { AzimuthTool } from '@seedlib/ol-plot'
 
 const tool = new AzimuthTool(map, {
-  measure: { unit: 'km' },
+  measure: { unit: 'kilometers' },
 })
 ```
 
@@ -29,4 +29,4 @@ const tool = new AzimuthTool(map, {
 | `getAzimuth()` | 返回方位角（0°–360°） |
 | `getPointCount()` | 固定返回 `2` |
 
-`measure.unit` 支持 `m`（米）、`km`（千米）、`nm`（海里），仅影响标签显示单位，不影响 `getDistance()` 的米制返回值。
+`measure.unit` 支持 Turf 的全部 `Units`，仅影响标签显示单位，不影响 `getDistance()` 的米制返回值。

@@ -18,6 +18,8 @@ export {
   projectedGeodesicRadius,
   midpointLonLat,
   areaSquareMeters,
+  formatDistanceMeters,
+  formatAreaSquareMeters,
   centerOfMassLonLat,
   buildGeodesicCircleLonLat,
   buildGeodesicSectorLonLat,

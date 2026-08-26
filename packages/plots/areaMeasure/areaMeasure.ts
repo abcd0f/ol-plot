@@ -6,12 +6,10 @@ import { unByKey } from 'ol/Observable';
 import type Feature from 'ol/Feature';
 import type { EventsKey } from 'ol/events';
 import type { EventBus } from '../../engine/runtime/EventBus';
-import type { DistanceUnit, ResolvedPlotConfig } from '../../kernel/types/config';
+import type { AreaUnit, ResolvedPlotConfig } from '../../kernel/types/config';
 import { DrawEvent } from '../../kernel/constants/events';
 import type { DrawType } from '../../kernel/constants/drawType';
-import { areaSquareMeters, centerOfMassLonLat } from '../../kernel/utils/geodesy';
-
-const SQUARE_METERS_PER_SQUARE_NAUTICAL_MILE = 1852 * 1852;
+import { areaSquareMeters, centerOfMassLonLat, formatAreaSquareMeters } from '../../kernel/utils/geodesy';
 
 interface Label {
   position: number[];
@@ -20,7 +18,7 @@ interface Label {
 
 export class AreaMeasureManager {
   private map: OLMap;
-  private unit: DistanceUnit;
+  private unit: AreaUnit;
   private labelStyle: Partial<CSSStyleDeclaration>;
 
   private groups = new Map<Feature, Overlay[]>();
@@ -176,9 +174,7 @@ export class AreaMeasureManager {
   }
 
   private format(area: number): string {
-    if (this.unit === 'km') return `${(area / 1000000).toFixed(2)} km²`;
-    if (this.unit === 'nm') return `${(area / SQUARE_METERS_PER_SQUARE_NAUTICAL_MILE).toFixed(2)} nm²`;
-    return `${area.toFixed(2)} m²`;
+    return formatAreaSquareMeters(area, this.unit);
   }
 
   private createOverlay(): Overlay {

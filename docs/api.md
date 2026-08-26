@@ -214,10 +214,10 @@ const tool = new CircleTool(map)
 
 ```ts
 import { AzimuthTool } from 'ol-plot'
-const tool = new AzimuthTool(map, { measure: { unit: 'km' } })
+const tool = new AzimuthTool(map, { measure: { unit: 'kilometers' } })
 ```
 
-`measure.unit` 支持 `m`（米）、`km`（千米）和 `nm`（海里）。
+`measure.unit` 支持 Turf 的全部 `Units`（如 `meters`、`kilometers`、`miles`、`nauticalmiles`、`feet` 等）。
 
 | 方法 | 说明 | 返回值 |
 |------|------|--------|
@@ -479,10 +479,13 @@ interface AreaMeasurePlotConfig extends PlotConfig {
 }
 ```
 
-距离和面积相关配置统一使用以下单位类型：
+距离配置使用 Turf 的 `Units`，面积配置使用 Turf 的 `AreaUnits`，因此可直接使用 Turf 支持的完整单位和别名（如 `meters`、`kilometers`、`miles`、`nauticalmiles`、`acres`、`hectares` 等）：
 
 ```ts
-type DistanceUnit = 'm' | 'km' | 'nm'
+import type { Units, AreaUnits } from '@turf/helpers'
+
+type DistanceUnit = Units
+type AreaUnit = AreaUnits
 ```
 
 ### NodeStyle

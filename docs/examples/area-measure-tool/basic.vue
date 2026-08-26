@@ -44,7 +44,7 @@ onMounted(() => {
     fillColor: 'rgba(24,144,255,0.18)',
     nodeStyle: { radius: 5, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
     areaMeasure: {
-      unit: 'm',
+      unit: 'meters',
     },
   });
 });

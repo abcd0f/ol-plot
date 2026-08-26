@@ -32,7 +32,7 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
     /** 显示模式：总距离 */
     mode: 'total',
     /** 距离单位：米 */
-    unit: 'm',
+    unit: 'meters',
     /** 测距标签样式 */
     labelStyle: {
       /** 标签内边距 */
@@ -56,7 +56,7 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
   /** 测面配置 */
   areaMeasure: {
     /** 面积单位：平方米 */
-    unit: 'm',
+    unit: 'meters',
     /** 面积标签样式 */
     labelStyle: {
       /** 标签内边距 */
@@ -82,7 +82,7 @@ export const DEFAULT_CONFIG: ResolvedPlotConfig = {
     /** 相邻距离环间距 */
     spacing: 10,
     /** 距离环单位：千米 */
-    unit: 'km',
+    unit: 'kilometers',
   },
   /** 流向线配置 */
   flowLine: {

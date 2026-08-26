@@ -34,7 +34,7 @@ onMounted(() => {
   tool = new AzimuthTool(map, {
     strokeColor: '#13c2c2',
     fillColor: 'rgba(19,194,194,0.1)',
-    measure: { unit: 'km' },
+    measure: { unit: 'kilometers' },
   });
 });
 

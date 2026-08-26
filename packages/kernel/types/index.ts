@@ -11,6 +11,7 @@ export type {
   MeasureMode,
   AreaMeasureConfig,
   DistanceUnit,
+  AreaUnit,
   RangeRingsConfig,
   FlowLineConfig,
   AlarmPointStyleConfig,

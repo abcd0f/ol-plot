@@ -125,17 +125,17 @@ describe('buildSector', () => {
 
 describe('parseRangeSpacing', () => {
   it('converts value + unit into metres', () => {
-    expect(parseRangeSpacing(20, 'km')).toEqual({ value: 20, unit: 'km', meters: 20000 });
-    expect(parseRangeSpacing(3, 'nm')).toEqual({ value: 3, unit: 'nm', meters: 5556 });
+    expect(parseRangeSpacing(20, 'kilometers')).toEqual({ value: 20, unit: 'kilometers', meters: 20000 });
+    expect(parseRangeSpacing(3, 'nauticalmiles')).toEqual({ value: 3, unit: 'nauticalmiles', meters: 5556 });
   });
 
   it('falls back to 10 m when value/unit are undefined', () => {
-    expect(parseRangeSpacing(undefined, undefined)).toEqual({ value: 10, unit: 'm', meters: 10 });
+    expect(parseRangeSpacing(undefined, undefined)).toEqual({ value: 10, unit: 'meters', meters: 10 });
   });
 
   it('throws on non-positive spacing', () => {
-    expect(() => parseRangeSpacing(0, 'm')).toThrow();
-    expect(() => parseRangeSpacing(-5, 'm')).toThrow();
+    expect(() => parseRangeSpacing(0, 'meters')).toThrow();
+    expect(() => parseRangeSpacing(-5, 'meters')).toThrow();
   });
 });
 

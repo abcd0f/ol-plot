@@ -9,9 +9,7 @@ import type { DrawType } from '../../kernel/constants/drawType';
 import { DrawEvent } from '../../kernel/constants/events';
 import type { EventBus } from '../../engine/runtime/EventBus';
 import type { DistanceUnit, ResolvedPlotConfig } from '../../kernel/types/config';
-import { bearingDegrees, distanceMeters } from '../../kernel/utils';
-
-const METERS_PER_NAUTICAL_MILE = 1852;
+import { bearingDegrees, distanceMeters, formatDistanceMeters } from '../../kernel/utils';
 
 export class AzimuthManager {
   private map: OLMap;
@@ -122,9 +120,7 @@ export class AzimuthManager {
   }
 
   private format(length: number): string {
-    if (this.unit === 'km') return `${(length / 1000).toFixed(2)} km`;
-    if (this.unit === 'nm') return `${(length / METERS_PER_NAUTICAL_MILE).toFixed(2)} nm`;
-    return `${length.toFixed(2)} m`;
+    return formatDistanceMeters(length, this.unit);
   }
 
   private createOverlay(): Overlay {

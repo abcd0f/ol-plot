@@ -4,7 +4,7 @@ import centerOfMass from '@turf/center-of-mass';
 import circle from '@turf/circle';
 import destination from '@turf/destination';
 import distance from '@turf/distance';
-import { point } from '@turf/helpers';
+import { convertArea, convertLength, point, type AreaUnits, type Units } from '@turf/helpers';
 import midpoint from '@turf/midpoint';
 import sector from '@turf/sector';
 import { fromLonLat, toLonLat, type ProjectionLike } from 'ol/proj';
@@ -41,6 +41,15 @@ export function midpointLonLat(start: number[], end: number[]): number[] {
 
 export function areaSquareMeters(ringLonLat: number[][]): number {
   return area({ type: 'Polygon', coordinates: [ringLonLat] });
+}
+
+export function formatDistanceMeters(value: number, unit: Units): string {
+  return `${convertLength(value, 'meters', unit).toFixed(2)} ${unit}`;
+}
+
+export function formatAreaSquareMeters(value: number, unit: AreaUnits): string {
+  const suffix = unit === 'acres' || unit === 'ac' || unit === 'hectares' || unit === 'ha' ? unit : `${unit}²`;
+  return `${convertArea(value, 'meters', unit).toFixed(2)} ${suffix}`;
 }
 
 export function centerOfMassLonLat(ringLonLat: number[][]): number[] {

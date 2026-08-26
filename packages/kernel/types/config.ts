@@ -1,3 +1,5 @@
+import type { AreaUnits, Units } from '@turf/helpers';
+
 export interface NodeStyle {
   /** 节点半径（像素）。 */
   radius?: number;
@@ -11,7 +13,11 @@ export interface NodeStyle {
 
 export type MeasureMode = 'total' | 'segment' | 'both';
 
-export type DistanceUnit = 'm' | 'km' | 'nm';
+/** Turf 支持的距离单位。 */
+export type DistanceUnit = Units;
+
+/** Turf 支持的面积单位。 */
+export type AreaUnit = AreaUnits;
 
 export interface MeasureConfig {
   /** 测距标签显示模式。 */
@@ -24,7 +30,7 @@ export interface MeasureConfig {
 
 export interface AreaMeasureConfig {
   /** 面积单位。 */
-  unit?: DistanceUnit;
+  unit?: AreaUnit;
   /** 标签样式。 */
   labelStyle?: Partial<CSSStyleDeclaration>;
 }

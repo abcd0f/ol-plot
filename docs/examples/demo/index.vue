@@ -235,9 +235,11 @@
         <label class="field">
           <span>单位</span>
           <select v-model="styleForm.rangeUnit" :disabled="!hasSelection">
-            <option value="m">m</option>
-            <option value="km">km</option>
-            <option value="nm">nm</option>
+            <option value="meters">meters</option>
+            <option value="kilometers">kilometers</option>
+            <option value="miles">miles</option>
+            <option value="nauticalmiles">nauticalmiles</option>
+            <option value="feet">feet</option>
           </select>
         </label>
       </template>
@@ -335,7 +337,7 @@ const styleForm = reactive({
   alarmRings: 2,
   alarmFrameRate: 30,
   rangeSpacing: 10,
-  rangeUnit: 'km' as DistanceUnit,
+  rangeUnit: 'kilometers' as DistanceUnit,
 });
 
 let map: OlMap | null = null;
@@ -440,7 +442,7 @@ function createPlotConfig(): PlotManagerConfig {
     },
     measure: {
       mode: 'both',
-      unit: 'm',
+      unit: 'meters',
     },
     rangeRings: {
       spacing: styleForm.rangeSpacing,
@@ -583,7 +585,7 @@ async function syncStyleForm(style: PlotStyleData): Promise<void> {
   styleForm.alarmRings = style.alarm?.rings ?? 2;
   styleForm.alarmFrameRate = style.alarm?.frameRate ?? 30;
   styleForm.rangeSpacing = 10;
-  styleForm.rangeUnit = 'km';
+  styleForm.rangeUnit = 'kilometers';
 
   await nextTick();
   syncingStyle.value = false;

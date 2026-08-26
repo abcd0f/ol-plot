@@ -128,13 +128,13 @@ plot.on(DrawEvent.DRAW_END, ({ feature, data }) => {
 | `MeasureTool`         | `LineString`         | 绘制折线并显示距离标签                               |
 | `AreaMeasureTool`     | `Polygon`            | 绘制区域并显示面积标签                               |
 
-距离环的间距通过 `rangeRings.spacing` 和 `rangeRings.unit` 配置，支持 `m`、`km`、`nm`，例如：
+距离环的间距通过 `rangeRings.spacing` 和 `rangeRings.unit` 配置，支持 Turf 的全部 `Units`（如 `meters`、`kilometers`、`miles`、`nauticalmiles`、`feet` 等），例如：
 
 ```ts
 import { RangeRingsTool } from '@seedlib/ol-plot';
 
 const tool = new RangeRingsTool(map, {
-  rangeRings: { spacing: 50, unit: 'nm' },
+  rangeRings: { spacing: 50, unit: 'nauticalmiles' },
 });
 ```
 
@@ -232,7 +232,10 @@ interface NodeStyle {
   strokeWidth?: number;
 }
 
-type DistanceUnit = 'm' | 'km' | 'nm';
+import type { Units, AreaUnits } from '@turf/helpers';
+
+type DistanceUnit = Units;
+type AreaUnit = AreaUnits;
 
 interface MeasureConfig {
   mode?: 'total' | 'segment' | 'both';
@@ -245,7 +248,7 @@ interface MeasurePlotConfig extends PlotConfig {
 }
 
 interface AreaMeasureConfig {
-  unit?: DistanceUnit;
+  unit?: AreaUnit;
   labelStyle?: Partial<CSSStyleDeclaration>;
 }
 
@@ -339,13 +342,13 @@ import { MeasureTool, AreaMeasureTool } from '@seedlib/ol-plot';
 const measure = new MeasureTool(map, {
   measure: {
     mode: 'both',
-    unit: 'nm',
+    unit: 'nauticalmiles',
   },
 });
 
 const areaMeasure = new AreaMeasureTool(map, {
   areaMeasure: {
-    unit: 'nm',
+    unit: 'nauticalmiles',
   },
 });
 ```

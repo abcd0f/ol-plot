@@ -9,9 +9,7 @@ import type { EventBus } from '../../engine/runtime/EventBus';
 import type { ResolvedPlotConfig, MeasureMode, DistanceUnit } from '../../kernel/types/config';
 import { DrawEvent } from '../../kernel/constants/events';
 import type { DrawType } from '../../kernel/constants/drawType';
-import { distanceMeters, midpointLonLat } from '../../kernel/utils/geodesy';
-
-const METERS_PER_NAUTICAL_MILE = 1852;
+import { distanceMeters, formatDistanceMeters, midpointLonLat } from '../../kernel/utils/geodesy';
 
 /** 单条标签的位置与文本 */
 interface Label {
@@ -249,9 +247,7 @@ export class MeasureManager {
   }
 
   private format(length: number): string {
-    if (this.unit === 'km') return `${(length / 1000).toFixed(2)} km`;
-    if (this.unit === 'nm') return `${(length / METERS_PER_NAUTICAL_MILE).toFixed(2)} nm`;
-    return `${length.toFixed(2)} m`;
+    return formatDistanceMeters(length, this.unit);
   }
 
   /** 创建一个带默认样式的标签 Overlay。 */

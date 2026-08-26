@@ -45,7 +45,7 @@ onMounted(() => {
     nodeStyle: { radius: 5, fill: '#fff', stroke: '#1890ff', strokeWidth: 2 },
     measure: {
       mode: 'both',
-      unit: 'm',
+      unit: 'meters',
     },
   });
 });

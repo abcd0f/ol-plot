@@ -6,10 +6,10 @@
 import { RangeRingsTool } from '@seedlib/ol-plot'
 
 const tool = new RangeRingsTool(map, {
-  rangeRings: { spacing: 50, unit: 'nm' },
+  rangeRings: { spacing: 50, unit: 'nauticalmiles' },
 })
 ```
 
-支持的单位为 `m`、`km` 和 `nm`。例如 `{ spacing: 5, unit: 'm' }`、`{ spacing: 1.5, unit: 'km' }`、`{ spacing: 50, unit: 'nm' }`。第二个点只决定覆盖范围，最大半径不是间距整数倍时，不绘制超出范围的不完整环。
+支持 Turf 的全部距离单位（`Units`），例如 `meters`、`kilometers`、`miles`、`nauticalmiles`、`feet`，以及对应别名 `m`、`km`、`mi`、`nmi`、`ft`。第二个点只决定覆盖范围，最大半径不是间距整数倍时，不绘制超出范围的不完整环。
 
 点击任意圆环会选中整个距离环标绘，并显示圆心和外侧控制点；拖动控制点可以整体移动或调整覆盖半径。
