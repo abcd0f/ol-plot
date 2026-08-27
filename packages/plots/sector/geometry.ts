@@ -27,6 +27,14 @@ export function buildSector(
     ? bearingDegrees(centerLonLat, toLonLat(controlPoints[2] ?? controlPoints[1], projection))
     : 0;
   if (projection) {
+    // Turf interprets equal bearings as a full circle. During drawing this is
+    // the normal preview state before the third point is clicked, so keep it
+    // as a zero-angle sector instead.
+    const angleSpan = (endBearing - startBearing + 360) % 360;
+    if (controlPoints.length < 3 || angleSpan === 0) {
+      const startPoint = [...controlPoints[1]];
+      return [[startPoint, [...center], startPoint]];
+    }
     const sectorRing = buildGeodesicSectorLonLat(centerLonLat, radius, startBearing, endBearing, segments);
     const arc = sectorRing.slice(1, -1).map((coordinate) => fromLonLat(coordinate, projection));
     const ring = [...arc, [...center], [...arc[0]]];

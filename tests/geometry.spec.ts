@@ -121,6 +121,23 @@ describe('buildSector', () => {
       ]),
     ).toEqual({ start: 0, end: Math.PI / 2 });
   });
+
+  it('keeps the projected preview as a zero-angle sector before the third point', () => {
+    const ring = buildSector(
+      [
+        [0, 0],
+        [1000, 0],
+      ],
+      undefined,
+      'EPSG:3857',
+    )[0];
+
+    expect(ring).toEqual([
+      [1000, 0],
+      [0, 0],
+      [1000, 0],
+    ]);
+  });
 });
 
 describe('parseRangeSpacing', () => {
